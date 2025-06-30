@@ -114,19 +114,14 @@ int main() {
     
     std::cout << "\nDemonstrating deadline parsing..." << std::endl;
     
-    try {
-        auto parsedDeadline1 = Task::parseDeadline("2024-12-31 23:59:59");
-        auto parsedDeadline2 = Task::parseDeadline("2024-06-15");
-        
-        Task taskFromString("Parse test task", 
-                           "Task created with parsed deadline", 
-                           parsedDeadline1);
-        
-        std::cout << "Task with parsed deadline: " << taskFromString.toString() << std::endl;
-        
-    } catch (const std::exception& e) {
-        std::cout << "Error parsing deadline: " << e.what() << std::endl;
-    }
+    auto parsedDeadline1 = Task::parseDeadline("2024-12-31 23:59:59");
+    auto parsedDeadline2 = Task::parseDeadline("2024-06-15");
+    
+    Task taskFromString("Parse test task", 
+                       "Task created with parsed deadline", 
+                       parsedDeadline1);
+    
+    std::cout << "Task with parsed deadline: " << taskFromString.toString() << std::endl;
     
     std::cout << "\nDemo cleanup options:" << std::endl;
     std::cout << "1. Keep demo data" << std::endl;

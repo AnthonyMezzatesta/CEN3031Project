@@ -25,7 +25,6 @@ void printTasks(const std::vector<Task>& tasks, const std::string& title) {
 int main() {
     std::cout << "=== Task Manager Demo ===" << std::endl;
     
-    // Initialize TaskManager
     TaskManager taskManager("demo_tasks.db");
     
     if (!taskManager.initialize()) {
@@ -35,37 +34,30 @@ int main() {
     
     std::cout << "TaskManager initialized successfully!" << std::endl;
     
-    // Clear existing tasks for demo
     taskManager.clearAllTasks();
     
-    // Create some sample tasks
     auto now = std::chrono::system_clock::now();
     auto tomorrow = now + std::chrono::hours(24);
     auto nextWeek = now + std::chrono::hours(24 * 7);
     auto lastWeek = now - std::chrono::hours(24 * 7);
     
-    // Task 1: Due tomorrow
     Task task1("Complete project proposal", 
                "Write and submit the final project proposal for the new initiative", 
                tomorrow);
     
-    // Task 2: Due next week
     Task task2("Team meeting preparation", 
                "Prepare presentation slides and agenda for next team meeting", 
                nextWeek);
     
-    // Task 3: Overdue task
     Task task3("Submit expense report", 
                "Submit the quarterly expense report to accounting", 
                lastWeek);
     
-    // Task 4: Due in a few days
     auto fewDays = now + std::chrono::hours(24 * 3);
     Task task4("Code review", 
                "Review and approve pending code changes in the repository", 
                fewDays);
     
-    // Add tasks
     std::cout << "\nAdding tasks..." << std::endl;
     
     if (taskManager.addTask(task1)) {
@@ -86,23 +78,18 @@ int main() {
     
     std::cout << "\nTotal tasks in database: " << taskManager.getTaskCount() << std::endl;
     
-    // Display all tasks
     auto allTasks = taskManager.getAllTasks();
     printTasks(allTasks, "All Tasks");
     
-    // Display overdue tasks
     auto overdueTasks = taskManager.getOverdueTasks();
     printTasks(overdueTasks, "Overdue Tasks");
     
-    // Display upcoming tasks (next 7 days)
     auto upcomingTasks = taskManager.getUpcomingTasks(7);
     printTasks(upcomingTasks, "Upcoming Tasks (Next 7 Days)");
     
-    // Search for tasks by name
     auto projectTasks = taskManager.getTasksByName("project");
     printTasks(projectTasks, "Tasks containing 'project'");
     
-    // Get a specific task and update it
     if (!allTasks.empty()) {
         auto firstTask = allTasks[0];
         if (firstTask.getId().has_value()) {
@@ -125,7 +112,6 @@ int main() {
         }
     }
     
-    // Demonstrate task parsing from string
     std::cout << "\nDemonstrating deadline parsing..." << std::endl;
     
     try {
@@ -142,7 +128,6 @@ int main() {
         std::cout << "Error parsing deadline: " << e.what() << std::endl;
     }
     
-    // Clean up demonstration
     std::cout << "\nDemo cleanup options:" << std::endl;
     std::cout << "1. Keep demo data" << std::endl;
     std::cout << "2. Clear all tasks" << std::endl;

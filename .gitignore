@@ -4,15 +4,19 @@ bin/
 out/
 
 # CMake generated files
+cmake-build-*/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 *.cmake
 
-# Executable
-TaskManager
-TaskManager.exe
+# Executables
+# TaskManager
+# TaskManager.exe
+*.exe
+*.out
+*.app
 
 # Object files
 *.o

@@ -1,4 +1,6 @@
 #include "Task.h"
+
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 #include <ctime>
@@ -68,4 +70,9 @@ std::string Task::formatDeadline(const std::chrono::system_clock::time_point& de
     std::ostringstream oss;
     oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
     return oss.str();
-} 
+}
+
+void mark_task_completed(Task& someTask, std::chrono::system_clock::time_point currentTime) {
+    someTask.set_time_completed(currentTime);
+    someTask.set_Task_Completed();
+}

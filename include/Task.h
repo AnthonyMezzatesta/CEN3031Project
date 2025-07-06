@@ -10,6 +10,9 @@ private:
     std::string name_;
     std::string description_;
     std::chrono::system_clock::time_point deadline_;
+    std::chrono::system_clock::time_point time_of_completion;
+    bool completed_ = false;
+    bool archived = false;
 
 public:
     Task() = default;
@@ -27,6 +30,8 @@ public:
     void setName(const std::string& name) { name_ = name; }
     void setDescription(const std::string& description) { description_ = description; }
     void setDeadline(const std::chrono::system_clock::time_point& deadline) { deadline_ = deadline; }
+    void setTaskCompleted() { completed_ = true; archived = true; }
+    void set_time_completed(const std::chrono::system_clock::time_point& currentTime) { time_of_completion = currentTime; }
 
     std::string getDeadlineString() const;
     bool isOverdue() const;
@@ -34,4 +39,6 @@ public:
 
     static std::chrono::system_clock::time_point parseDeadline(const std::string& deadline_str);
     static std::string formatDeadline(const std::chrono::system_clock::time_point& deadline);
-}; 
+};
+
+void mark_task_completed(Task& someTask, std::chrono::system_clock::time_point currentTime);

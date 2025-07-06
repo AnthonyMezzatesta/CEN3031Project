@@ -124,6 +124,8 @@ bool TaskManager::removeTask(int task_id) {
     sqlite3_finalize(stmt);
     
     return rc == SQLITE_DONE && sqlite3_changes(db_) > 0;
+
+    // find a way to remove the actual Task from the database.
 }
 
 bool TaskManager::updateTask(const Task& task) {

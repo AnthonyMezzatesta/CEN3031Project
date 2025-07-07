@@ -27,7 +27,7 @@ public:
         Priority priority = Priority::None); // Added priority parameter
     Task(int id, const std::string& name, const std::string& description, 
          const std::chrono::system_clock::time_point& deadline,
-        Priority priority_ = Priority::None);
+        Priority priority = Priority::None);
 
     std::optional<int> getId() const { return id_; }
     const std::string& getName() const { return name_; }
@@ -39,6 +39,9 @@ public:
     void setName(const std::string& name) { name_ = name; }
     void setDescription(const std::string& description) { description_ = description; }
     void setDeadline(const std::chrono::system_clock::time_point& deadline) { deadline_ = deadline; }
+    void setPriority(Priority priority) {priority_ = priority;} // Added priority setter
+    void setTaskCompleted() { completed_ = true; archived = true; }
+    void set_time_completed(const std::chrono::system_clock::time_point& currentTime) { time_of_completion = currentTime; }
 
     std::string getDeadlineString() const;
     bool isOverdue() const;
@@ -48,4 +51,7 @@ public:
 
     static std::chrono::system_clock::time_point parseDeadline(const std::string& deadline_str);
     static std::string formatDeadline(const std::chrono::system_clock::time_point& deadline);
-}; 
+
+};
+
+void mark_task_completed(Task& someTask, std::chrono::system_clock::time_point currentTime);

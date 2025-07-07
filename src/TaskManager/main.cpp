@@ -41,39 +41,44 @@ int main() {
     auto nextWeek = now + std::chrono::hours(24 * 7);
     auto lastWeek = now - std::chrono::hours(24 * 7);
     
+    // Added priority to demo tasks
     Task task1("Complete project proposal", 
                "Write and submit the final project proposal for the new initiative", 
-               tomorrow);
+               tomorrow, Task::Priority::High);
     
     Task task2("Team meeting preparation", 
                "Prepare presentation slides and agenda for next team meeting", 
-               nextWeek);
+               nextWeek, Task::Priority::Medium);
     
     Task task3("Submit expense report", 
                "Submit the quarterly expense report to accounting", 
-               lastWeek);
+               lastWeek, Task::Priority::Low);
     
     auto fewDays = now + std::chrono::hours(24 * 3);
     Task task4("Code review", 
                "Review and approve pending code changes in the repository", 
-               fewDays);
+               fewDays, Task::Priority::Medium);
     
     std::cout << "\nAdding tasks..." << std::endl;
     
     if (taskManager.addTask(task1)) {
-        std::cout << "✓ Added: " << task1.getName() << std::endl;
+        std::cout << "✓ Added: " << task1.getName() << " (Priority: " 
+        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
     }
     
     if (taskManager.addTask(task2)) {
-        std::cout << "✓ Added: " << task2.getName() << std::endl;
+        std::cout << "✓ Added: " << task2.getName() << " (Priority: " 
+        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
     }
     
     if (taskManager.addTask(task3)) {
-        std::cout << "✓ Added: " << task3.getName() << std::endl;
+        std::cout << "✓ Added: " << task3.getName() << " (Priority: " 
+        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
     }
     
     if (taskManager.addTask(task4)) {
-        std::cout << "✓ Added: " << task4.getName() << std::endl;
+        std::cout << "✓ Added: " << task4.getName() << " (Priority: " 
+        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
     }
     
     std::cout << "\nTotal tasks in database: " << taskManager.getTaskCount() << std::endl;
@@ -86,7 +91,11 @@ int main() {
     
     auto upcomingTasks = taskManager.getUpcomingTasks(7);
     printTasks(upcomingTasks, "Upcoming Tasks (Next 7 Days)");
-    
+
+    // Added high priority tasks
+    auto highPriorityTasks = taskManager.getTasksByPriority(Task::Priority::High);
+    printTasks(highPriorityTasks, "High Priority Tasks");
+
     auto projectTasks = taskManager.getTasksByName("project");
     printTasks(projectTasks, "Tasks containing 'project'");
     
@@ -96,6 +105,7 @@ int main() {
             std::cout << "\nUpdating task with ID " << firstTask.getId().value() << "..." << std::endl;
             
             firstTask.setDescription(firstTask.getDescription() + " - UPDATED");
+            firstTask.setPriority(Task::Priority::High); // Set first task to high priority
             firstTask.setDeadline(now + std::chrono::hours(48)); // Push deadline to day after tomorrow
             
             if (taskManager.updateTask(firstTask)) {

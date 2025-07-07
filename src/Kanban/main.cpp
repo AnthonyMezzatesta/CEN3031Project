@@ -4,7 +4,6 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
     sf::Clock clock;
-
     while (window.isOpen()) {
         sf::Event event{};
 

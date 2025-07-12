@@ -2,7 +2,7 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 #include "Column.h"
-#include "../../include/Task.h"
+#include "Task.h"
 #include "Board.h"
 using namespace std;
 
@@ -25,7 +25,7 @@ bool Kanban::Board::AddColumn(const string& name, const sf::RenderTarget& target
     auto targetSize = target.getSize();
     int width =  targetSize.x / (colPerScreen + 1);
     int height = targetSize.y * 0.75f;
-    columns.push_back(new Column(name, width, height, &windowPromptManager));
+    columns.push_back(new Column(name, width, height, windowPromptManager));
     return true;
 }
 

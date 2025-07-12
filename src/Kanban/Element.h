@@ -15,7 +15,7 @@ namespace Kanban
         sf::Color bgColor;
         sf::RectangleShape rect;
         bool selected = false;
-        virtual void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) {}
+        virtual void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) = 0;
     public:
         Element(sf::Color color = sf::Color::White) : bgColor(color) {}
         virtual ~Element() {}

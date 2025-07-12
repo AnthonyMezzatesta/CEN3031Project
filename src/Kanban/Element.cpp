@@ -1,7 +1,7 @@
 #include "Element.h"
 #include <SFML/Graphics.hpp>
-#include "../../include/TaskManager.h"
-#include "../../include/Task.h"
+#include "TaskManager.h"
+#include "Task.h"
 #include "../Utilities/Utilities.h"
 using namespace std;
 
@@ -20,8 +20,7 @@ namespace Kanban
 
     bool Element::CheckCollision(sf::Vector2f point)
     {
-        sf::FloatRect boundingBox = rect.getGlobalBounds();
-        return boundingBox.contains(point);
+        return rect.getGlobalBounds().contains(point);
     }
 
     void Element::Select()

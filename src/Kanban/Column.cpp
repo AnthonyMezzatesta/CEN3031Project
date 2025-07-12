@@ -1,27 +1,23 @@
 #include <iostream>
-#include <cmath>
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
 #include "Icon.h"
 #include "TaskCard.h"
 #include "Element.h"
-#include "../../include/TaskManager.h"
-#include "../../include/Task.h"
+#include "TaskManager.h"
+#include "Task.h"
 #include "Column.h"
+#include "WindowPromptManager.h"
+
 using namespace std;
 
 Column::Column(const string& name, const float width, const float height,
-    WindowPromptManager* windowPromptManager):
+    WindowPromptManager& windowPromptManager) :
     name_(name), size_(width, height), rect_(size_)
 {
-    // if (!renderTexture_.create(size_.x, size_.y))
-    // {
-    //     throw runtime_error("could not create column texture");
-    // }
     icons_.push_back(new Icon(Icon::Types::plus));
-
-    this->windowPromptManager = windowPromptManager;
+    AddObserver(&windowPromptManager);
 }
 
 Column::~Column() {
@@ -29,6 +25,17 @@ Column::~Column() {
         delete icons_[i];
     for (unsigned int i = 0; i < tasks_.size(); i++)
         delete tasks_[i];
+}
+
+void Column::OnNotify(Event event, vector<Task>& tasks)
+{
+    if (event == Event::AddTask)
+    {
+        const int prevSize = tasks_.size();
+        tasks_.resize(prevSize + tasks.size());
+        for (unsigned int i = 0; i < tasks.size(); i++)
+            tasks_[i + prevSize] = new Kanban::TaskCard(tasks[i]);
+    }
 }
 
 bool Column::AddTask(Task& task) {
@@ -59,7 +66,9 @@ void Column::SelectIcon(Icon::Types type) {
     {
         case Icon::Types::plus:
             cout << "plus icon selected" << endl;
-            windowPromptManager->ShowPrompt(WindowPrompt::AddTask);
+            Notify(EventSystem::Observer::ShowPrompt,
+                   EventSystem::ColumnPromptObserver::AddTask,
+                   this);
             break;
         default:
             break;
@@ -109,7 +118,7 @@ void Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos) {
     // target.draw(iconBG);
 
     int x = basePos.x;
-    int y = basePos.y + height/4;
+    int y = basePos.y + height/4.f;
     int bgXPadding = 8;
     int iconXPadding = 16;
     for (int i = 0; i < iconCount; i++)

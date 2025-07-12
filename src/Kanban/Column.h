@@ -3,17 +3,19 @@
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
+#include "Task.h"
 #include "Icon.h"
 #include "TaskCard.h"
-#include "../../include/Task.h"
 #include "WindowPromptManager.h"
+#include "../Utilities/EventSystem/Subject.h"
+#include "../Utilities/EventSystem/Observer.h"
 
 using std::string;
 using std::runtime_error;
 using std::cout;
 using std::endl;
 
-class Column
+class Column : public EventSystem::ColumnPromptSubject, public EventSystem::TaskObserver
 {
     // int taskLimit;
     string name_;
@@ -23,13 +25,12 @@ class Column
     // sf::RenderTexture renderTexture_;
     sf::RectangleShape rect_;
     std::vector<Icon*> icons_;
-
-    WindowPromptManager* windowPromptManager;
 public:
     Column(const string& name, const float width, const float height,
-        WindowPromptManager* windowPromptManager);
+        WindowPromptManager& windowPromptManager);
     ~Column();
 
+    void OnNotify(Event event, vector<Task>& tasks) override;
     bool AddTask(Task& task);
     bool RemoveTask(Kanban::TaskCard& task);
     void ShowAddTaskPrompt();

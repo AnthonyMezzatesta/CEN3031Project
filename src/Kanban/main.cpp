@@ -23,20 +23,20 @@ void CreateTasks(TaskManager& taskManager)
     auto nextWeek = now + std::chrono::hours(24 * 7);
     auto lastWeek = now - std::chrono::hours(24 * 7);
 
-    Task task1("Complete project proposal",
+    Task task1(1, "Complete project proposal",
                "Write and submit the final project proposal for the new initiative",
                tomorrow);
 
-    Task task2("Team meeting preparation",
+    Task task2(2, "Team meeting preparation",
                "Prepare presentation slides and agenda for next team meeting",
                nextWeek);
 
-    Task task3("Submit expense report",
+    Task task3(3, "Submit expense report",
                "Submit the quarterly expense report to accounting",
                lastWeek);
 
     auto fewDays = now + std::chrono::hours(24 * 3);
-    Task task4("Code review",
+    Task task4(4, "Code review",
                "Review and approve pending code changes in the repository",
                fewDays);
 
@@ -64,17 +64,12 @@ int main() {
         throw runtime_error("Failed to initialize TaskManager!");
     taskManager.clearAllTasks();
     CreateTasks(taskManager);
-    auto allTasks = taskManager.getAllTasks();
-    queue<Task> q;
-    for (Task& task : allTasks)
-        q.push(task);
 
     sf::Clock clock;
     sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
     window.setFramerateLimit(60);
 
-    WindowPromptManager windowPromptManager(window);
-    windowPromptManager.AddPrompt(WindowPrompt::PromptType::AddTask);
+    WindowPromptManager windowPromptManager(window, taskManager);
     sf::FloatRect windowPromptViewPort(0.5f, 0.f, 0.5f, 0.5f);
 
     Kanban::Board board(window);
@@ -83,12 +78,6 @@ int main() {
     // board.AddColumn("done", window);
     // board.AddColumn("done", window);
 
-
-    // https://en.sfml-dev.org/forums/index.php?topic=18190.0
-    // use getPosition in real-time method for the mouse
-
-    // a 'view' defines which part of the 2D world is seen in the window
-    // a 'viewport' defines where the 'view' is shown
     while (window.isOpen())
     {
         sf::Event event{};
@@ -101,17 +90,9 @@ int main() {
             {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    bool a = board.CheckCollision(sf::Vector2i(event.mouseButton.x, event.mouseButton.y), window);
-                    // cout << std::boolalpha << a << endl;
-
-                }
-                if (event.mouseButton.button == sf::Mouse::Right)
-                {
-                    if (!q.empty())
-                    {
-                        board.AddTaskToColumn("todo", q.front());
-                        q.pop();
-                    }
+                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+                    board.CheckCollision(pixelPos, window);
+                    windowPromptManager.CheckCollision(pixelPos, window);
                 }
             }
             if (event.type == sf::Event::KeyPressed)
@@ -122,8 +103,11 @@ int main() {
 
         window.clear(sf::Color::Black);
 
-        board.DrawBoard(window);
+        // update
+        windowPromptManager.UpdatePrompts();
 
+        // draw
+        board.DrawBoard(window);
         windowPromptManager.Draw(window, windowPromptViewPort);
 
         window.display();

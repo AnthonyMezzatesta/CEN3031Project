@@ -24,6 +24,7 @@ set(SOURCES
 
 set (SFML_SOURCES
         src/Utilities/Utilities.cpp
+        src/Utilities/EventSystem/Subject.h
         src/Kanban/Element.cpp
         src/Kanban/Icon.cpp
         src/Kanban/Column.cpp
@@ -32,6 +33,8 @@ set (SFML_SOURCES
         src/Kanban/WindowPromptManager.h
         src/Kanban/Element.h
         src/Kanban/TaskCard.h
+        src/Kanban/TaskOption.h
+        src/Utilities/EventSystem/Observer.h
 )
 
 # Executables

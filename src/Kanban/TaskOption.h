@@ -14,18 +14,8 @@ namespace Kanban
         // centering text: https://stackoverflow.com/questions/14505571/centering-text-on-the-screen-with-sfml
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
         {
-            textObj.setString(task.getName());
-            textObj.setFillColor(sf::Color::Black);
-            textObj.setPosition(basePos);
-
-            textObj.setCharacterSize(size.y * 0.1); // in pixels, not points
-            sf::FloatRect textRect = textObj.getLocalBounds();
-            textObj.setOrigin(textRect.left + textRect.width/2.f, textRect.top + textRect.height/2.f);
-
-            float xOffset = size.x / 2;
-            float yOffset = size.y / 2;
-            textObj.move(xOffset, yOffset);
-            target.draw(textObj);
+            // draw task name
+            Utilities::DrawText(target, textObj, size, basePos, task.getName(), 24/*size.y * 0.15*/);
         }
     public:
         TaskOption(Task& task) : Element(sf::Color(190, 190, 190, 255)), task(task)

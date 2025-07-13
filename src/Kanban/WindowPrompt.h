@@ -21,7 +21,7 @@ public:
 
     virtual void Update() = 0;
     virtual void Draw(sf::RenderTarget& target) = 0;
-    virtual bool CheckCollision(sf::Vector2f point) = 0;
+    virtual bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) = 0;
 
     Type GetType() const { return type_; }
     bool IsVisible() const { return isVisible; }
@@ -33,13 +33,14 @@ protected:
     bool isVisible = false;
     bool isActive = false;
     TaskManager* taskManager_ = nullptr;
+    sf::View view_;
 };
 struct DummyPrompt : public WindowPrompt
 {
     DummyPrompt() { type_ = Default; }
     void Update() override {}
     void Draw(sf::RenderTarget& target) override {}
-    bool CheckCollision(sf::Vector2f point) override { return false; }
+    bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override { return false; }
 };
 class AddTaskWindowPrompt final : public WindowPrompt
 {
@@ -48,10 +49,12 @@ class AddTaskWindowPrompt final : public WindowPrompt
     sf::Color bgColor = sf::Color(128, 128, 128, 255);
     std::unordered_map<int, Kanban::TaskOption*> taskElements_;
 public:
-    AddTaskWindowPrompt(TaskManager& taskManager, const Type type = Default)
+    AddTaskWindowPrompt(const sf::RenderWindow& target, TaskManager& taskManager, const Type type = Default)
     {
         type_ = type;
         taskManager_ = &taskManager;
+        view_ = target.getDefaultView();
+        view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
         bg.setFillColor(bgColor);
 
         sf::Font font;
@@ -107,10 +110,12 @@ public:
     //     return true;
     // }
 
-    bool CheckCollision(sf::Vector2f point) override
+    bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override
     {
+        auto mousePos = target.mapPixelToCoords(point, view_);
+
         // exit early if not visible
-        if (!isVisible || !bg.getGlobalBounds().contains(point))
+        if (!isVisible || !bg.getGlobalBounds().contains(mousePos))
         {
             // if point was outside of bounds...
             if (isActive && isVisible)
@@ -121,7 +126,7 @@ public:
 
         for (auto iter = taskElements_.begin(); iter != taskElements_.end(); ++iter)
         {
-            if (iter->second->CheckCollision(point))
+            if (iter->second->CheckCollision(mousePos))
             {
                 // move task to be sent to observers
                 tasksToDeliver_.push_back(iter->second->GetTask());
@@ -138,6 +143,8 @@ public:
     {
         if (!isVisible)
             return;
+
+        target.setView(view_);
 
         bg.setSize(sf::Vector2f(target.getSize().x, target.getSize().y));
         target.draw(bg);
@@ -159,5 +166,7 @@ public:
                                 sf::Vector2f(taskWidth, taskHeight), {}, target);
             i++;
         }
+
+        target.setView(target.getDefaultView());
     }
 };

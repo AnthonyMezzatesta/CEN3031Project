@@ -9,18 +9,23 @@
 class WindowPromptManager : public EventSystem::ColumnPromptObserver
 {
 public:
-    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager) : view_(target.getDefaultView())
+    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager)
     {
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
-        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(taskManager,
-                                                                                WindowPrompt::Type::AddTaskPrompt);
+        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(
+            target,
+            taskManager,
+            WindowPrompt::Type::AddTaskPrompt
+        );
         UpdatePrompts();
     }
+
     ~WindowPromptManager()
     {
-        for (auto& kvp : prompts_)
+        for (auto& kvp: prompts_)
             delete kvp.second;
     }
+
     WindowPrompt* GetPrompt(const WindowPrompt::Type type)
     {
         if (prompts_.find(type) != prompts_.end())
@@ -28,6 +33,7 @@ public:
 
         return prompts_[WindowPrompt::Type::Default];
     }
+
     // void ShowPrompt(WindowPrompt::Type type)
     // {
     //     if (prompts_.find(type) != prompts_.end())
@@ -53,32 +59,29 @@ public:
             }
         }
     }
+
     void UpdatePrompts()
     {
-        for (auto& kvp : prompts_)
+        for (auto& kvp: prompts_)
             kvp.second->Update();
     }
+
     bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
     {
-        auto mousePos = target.mapPixelToCoords(point, view_);
-        for (auto& kvp : prompts_)
+        for (auto& kvp: prompts_)
         {
-            if (kvp.second->CheckCollision(mousePos))
+            if (kvp.second->CheckCollision(target, point))
                 return true;
         }
         return false;
     }
-    void Draw(sf::RenderWindow& target, sf::FloatRect viewport)
+
+    void Draw(sf::RenderWindow& target)
     {
-        view_.setViewport(viewport);
-        target.setView(view_);
-
-        for (auto& kvp : prompts_)
+        for (auto& kvp: prompts_)
             kvp.second->Draw(target);
-
-        target.setView(target.getDefaultView());
     }
+
 private:
-    sf::View view_;
     std::unordered_map<WindowPrompt::Type, WindowPrompt*> prompts_;
 };

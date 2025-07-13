@@ -3,17 +3,17 @@
 #include "Icon.h"
 using namespace std;
 
-Icon::Icon(Types type, int scaleFactor): type(type) {
+Icon::Icon(Types type, sf::Color color, int scaleFactor): type(type) {
     if (!texture_.loadFromFile(iconsPath))
         throw std::runtime_error("could not load icons sprite sheet");
     sprite_.setTexture(texture_);
-    sprite_.setColor(sf::Color(128, 128, 128, 255));
+    sprite_.setColor(color);
     sprite_.setTextureRect(sf::IntRect(type * sideLenPixel, 0, sideLenPixel, sideLenPixel));
     sprite_.scale(scaleFactor, scaleFactor);
 }
 
-void Icon::ScaleBy(int scaleFactor) {
-    sprite_.scale(scaleFactor, scaleFactor);
+void Icon::SetScale(int scale) {
+    sprite_.setScale(scale, scale);
 }
 
 void Icon::Draw(int x, int y, sf::RenderTarget& target) {

@@ -70,13 +70,12 @@ int main() {
     window.setFramerateLimit(60);
 
     WindowPromptManager windowPromptManager(window, taskManager);
-    sf::FloatRect windowPromptViewPort(0.5f, 0.f, 0.5f, 0.5f);
 
     Kanban::Board board(window);
     board.AddColumn("todo", window, windowPromptManager);
     board.AddColumn("wip", window, windowPromptManager);
-    // board.AddColumn("done", window);
-    // board.AddColumn("done", window);
+    board.AddColumn("done", window, windowPromptManager);
+    board.AddColumn("done", window, windowPromptManager);
 
     while (window.isOpen())
     {
@@ -108,7 +107,7 @@ int main() {
 
         // draw
         board.DrawBoard(window);
-        windowPromptManager.Draw(window, windowPromptViewPort);
+        windowPromptManager.Draw(window);
 
         window.display();
     }

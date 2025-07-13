@@ -16,7 +16,10 @@ Column::Column(const string& name, const float width, const float height,
     WindowPromptManager& windowPromptManager) :
     name_(name), size_(width, height), rect_(size_)
 {
+    font_.loadFromFile(Utilities::fontPath);
+    text_.setFont(font_);
     icons_.push_back(new Icon(Icon::Types::plus));
+    icons_.push_back(new Icon(Icon::Types::dots));
     AddObserver(&windowPromptManager);
 }
 
@@ -80,10 +83,6 @@ void Column::SelectTask(Kanban::TaskCard* task) {
 }
 
 bool Column::CheckCollision(sf::Vector2f point) {
-    // auto pos = rect_.getPosition();
-    // sf::FloatRect f(pos.x, pos.y, rect_.getLocalBounds().width, rect_.getLocalBounds().height);
-    // sf::FloatRect boundingBox = sprite_.getGlobalBounds();
-    
     if (rect_.getGlobalBounds().contains(point))
     {
         for (unsigned int i = 0; i < icons_.size(); i++)
@@ -109,43 +108,43 @@ bool Column::CheckCollision(sf::Vector2f point) {
 
 void Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos) {
     int iconCount = icons_.size();
-    // assuming all icon sprites are of same scale
-    // int width = iconCount * 16 + (iconCount + 1) * 8;
-    int height = 32;
-    // sf::RectangleShape iconBG(sf::Vector2f(width, height));
-    // iconBG.setPosition(basePos);
-    // iconBG.setFillColor(sf::Color(192, 192, 192, 255));
-    // target.draw(iconBG);
 
-    int x = basePos.x;
-    int y = basePos.y + height/4.f;
-    int bgXPadding = 8;
-    int iconXPadding = 16;
+    const int iconWidth = Icon::GetWidth();
+    int bgXPadding = iconWidth / 2;
+    int iconXPadding = iconWidth;
+
+    int totalIconWidth = (bgXPadding * iconCount) + (iconXPadding * iconCount) + (iconWidth * iconCount);
+    int x = basePos.x + size_.x - totalIconWidth;
+    int y = basePos.y + iconWidth;
+
     for (int i = 0; i < iconCount; i++)
     {
-        int xOffset = ((i+1) * bgXPadding) + (iconXPadding * i) + (16 * i);
+        int xOffset = (bgXPadding * (i+1)) + (iconXPadding * i) + (iconWidth * i);
         icons_[i]->Draw(x + xOffset, y, target);
     }
 }
 
-void Column::Render(sf::Vector2f position, sf::RenderTarget& target) {
+void Column::Render(sf::Vector2f position, sf::RenderTarget& target, const int tasksPerColumn) {
 
     // draw background
     rect_.setSize(size_);
-    // renderTexture_.draw(rect);
     rect_.setPosition(position);
     target.draw(rect_);
 
+    int iconHeight = Icon::GetWidth() * 2;
+    int yheader = iconHeight + iconHeight / 2.f;
     if (!tasks_.empty())
     {
-        int taskCount = tasks_.size();
+        int taskCount = tasksPerColumn;
         float taskWidth = size_.x * 0.75f;
         float xOffset = size_.x / 8.0f;
-        float taskHeight = size_.y / (taskCount + 1.0f);
-        float yPadding = taskHeight / (taskCount + 1.0f);
-        for (int i = 0; i < taskCount; i++)
+
+        float taskHeight = (size_.y - yheader) / (taskCount + 1.0f);
+        float yPadding = taskHeight / (taskCount);
+
+        for (int i = 0; i < tasks_.size(); i++)
         {
-            float yOffset = (i+1) * yPadding + taskHeight * i;
+            float yOffset = (yPadding * i) + (taskHeight * i) + yheader;
             tasks_[i]->Draw(sf::Vector2f(position.x + xOffset, position.y + yOffset),
                                 sf::Vector2f(taskWidth, taskHeight), {}, target);
         }
@@ -153,7 +152,9 @@ void Column::Render(sf::Vector2f position, sf::RenderTarget& target) {
 
     RenderIcons(target, position);
 
-    // sprite_.setTexture(renderTexture_.getTexture());
-    // sprite_.setPosition(position);
-    // target.draw(sprite_);
+    // draw column title
+    int titleWidth = size_.x;
+    int titleHeight = yheader;
+    sf::Vector2f textSize(titleWidth, titleHeight);
+    Utilities::DrawText(target, text_, textSize, position, name_, 24);
 }

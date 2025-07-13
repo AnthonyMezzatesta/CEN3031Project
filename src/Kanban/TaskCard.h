@@ -10,32 +10,31 @@ namespace Kanban
 {
     class TaskCard : public Element
     {
-        Task task;
+        Task task_;
+        Icon overdueIcon_;
 
-        // centering text: https://stackoverflow.com/questions/14505571/centering-text-on-the-screen-with-sfml
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
         {
-            textObj.setString(task.getName());
-            textObj.setFillColor(sf::Color::Black);
-            textObj.setPosition(basePos);
+            // draw task name
+            Utilities::DrawText(target, textObj, size, basePos, task_.getName(), 16/*size.y * 0.15*/);
 
-            textObj.setCharacterSize(size.y * 0.1); // in pixels, not points
-            sf::FloatRect textRect = textObj.getLocalBounds();
-            textObj.setOrigin(textRect.left + textRect.width/2.f, textRect.top + textRect.height/2.f);
-
-            float xOffset = size.x / 2;
-            float yOffset = size.y / 2;
-            textObj.move(xOffset, yOffset);
-            target.draw(textObj);
+            if (task_.isOverdue())
+            {
+                int x = basePos.x + size.x - Icon::GetWidth();
+                int y = basePos.y + size.y - Icon::GetWidth();
+                // overdueIcon_.SetScale(2);
+                overdueIcon_.Draw(x, y, target);
+            }
         }
     public:
-        TaskCard(Task& task) : Element(sf::Color(190, 190, 190, 255)), task(task)
+        TaskCard(Task& task) : Element(sf::Color(190, 190, 190, 255)),
+            task_(task), overdueIcon_(Icon::Types::overdue, sf::Color::Red)
         {
             if (!font.loadFromFile(Utilities::fontPath))
                 throw std::runtime_error("could not load font");
             textObj.setFont(font);
         }
-        std::optional<int> getId() { return task.getId(); }
+        std::optional<int> getId() { return task_.getId(); }
 
     };
 }

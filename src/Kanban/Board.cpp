@@ -7,7 +7,7 @@
 using namespace std;
 
 Kanban::Board::Board(const sf::RenderTarget& target) : boardView(target.getDefaultView()) {
-    boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
+    // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
 }
 
 Kanban::Board::~Board() {

@@ -25,6 +25,9 @@ class Column : public EventSystem::ColumnPromptSubject, public EventSystem::Task
     // sf::RenderTexture renderTexture_;
     sf::RectangleShape rect_;
     std::vector<Icon*> icons_;
+    sf::Font font_;
+    sf::Text text_;
+    const static int tasksPerColummn_ = 5;
 public:
     Column(const string& name, const float width, const float height,
         WindowPromptManager& windowPromptManager);
@@ -39,9 +42,9 @@ public:
 
     bool CheckCollision(sf::Vector2f point);
     void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos);
-    void Render(sf::Vector2f position, sf::RenderTarget& target);
+    void Render(sf::Vector2f position, sf::RenderTarget& target, int tasksPerColumn = tasksPerColummn_);
 
     string GetName() { return name_; }
-    void SetName(string name) { name_ = name; }
+    void SetName(string name) { name_ = std::move(name); }
     // sf::RenderTexture& GetRenderTexture() { return renderTexture_; }
 };

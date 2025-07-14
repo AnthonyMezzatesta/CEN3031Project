@@ -31,6 +31,7 @@ public:
     std::vector<Task> getTasksByName(const std::string& name);
     std::vector<Task> getOverdueTasks();
     std::vector<Task> getUpcomingTasks(int days = 7);
+    std::vector<Task> getTasksByPriority(Task::Priority priority); // New method t get tasks by priority
 
     bool isConnected() const { return db_ != nullptr; }
     int getTaskCount();

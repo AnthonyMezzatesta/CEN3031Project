@@ -1,16 +1,22 @@
 #include "Task.h"
+
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <map> // Added for priority mapping
 
 // Constructors
+// Updated constructors with priority parameter
 Task::Task(const std::string& name, const std::string& description, 
-           const std::chrono::system_clock::time_point& deadline)
-    : name_(name), description_(description), deadline_(deadline) {}
+           const std::chrono::system_clock::time_point& deadline,
+        Priority priority)
+    : name_(name), description_(description), deadline_(deadline), priority_(priority) {}
 
 Task::Task(int id, const std::string& name, const std::string& description, 
-           const std::chrono::system_clock::time_point& deadline)
-    : id_(id), name_(name), description_(description), deadline_(deadline) {}
+           const std::chrono::system_clock::time_point& deadline,
+        Priority priority)
+    : id_(id), name_(name), description_(description), deadline_(deadline), priority_(priority) {}
 
 // Utility methods
 std::string Task::getDeadlineString() const {
@@ -20,7 +26,7 @@ std::string Task::getDeadlineString() const {
 bool Task::isOverdue() const {
     return std::chrono::system_clock::now() > deadline_;
 }
-
+// Updated toString to display priority
 std::string Task::toString() const {
     std::ostringstream oss;
     oss << "Task ";
@@ -30,8 +36,38 @@ std::string Task::toString() const {
     oss << "Name: \"" << name_ << "\"\n"
         << "Description: \"" << description_ << "\"\n"
         << "Deadline: " << getDeadlineString() << "\n"
+        << "Priority: " << priorityToString(priority_) << ", " // Added priority 
         << "Overdue: " << (isOverdue() ? "Yes" : "No") << "\n";
     return oss.str();
+}
+
+// Added helper methods for priority
+std::string Task::priorityToString(Priority priority) {
+    static const std::map<Priority, std::string> priorityMap = {
+        {Priority::None, "None"},
+        {Priority::Low, "Low"},
+        {Priority::Medium, "Medium"},
+        {Priority::High, "High"}
+    };
+    // return string of priority
+    return priorityMap.at(priority);
+}
+
+Task::Priority Task::stringToPriority(const std::string& priority_str) {
+    static const std::map<std::string, Priority> stringMap = {
+        {"None", Priority::None},
+        {"Low", Priority::Low},
+        {"Medium", Priority::Medium},
+        {"High", Priority::High}
+    };
+    // Return priority if it exists, otherwise priority is None
+    auto it = stringMap.find(priority_str);
+    if (it != stringMap.end()) {
+        return it->second;
+    }
+    else {
+        return Priority::None;
+    }
 }
 
 // Static utility methods
@@ -68,4 +104,9 @@ std::string Task::formatDeadline(const std::chrono::system_clock::time_point& de
     std::ostringstream oss;
     oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
     return oss.str();
-} 
+}
+
+void mark_task_completed(Task& someTask, std::chrono::system_clock::time_point currentTime) {
+    someTask.set_time_completed(currentTime);
+    someTask.set_Task_Completed();
+}

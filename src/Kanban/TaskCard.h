@@ -28,7 +28,7 @@ namespace Kanban
         }
     public:
         TaskCard(Task& task) : Element(sf::Color(190, 190, 190, 255)),
-            task_(task), overdueIcon_(Icon::Types::overdue, sf::Color::Red)
+            task_(task), overdueIcon_(Icon::Type::overdue, sf::Color::Red)
         {
             if (!font.loadFromFile(Utilities::fontPath))
                 throw std::runtime_error("could not load font");

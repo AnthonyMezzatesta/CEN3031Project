@@ -15,7 +15,7 @@ using std::runtime_error;
 using std::cout;
 using std::endl;
 
-class Column : public EventSystem::ColumnPromptSubject, public EventSystem::TaskObserver
+class Column final
 {
     // int taskLimit;
     string name_;
@@ -28,16 +28,40 @@ class Column : public EventSystem::ColumnPromptSubject, public EventSystem::Task
     sf::Font font_;
     sf::Text text_;
     const static int tasksPerColummn_ = 5;
+
+    struct ColumnPromptTaskSubject : public EventSystem::ColumnPromptTaskSubject
+    {
+        friend Column;
+    };
+    struct ColumnPromptConfigSubject : public EventSystem::ColumnPromptConfigSubject
+    {
+        friend Column;
+    };
+    struct ActionObserver : public EventSystem::ActionObserver
+    {
+        Column* column_;
+        void OnNotify(Event event, Action action) override;
+        ActionObserver(Column* column) : column_(column) {}
+    };
+    struct TaskObserver : public EventSystem::TaskObserver
+    {
+        Column* column_;
+        void OnNotify(Event event, vector<Task>& tasks) override;
+        TaskObserver(Column* column) : column_(column) {}
+    };
+    ActionObserver actionObserver_;
+    TaskObserver taskObserver_;
+    ColumnPromptTaskSubject columnPromptTaskSubject_;
+    ColumnPromptConfigSubject columnPromptConfigSubject_;
 public:
     Column(const string& name, const float width, const float height,
         WindowPromptManager& windowPromptManager);
     ~Column();
 
-    void OnNotify(Event event, vector<Task>& tasks) override;
     bool AddTask(Task& task);
     bool RemoveTask(Kanban::TaskCard& task);
     void ShowAddTaskPrompt();
-    void SelectIcon(Icon::Types type);
+    void SelectIcon(Icon::Type type);
     void SelectTask(Kanban::TaskCard* task);
 
     bool CheckCollision(sf::Vector2f point);

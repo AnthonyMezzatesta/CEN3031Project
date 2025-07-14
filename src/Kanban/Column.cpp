@@ -12,15 +12,39 @@
 
 using namespace std;
 
+void Column::ActionObserver::OnNotify(Event event, Action action)
+{
+    if (event == Event::Action)
+    {
+        if (action == Action::Rename)
+        {
+            cout << "renaming column" << endl;
+            column_->name_ = "test_name";
+        }
+    }
+}
+
+void Column::TaskObserver::OnNotify(Event event, vector<Task>& tasks)
+{
+    if (event == Event::AddTask)
+    {
+        const int prevSize = column_->tasks_.size();
+        column_->tasks_.resize(prevSize + tasks.size());
+        for (unsigned int i = 0; i < tasks.size(); i++)
+            column_->tasks_[i + prevSize] = new Kanban::TaskCard(tasks[i]);
+    }
+}
+
 Column::Column(const string& name, const float width, const float height,
-    WindowPromptManager& windowPromptManager) :
-    name_(name), size_(width, height), rect_(size_)
+               WindowPromptManager& windowPromptManager) :
+    name_(name), size_(width, height), rect_(size_), taskObserver_(this), actionObserver_(this)
 {
     font_.loadFromFile(Utilities::fontPath);
     text_.setFont(font_);
-    icons_.push_back(new Icon(Icon::Types::plus));
-    icons_.push_back(new Icon(Icon::Types::dots));
-    AddObserver(&windowPromptManager);
+    icons_.push_back(new Icon(Icon::Type::plus));
+    icons_.push_back(new Icon(Icon::Type::dots));
+    columnPromptTaskSubject_.AddObserver(windowPromptManager.columnPromptTaskObserver);
+    columnPromptConfigSubject_.AddObserver(windowPromptManager.columnPromptConfigObserver);
 }
 
 Column::~Column() {
@@ -28,17 +52,6 @@ Column::~Column() {
         delete icons_[i];
     for (unsigned int i = 0; i < tasks_.size(); i++)
         delete tasks_[i];
-}
-
-void Column::OnNotify(Event event, vector<Task>& tasks)
-{
-    if (event == Event::AddTask)
-    {
-        const int prevSize = tasks_.size();
-        tasks_.resize(prevSize + tasks.size());
-        for (unsigned int i = 0; i < tasks.size(); i++)
-            tasks_[i + prevSize] = new Kanban::TaskCard(tasks[i]);
-    }
 }
 
 bool Column::AddTask(Task& task) {
@@ -64,14 +77,24 @@ bool Column::RemoveTask(Kanban::TaskCard& task) {
     return false;
 }
 
-void Column::SelectIcon(Icon::Types type) {
+void Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
-        case Icon::Types::plus:
+        case Icon::Type::plus:
             cout << "plus icon selected" << endl;
-            Notify(EventSystem::Observer::ShowPrompt,
-                   EventSystem::ColumnPromptObserver::AddTask,
-                   this);
+            columnPromptTaskSubject_.Notify(
+                EventSystem::Observer::ShowPrompt,
+                EventSystem::ColumnPromptObserver<EventSystem::TaskObserver>::Prompt::AddTask,
+                taskObserver_
+            );
+            break;
+        case Icon::Type::dots:
+            cout << "dots icon selected" << endl;
+            columnPromptConfigSubject_.Notify(
+                EventSystem::Observer::ShowPrompt,
+                EventSystem::ColumnPromptObserver<EventSystem::ActionObserver>::Settings,
+                actionObserver_
+            );
             break;
         default:
             break;

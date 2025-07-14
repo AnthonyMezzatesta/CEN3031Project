@@ -3,7 +3,7 @@
 #include "Icon.h"
 using namespace std;
 
-Icon::Icon(Types type, sf::Color color, int scaleFactor): type(type) {
+Icon::Icon(Type type, sf::Color color, int scaleFactor): type(type) {
     if (!texture_.loadFromFile(iconsPath))
         throw std::runtime_error("could not load icons sprite sheet");
     sprite_.setTexture(texture_);

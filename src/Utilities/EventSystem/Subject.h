@@ -23,7 +23,7 @@ namespace EventSystem
             for (; !nodePool.empty(); nodePool.pop())
                 delete nodePool.front();
         }
-        bool AddObserver(ObserverType* observer)
+        bool AddObserver(ObserverType& observer)
         {
             Node* node = GetFromPool();
             if (!node)
@@ -32,7 +32,7 @@ namespace EventSystem
                 return false;
             }
 
-            node->observer_ = observer;
+            node->observer_ = &observer;
 
             if (!head)
             {
@@ -45,13 +45,13 @@ namespace EventSystem
             head = node;
             return true;
         }
-        bool RemoveObserver(ObserverType* observer)
+        bool RemoveObserver(ObserverType& observer)
         {
             Node* prev = head;
             Node* curr = head;
             while (curr)
             {
-                if (curr->observer_ == observer)
+                if (curr->observer_ == &observer)
                 {
                     if (curr == head)
                         head = nullptr;
@@ -106,6 +106,22 @@ namespace EventSystem
         }
         virtual void Notify(Observer::Event event) = 0;
     };
+
+    struct ActionSubject : public Subject<ActionObserver>
+    {
+        virtual ~ActionSubject() {}
+    protected:
+        void Notify(Observer::Event event) override {}
+        void Notify(Observer::Event event, ActionObserver::Action action)
+        {
+            Node* curr = head;
+            while (curr)
+            {
+                curr->observer_->OnNotify(event, action);
+                curr = curr->next_;
+            }
+        }
+    };
     struct TaskSubject : public Subject<TaskObserver>
     {
         virtual ~TaskSubject() {}
@@ -122,17 +138,33 @@ namespace EventSystem
             tasksToDeliver_.clear();
         }
     };
-    struct ColumnPromptSubject : public Subject<ColumnPromptObserver>
+
+    struct ColumnPromptTaskSubject : public Subject<ColumnPromptObserver<TaskObserver>>
     {
-        virtual ~ColumnPromptSubject() {}
+        virtual ~ColumnPromptTaskSubject() {}
     protected:
         void Notify(Observer::Event event) override {}
-        void Notify(Observer::Event event, ColumnPromptObserver::Prompt promptType, TaskObserver* taskObserver)
+        void Notify(Observer::Event event, ColumnPromptObserver<TaskObserver>::Prompt promptType, TaskObserver& observer)
         {
             Node* curr = head;
             while (curr)
             {
-                curr->observer_->OnNotify(event, promptType, taskObserver);
+                curr->observer_->OnNotify(event, promptType, observer);
+                curr = curr->next_;
+            }
+        }
+    };
+    struct ColumnPromptConfigSubject : public Subject<ColumnPromptObserver<ActionObserver>>
+    {
+        virtual ~ColumnPromptConfigSubject() {}
+    protected:
+        void Notify(Observer::Event event) override {}
+        void Notify(Observer::Event event, ColumnPromptObserver<ActionObserver>::Prompt promptType, ActionObserver& observer)
+        {
+            Node* curr = head;
+            while (curr)
+            {
+                curr->observer_->OnNotify(event, promptType, observer);
                 curr = curr->next_;
             }
         }

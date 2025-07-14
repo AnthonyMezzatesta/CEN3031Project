@@ -6,10 +6,70 @@
 #include "TaskManager.h"
 #include "WindowPrompt.h"
 
-class WindowPromptManager : public EventSystem::ColumnPromptObserver
+class WindowPromptManager
 {
+    class ColumnPromptTaskObserver final : public EventSystem::ColumnPromptObserver<EventSystem::TaskObserver>
+    {
+        WindowPromptManager* windowPromptManager;
+        void OnNotify(Event event, Prompt promptType, EventSystem::TaskObserver& observer) override
+        {
+            if (promptType == ColumnPromptTaskObserver::Prompt::AddTask)
+            {
+                if (event == Event::ShowPrompt)
+                {
+                    // show prompt and add column as an observer to prompt's TaskSubject event
+                    auto prompt = dynamic_cast<AddTaskWindowPrompt*>(windowPromptManager->GetPrompt(WindowPrompt::Type::AddTaskPrompt));
+
+                    if (!prompt)
+                    {
+                        std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                        return;
+                    }
+
+                    if (!prompt->IsActive())
+                    {
+                        prompt->AddObserver(observer);
+                        prompt->SetActive(true);
+                    }
+                }
+            }
+        }
+    public:
+        ColumnPromptTaskObserver(WindowPromptManager* manager) : windowPromptManager(manager) {}
+        };
+    class ColumnPromptConfigObserver final : public EventSystem::ColumnPromptObserver<EventSystem::ActionObserver>
+    {
+        WindowPromptManager* windowPromptManager;
+        void OnNotify(Event event, Prompt promptType, EventSystem::ActionObserver& observer) override
+        {
+            if (promptType == ColumnPromptConfigObserver::Prompt::Settings)
+            {
+                if (event == Event::ShowPrompt)
+                {
+                    auto prompt = dynamic_cast<SettingsWindowPrompt*>(windowPromptManager->GetPrompt(WindowPrompt::Type::SettingsPrompt));
+
+                    if (!prompt)
+                    {
+                        std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                        return;
+                    }
+
+                    if (!prompt->IsActive())
+                    {
+                        prompt->AddObserver(observer);
+                        prompt->SetActive(true);
+                    }
+                }
+            }
+        }
+    public:
+        ColumnPromptConfigObserver(WindowPromptManager* manager) : windowPromptManager(manager) {}
+    };
 public:
-    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager)
+    ColumnPromptTaskObserver columnPromptTaskObserver;
+    ColumnPromptConfigObserver columnPromptConfigObserver;
+
+    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager) : columnPromptTaskObserver(this), columnPromptConfigObserver(this)
     {
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(
@@ -17,6 +77,10 @@ public:
             taskManager,
             WindowPrompt::Type::AddTaskPrompt
         );
+        prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsWindowPrompt(
+            target,
+            taskManager,
+            WindowPrompt::Type::SettingsPrompt);
         UpdatePrompts();
     }
 
@@ -32,32 +96,6 @@ public:
             return prompts_[type];
 
         return prompts_[WindowPrompt::Type::Default];
-    }
-
-    // void ShowPrompt(WindowPrompt::Type type)
-    // {
-    //     if (prompts_.find(type) != prompts_.end())
-    //     {
-    //         prompts_[type]->ToggleVisibility(true);
-    //     }
-    // }
-    void OnNotify(Event event, Prompt promptType, EventSystem::TaskObserver* observer) override
-    {
-        if (promptType == ColumnPromptObserver::Prompt::AddTask)
-        {
-            if (event == Event::ShowPrompt)
-            {
-                // show prompt and add column as an observer to prompt's TaskSubject event
-                auto prompt = GetPrompt(WindowPrompt::Type::AddTaskPrompt);
-                if (prompt->GetType() == WindowPrompt::Type::Default)
-                    cout << "retrieved Dummy prompt when AddTask was expected" << endl;
-                if (!prompt->IsActive())
-                {
-                    prompt->AddObserver(observer);
-                    prompt->SetActive(true);
-                }
-            }
-        }
     }
 
     void UpdatePrompts()

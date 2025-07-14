@@ -1,14 +1,14 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "../../include/TaskManager.h"
-#include "../../include/Task.h"
-#include "../Utilities/Utilities.h"
-#include "Element.h"
 #include "Task.h"
+#include "TaskManager.h"
+#include "Task.h"
+#include "Utilities.h"
+#include "GUIElement.h"
 
 namespace Kanban
 {
-    class TaskCard : public Element
+    class TaskCard : public GUIElement
     {
         Task task_;
         Icon overdueIcon_;
@@ -27,7 +27,7 @@ namespace Kanban
             }
         }
     public:
-        TaskCard(Task& task) : Element(sf::Color(190, 190, 190, 255)),
+        TaskCard(Task& task) : GUIElement(sf::Color(190, 190, 190, 255)),
             task_(task), overdueIcon_(Icon::Type::overdue, sf::Color::Red)
         {
             if (!font.loadFromFile(Utilities::fontPath))

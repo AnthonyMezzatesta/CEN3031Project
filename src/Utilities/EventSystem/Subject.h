@@ -37,7 +37,7 @@ namespace EventSystem
             if (!head)
             {
                 head = node;
-                node->next_ = nullptr;
+                head->next_ = nullptr;
                 return true;
             }
 
@@ -45,7 +45,7 @@ namespace EventSystem
             head = node;
             return true;
         }
-        bool RemoveObserver(ObserverType& observer)
+        bool RemoveObserver(ObserverType observer)
         {
             Node* prev = head;
             Node* curr = head;
@@ -120,6 +120,8 @@ namespace EventSystem
                 curr->observer_->OnNotify(event, action);
                 curr = curr->next_;
             }
+            if (action == Observer::Delete)
+                RemoveAllObservers();
         }
     };
     struct TaskSubject : public Subject<DataObserver<vector<Task>>>

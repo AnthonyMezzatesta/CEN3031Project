@@ -1,13 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "../../include/TaskManager.h"
-#include "../../include/Task.h"
-#include "../Utilities/Utilities.h"
-#include "Task.h"
 
 namespace Kanban
 {
-    class Element
+    class GUIElement
     {
     protected:
         sf::Font font;
@@ -17,8 +13,8 @@ namespace Kanban
         bool selected = false;
         virtual void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) = 0;
     public:
-        Element(sf::Color color = sf::Color::White) : bgColor(color) {}
-        virtual ~Element() {}
+        GUIElement(sf::Color color = sf::Color::White) : bgColor(color) {}
+        virtual ~GUIElement() {}
         void Draw(sf::Vector2f position, sf::Vector2f size,
             sf::Vector2f origin, sf::RenderTarget& target);
         bool CheckCollision(sf::Vector2f point);

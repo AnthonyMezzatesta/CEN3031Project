@@ -2,18 +2,21 @@
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
-#include "Icon.h"
-#include "TaskCard.h"
-#include "Element.h"
 #include "TaskManager.h"
 #include "Task.h"
 #include "Column.h"
-#include "WindowPromptManager.h"
+#include "Board.h"
+#include "../GUIElement/GUIElement.h"
+#include "../GUIElement/Icon.h"
+#include "../GUIElement/TaskCard.h"
+#include "../WindowPrompt/WindowPromptManager.h"
+#include "../Utilities/EventSystem/Subject.h"
+
 
 using namespace std;
 using namespace EventSystem;
 
-void Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::ActionEnum& action)
+void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::ActionEnum& action)
 {
     if (event == Observer::EventEnum::Action)
     {
@@ -22,22 +25,30 @@ void Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::Actio
             cout << "renaming column" << endl;
             column_->name_ = "test_name";
         }
+        if (action == Observer::ActionEnum::Delete)
+        {
+            cout << "deleting column" << endl;
+            column_->board_->RemoveColumn(*column_);
+        }
     }
 }
 
-void Column::TaskObserver::OnNotify(Observer::EventEnum event, vector<Task>& tasks)
+void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, vector<Task>& tasks)
 {
     if (event == Observer::EventEnum::TransferTask)
     {
         const int prevSize = column_->tasks_.size();
         column_->tasks_.resize(prevSize + tasks.size());
         for (unsigned int i = 0; i < tasks.size(); i++)
+        {
+            column_->board_->SetTaskAsTaken(tasks[i + prevSize]);
             column_->tasks_[i + prevSize] = new Kanban::TaskCard(tasks[i]);
+        }
     }
 }
 
-Column::Column(const string& name, const float width, const float height,
-               WindowPromptManager& windowPromptManager) :
+Kanban::Column::Column(const string& name, const float width, const float height,
+    WindowPromptManager& windowPromptManager, Kanban::Board& board) :
     name_(name), size_(width, height), rect_(size_), taskObserver_(this), actionObserver_(this)
 {
     font_.loadFromFile(Utilities::fontPath);
@@ -45,16 +56,20 @@ Column::Column(const string& name, const float width, const float height,
     icons_.push_back(new Icon(Icon::Type::plus));
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
+    board_ = &board;
 }
 
-Column::~Column() {
+Kanban::Column::~Column() {
     for (unsigned int i = 0; i < icons_.size(); i++)
         delete icons_[i];
     for (unsigned int i = 0; i < tasks_.size(); i++)
+    {
+        board_->ReturnTask(tasks_[i]->getId());
         delete tasks_[i];
+    }
 }
 
-bool Column::AddTask(Task& task) {
+bool Kanban::Column::AddTask(Task& task) {
     for (unsigned int i = 0; i < tasks_.size(); i++)
     {
         if (tasks_[i]->getId() == task.getId())
@@ -64,7 +79,7 @@ bool Column::AddTask(Task& task) {
     return true;
 }
 
-bool Column::RemoveTask(Kanban::TaskCard& task) {
+bool Kanban::Column::RemoveTask(Kanban::TaskCard& task) {
     for (auto iter = tasks_.begin(); iter != tasks_.end(); ++iter)
     {
         if ((*iter)->getId() == task.getId())
@@ -77,7 +92,7 @@ bool Column::RemoveTask(Kanban::TaskCard& task) {
     return false;
 }
 
-void Column::SelectIcon(Icon::Type type) {
+void Kanban::Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
         case Icon::Type::plus:
@@ -97,11 +112,11 @@ void Column::SelectIcon(Icon::Type type) {
     }
 }
 
-void Column::SelectTask(Kanban::TaskCard* task) {
+void Kanban::Column::SelectTask(Kanban::TaskCard* task) {
     task->Select();
 }
 
-bool Column::CheckCollision(sf::Vector2f point) {
+bool Kanban::Column::CheckCollision(sf::Vector2f point) {
     if (rect_.getGlobalBounds().contains(point))
     {
         for (unsigned int i = 0; i < icons_.size(); i++)
@@ -125,7 +140,7 @@ bool Column::CheckCollision(sf::Vector2f point) {
     return false;
 }
 
-void Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos) {
+void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos) {
     int iconCount = icons_.size();
 
     const int iconWidth = Icon::GetWidth();
@@ -143,7 +158,7 @@ void Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos) {
     }
 }
 
-void Column::Render(sf::Vector2f position, sf::RenderTarget& target, const int tasksPerColumn) {
+void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, const int tasksPerColumn) {
 
     // draw background
     rect_.setSize(size_);

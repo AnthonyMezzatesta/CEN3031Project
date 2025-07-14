@@ -2,25 +2,25 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <unordered_map>
-#include "../Utilities/EventSystem/Observer.h"
-#include "TaskManager.h"
+#include "Observer.h"
 #include "WindowPrompt.h"
+#include "../Board/Board.h"
 using namespace EventSystem;
 
 struct WindowPromptManager
 {
-    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager)
+    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board)
     {
+        activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(
             target,
-            taskManager,
-            WindowPrompt::Type::AddTaskPrompt
+            board
         );
         prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsWindowPrompt(
             target,
-            taskManager,
-            WindowPrompt::Type::SettingsPrompt);
+            board
+        );
 
         UpdatePrompts();
     }
@@ -34,9 +34,12 @@ struct WindowPromptManager
     template <typename T>
     void OnNotify(Observer::EventEnum event, Observer::PromptEnum promptType, DataObserver<T>& observer)
     {
+        if (!prompts_[activeWindow]->IsActive())
+            activeWindow = WindowPrompt::Type::Default;
+
         if (promptType == Observer::PromptEnum::AddTask)
         {
-            if (event == Observer::EventEnum::ShowPrompt)
+            if (event == Observer::EventEnum::ShowPrompt && activeWindow != WindowPrompt::AddTaskPrompt)
             {
                 // show prompt and add column as an observer to prompt's TaskSubject event
                 auto prompt = dynamic_cast<AddTaskWindowPrompt*>(GetPrompt(WindowPrompt::Type::AddTaskPrompt));
@@ -53,16 +56,14 @@ struct WindowPromptManager
                     return;
                 }
 
-                if (!prompt->IsActive())
-                {
-                    prompt->AddObserver(*o);
-                    prompt->SetActive(true);
-                }
+                activeWindow = WindowPrompt::AddTaskPrompt;
+                prompt->AddObserver(*o);
+                prompt->SetActive(true);
             }
         }
         if (promptType == Observer::PromptEnum::Settings)
         {
-            if (event == Observer::EventEnum::ShowPrompt)
+            if (event == Observer::EventEnum::ShowPrompt && activeWindow != WindowPrompt::SettingsPrompt)
             {
                 auto prompt = dynamic_cast<SettingsWindowPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
                 if (!prompt)
@@ -78,11 +79,9 @@ struct WindowPromptManager
                     return;
                 }
 
-                if (!prompt->IsActive())
-                {
-                    prompt->AddObserver(*o);
-                    prompt->SetActive(true);
-                }
+                activeWindow = WindowPrompt::SettingsPrompt;
+                prompt->AddObserver(*o);
+                prompt->SetActive(true);
             }
         }
     }
@@ -118,5 +117,6 @@ struct WindowPromptManager
     }
 
 private:
+    WindowPrompt::Type activeWindow;
     std::unordered_map<WindowPrompt::Type, WindowPrompt*> prompts_;
 };

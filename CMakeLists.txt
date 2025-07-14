@@ -13,6 +13,7 @@ find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
 
 # Include directories
 include_directories(include)
+include_directories(src/Utilities src/Utilities/EventSystem)
 include_directories(${SQLITE3_INCLUDE_DIRS})
 include_directories(${SFML_INCLUDE_DIRS})
 
@@ -25,16 +26,15 @@ set(SOURCES
 set (SFML_SOURCES
         src/Utilities/Utilities.cpp
         src/Utilities/EventSystem/Subject.h
-        src/Kanban/Element.cpp
-        src/Kanban/Icon.cpp
-        src/Kanban/Column.cpp
-        src/Kanban/Board.cpp
-        src/Kanban/WindowPrompt.h
-        src/Kanban/WindowPromptManager.h
-        src/Kanban/Element.h
-        src/Kanban/TaskCard.h
-        src/Kanban/TaskOption.h
         src/Utilities/EventSystem/Observer.h
+        src/Kanban/Board/Board.cpp
+        src/Kanban/Board/Column.cpp
+        src/Kanban/GUIElement/GUIElement.cpp
+        src/Kanban/GUIElement/Icon.cpp
+        src/Kanban/GUIElement/TaskCard.h
+        src/Kanban/GUIElement/TaskOption.h
+        src/Kanban/WindowPrompt/WindowPrompt.cpp
+        src/Kanban/WindowPrompt/WindowPromptManager.h
 )
 
 # Executables

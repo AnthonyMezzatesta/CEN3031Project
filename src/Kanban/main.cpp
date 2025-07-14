@@ -1,16 +1,11 @@
-#include <cmath>
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <queue>
-#include "Board.h"
-#include "../../include/TaskManager.h"
-#include "../../include/Task.h"
-#include "../Utilities/Utilities.h"
-#include "unordered_map"
-#include "WindowPromptManager.h"
-#include "WindowPrompt.h"
+#include "TaskManager.h"
+#include "Task.h"
+#include "Board/Board.h"
+#include "WindowPrompt/WindowPromptManager.h"
 
 using namespace std;
 using namespace Kanban;
@@ -69,12 +64,11 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
     window.setFramerateLimit(60);
 
-    WindowPromptManager windowPromptManager(window, taskManager);
+    Board board(window, taskManager);
+    WindowPromptManager windowPromptManager(window, board);
 
-    Kanban::Board board(window);
     board.AddColumn("todo", window, windowPromptManager);
     board.AddColumn("wip", window, windowPromptManager);
-    board.AddColumn("done", window, windowPromptManager);
     board.AddColumn("done", window, windowPromptManager);
 
     while (window.isOpen())
@@ -90,8 +84,8 @@ int main() {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
                     sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-                    board.CheckCollision(pixelPos, window);
-                    windowPromptManager.CheckCollision(pixelPos, window);
+                    if (!windowPromptManager.CheckCollision(pixelPos, window))
+                        board.CheckCollision(pixelPos, window);
                 }
             }
             if (event.type == sf::Event::KeyPressed)
@@ -103,6 +97,7 @@ int main() {
         window.clear(sf::Color::Black);
 
         // update
+        board.Update();
         windowPromptManager.UpdatePrompts();
 
         // draw

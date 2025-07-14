@@ -11,12 +11,13 @@
 #include "WindowPromptManager.h"
 
 using namespace std;
+using namespace EventSystem;
 
-void Column::ActionObserver::OnNotify(Event event, Action action)
+void Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::ActionEnum& action)
 {
-    if (event == Event::Action)
+    if (event == Observer::EventEnum::Action)
     {
-        if (action == Action::Rename)
+        if (action == Observer::ActionEnum::Rename)
         {
             cout << "renaming column" << endl;
             column_->name_ = "test_name";
@@ -24,9 +25,9 @@ void Column::ActionObserver::OnNotify(Event event, Action action)
     }
 }
 
-void Column::TaskObserver::OnNotify(Event event, vector<Task>& tasks)
+void Column::TaskObserver::OnNotify(Observer::EventEnum event, vector<Task>& tasks)
 {
-    if (event == Event::AddTask)
+    if (event == Observer::EventEnum::TransferTask)
     {
         const int prevSize = column_->tasks_.size();
         column_->tasks_.resize(prevSize + tasks.size());
@@ -43,8 +44,7 @@ Column::Column(const string& name, const float width, const float height,
     text_.setFont(font_);
     icons_.push_back(new Icon(Icon::Type::plus));
     icons_.push_back(new Icon(Icon::Type::dots));
-    columnPromptTaskSubject_.AddObserver(windowPromptManager.columnPromptTaskObserver);
-    columnPromptConfigSubject_.AddObserver(windowPromptManager.columnPromptConfigObserver);
+    windowPromptManager_ = &windowPromptManager;
 }
 
 Column::~Column() {
@@ -82,19 +82,15 @@ void Column::SelectIcon(Icon::Type type) {
     {
         case Icon::Type::plus:
             cout << "plus icon selected" << endl;
-            columnPromptTaskSubject_.Notify(
-                EventSystem::Observer::ShowPrompt,
-                EventSystem::ColumnPromptObserver<EventSystem::TaskObserver>::Prompt::AddTask,
-                taskObserver_
-            );
+            windowPromptManager_->OnNotify(Observer::EventEnum::ShowPrompt,
+                Observer::PromptEnum::AddTask,
+                taskObserver_);
             break;
         case Icon::Type::dots:
             cout << "dots icon selected" << endl;
-            columnPromptConfigSubject_.Notify(
-                EventSystem::Observer::ShowPrompt,
-                EventSystem::ColumnPromptObserver<EventSystem::ActionObserver>::Settings,
-                actionObserver_
-            );
+            windowPromptManager_->OnNotify(Observer::EventEnum::ShowPrompt,
+                Observer::PromptEnum::Settings,
+                actionObserver_);
             break;
         default:
             break;

@@ -12,7 +12,6 @@
 using std::cout;
 using std::endl;
 
-// todo: figure out how to inherit subject
 class WindowPrompt
 {
 public:
@@ -92,7 +91,7 @@ public:
 
         // send tasksToDeliver_ to observers
         if (!tasksToDeliver_.empty())
-            Notify(EventSystem::Observer::AddTask);
+            Notify(EventSystem::Observer::TransferTask);
 
         // update window prompt with current tasks
         if (taskElements_.empty())
@@ -208,7 +207,7 @@ public:
     {
         if (isActive) isVisible = true;
 
-        Notify(EventSystem::Observer::Action, EventSystem::ActionObserver::Rename);
+        Notify(EventSystem::Observer::EventEnum::Action, EventSystem::Observer::ActionEnum::Rename);
 
         // update window prompt with current tasks
         // if (taskElements_.empty())

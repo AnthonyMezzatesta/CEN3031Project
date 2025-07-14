@@ -14,6 +14,7 @@ using std::string;
 using std::runtime_error;
 using std::cout;
 using std::endl;
+using namespace EventSystem;
 
 class Column final
 {
@@ -27,32 +28,23 @@ class Column final
     std::vector<Icon*> icons_;
     sf::Font font_;
     sf::Text text_;
+    WindowPromptManager* windowPromptManager_;
     const static int tasksPerColummn_ = 5;
 
-    struct ColumnPromptTaskSubject : public EventSystem::ColumnPromptTaskSubject
-    {
-        friend Column;
-    };
-    struct ColumnPromptConfigSubject : public EventSystem::ColumnPromptConfigSubject
-    {
-        friend Column;
-    };
-    struct ActionObserver : public EventSystem::ActionObserver
+    struct ActionObserver : public DataObserver<Observer::ActionEnum>
     {
         Column* column_;
-        void OnNotify(Event event, Action action) override;
+        void OnNotify(Observer::EventEnum event, Observer::ActionEnum& action) override;
         ActionObserver(Column* column) : column_(column) {}
     };
-    struct TaskObserver : public EventSystem::TaskObserver
+    struct TaskObserver : public DataObserver<vector<Task>>
     {
         Column* column_;
-        void OnNotify(Event event, vector<Task>& tasks) override;
+        void OnNotify(Observer::EventEnum event, vector<Task>& tasks) override;
         TaskObserver(Column* column) : column_(column) {}
     };
     ActionObserver actionObserver_;
     TaskObserver taskObserver_;
-    ColumnPromptTaskSubject columnPromptTaskSubject_;
-    ColumnPromptConfigSubject columnPromptConfigSubject_;
 public:
     Column(const string& name, const float width, const float height,
         WindowPromptManager& windowPromptManager);

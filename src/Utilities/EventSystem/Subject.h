@@ -104,15 +104,15 @@ namespace EventSystem
             }
             head = nullptr;
         }
-        virtual void Notify(Observer::Event event) = 0;
+        virtual void Notify(Observer::EventEnum event) = 0;
     };
 
-    struct ActionSubject : public Subject<ActionObserver>
+    struct ActionSubject : public Subject<DataObserver<Observer::ActionEnum>>
     {
         virtual ~ActionSubject() {}
     protected:
-        void Notify(Observer::Event event) override {}
-        void Notify(Observer::Event event, ActionObserver::Action action)
+        void Notify(Observer::EventEnum event) override {}
+        void Notify(Observer::EventEnum event, Observer::ActionEnum action)
         {
             Node* curr = head;
             while (curr)
@@ -122,12 +122,12 @@ namespace EventSystem
             }
         }
     };
-    struct TaskSubject : public Subject<TaskObserver>
+    struct TaskSubject : public Subject<DataObserver<vector<Task>>>
     {
         virtual ~TaskSubject() {}
     protected:
         vector<Task> tasksToDeliver_;
-        void Notify(Observer::Event event) override
+        void Notify(Observer::EventEnum event) override
         {
             Node* curr = head;
             while (curr)
@@ -136,37 +136,6 @@ namespace EventSystem
                 curr = curr->next_;
             }
             tasksToDeliver_.clear();
-        }
-    };
-
-    struct ColumnPromptTaskSubject : public Subject<ColumnPromptObserver<TaskObserver>>
-    {
-        virtual ~ColumnPromptTaskSubject() {}
-    protected:
-        void Notify(Observer::Event event) override {}
-        void Notify(Observer::Event event, ColumnPromptObserver<TaskObserver>::Prompt promptType, TaskObserver& observer)
-        {
-            Node* curr = head;
-            while (curr)
-            {
-                curr->observer_->OnNotify(event, promptType, observer);
-                curr = curr->next_;
-            }
-        }
-    };
-    struct ColumnPromptConfigSubject : public Subject<ColumnPromptObserver<ActionObserver>>
-    {
-        virtual ~ColumnPromptConfigSubject() {}
-    protected:
-        void Notify(Observer::Event event) override {}
-        void Notify(Observer::Event event, ColumnPromptObserver<ActionObserver>::Prompt promptType, ActionObserver& observer)
-        {
-            Node* curr = head;
-            while (curr)
-            {
-                curr->observer_->OnNotify(event, promptType, observer);
-                curr = curr->next_;
-            }
         }
     };
 }

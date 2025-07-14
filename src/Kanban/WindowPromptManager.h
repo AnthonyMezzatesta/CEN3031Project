@@ -5,71 +5,11 @@
 #include "../Utilities/EventSystem/Observer.h"
 #include "TaskManager.h"
 #include "WindowPrompt.h"
+using namespace EventSystem;
 
-class WindowPromptManager
+struct WindowPromptManager
 {
-    class ColumnPromptTaskObserver final : public EventSystem::ColumnPromptObserver<EventSystem::TaskObserver>
-    {
-        WindowPromptManager* windowPromptManager;
-        void OnNotify(Event event, Prompt promptType, EventSystem::TaskObserver& observer) override
-        {
-            if (promptType == ColumnPromptTaskObserver::Prompt::AddTask)
-            {
-                if (event == Event::ShowPrompt)
-                {
-                    // show prompt and add column as an observer to prompt's TaskSubject event
-                    auto prompt = dynamic_cast<AddTaskWindowPrompt*>(windowPromptManager->GetPrompt(WindowPrompt::Type::AddTaskPrompt));
-
-                    if (!prompt)
-                    {
-                        std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
-                        return;
-                    }
-
-                    if (!prompt->IsActive())
-                    {
-                        prompt->AddObserver(observer);
-                        prompt->SetActive(true);
-                    }
-                }
-            }
-        }
-    public:
-        ColumnPromptTaskObserver(WindowPromptManager* manager) : windowPromptManager(manager) {}
-        };
-    class ColumnPromptConfigObserver final : public EventSystem::ColumnPromptObserver<EventSystem::ActionObserver>
-    {
-        WindowPromptManager* windowPromptManager;
-        void OnNotify(Event event, Prompt promptType, EventSystem::ActionObserver& observer) override
-        {
-            if (promptType == ColumnPromptConfigObserver::Prompt::Settings)
-            {
-                if (event == Event::ShowPrompt)
-                {
-                    auto prompt = dynamic_cast<SettingsWindowPrompt*>(windowPromptManager->GetPrompt(WindowPrompt::Type::SettingsPrompt));
-
-                    if (!prompt)
-                    {
-                        std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
-                        return;
-                    }
-
-                    if (!prompt->IsActive())
-                    {
-                        prompt->AddObserver(observer);
-                        prompt->SetActive(true);
-                    }
-                }
-            }
-        }
-    public:
-        ColumnPromptConfigObserver(WindowPromptManager* manager) : windowPromptManager(manager) {}
-    };
-public:
-    ColumnPromptTaskObserver columnPromptTaskObserver;
-    ColumnPromptConfigObserver columnPromptConfigObserver;
-
-    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager) : columnPromptTaskObserver(this), columnPromptConfigObserver(this)
+    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager)
     {
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(
@@ -81,6 +21,7 @@ public:
             target,
             taskManager,
             WindowPrompt::Type::SettingsPrompt);
+
         UpdatePrompts();
     }
 
@@ -88,6 +29,62 @@ public:
     {
         for (auto& kvp: prompts_)
             delete kvp.second;
+    }
+
+    template <typename T>
+    void OnNotify(Observer::EventEnum event, Observer::PromptEnum promptType, DataObserver<T>& observer)
+    {
+        if (promptType == Observer::PromptEnum::AddTask)
+        {
+            if (event == Observer::EventEnum::ShowPrompt)
+            {
+                // show prompt and add column as an observer to prompt's TaskSubject event
+                auto prompt = dynamic_cast<AddTaskWindowPrompt*>(GetPrompt(WindowPrompt::Type::AddTaskPrompt));
+                if (!prompt)
+                {
+                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    return;
+                }
+
+                auto o = dynamic_cast<DataObserver<vector<Task>>* >(&observer);
+                if (!o)
+                {
+                    std::cerr << "could not recast DataObserver<T> to DataObserver<vector<Task>>" << endl;
+                    return;
+                }
+
+                if (!prompt->IsActive())
+                {
+                    prompt->AddObserver(*o);
+                    prompt->SetActive(true);
+                }
+            }
+        }
+        if (promptType == Observer::PromptEnum::Settings)
+        {
+            if (event == Observer::EventEnum::ShowPrompt)
+            {
+                auto prompt = dynamic_cast<SettingsWindowPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
+                if (!prompt)
+                {
+                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    return;
+                }
+
+                auto o = dynamic_cast<DataObserver<Observer::ActionEnum>* >(&observer);
+                if (!o)
+                {
+                    std::cerr << "could not recast DataObserver<T> to DataObserver<Observer::ActionEnum>" << endl;
+                    return;
+                }
+
+                if (!prompt->IsActive())
+                {
+                    prompt->AddObserver(*o);
+                    prompt->SetActive(true);
+                }
+            }
+        }
     }
 
     WindowPrompt* GetPrompt(const WindowPrompt::Type type)

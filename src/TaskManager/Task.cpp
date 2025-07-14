@@ -23,14 +23,14 @@ bool Task::isOverdue() const {
 
 std::string Task::toString() const {
     std::ostringstream oss;
-    oss << "Task[";
+    oss << "Task ";
     if (id_.has_value()) {
-        oss << "ID: " << id_.value() << ", ";
+        oss << "ID: " << id_.value() << "\n";
     }
-    oss << "Name: \"" << name_ << "\", "
-        << "Description: \"" << description_ << "\", "
-        << "Deadline: " << getDeadlineString() << ", "
-        << "Overdue: " << (isOverdue() ? "Yes" : "No") << "]";
+    oss << "Name: \"" << name_ << "\"\n"
+        << "Description: \"" << description_ << "\"\n"
+        << "Deadline: " << getDeadlineString() << "\n"
+        << "Overdue: " << (isOverdue() ? "Yes" : "No") << "\n";
     return oss.str();
 }
 

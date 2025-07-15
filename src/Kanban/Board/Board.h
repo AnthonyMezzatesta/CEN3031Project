@@ -19,10 +19,18 @@ namespace Kanban
 
     class Board
     {
-        sf::View boardView;
         const static int colPerScreen = 3;
-        vector<Kanban::Column*> columns_;
+
+        enum UserInputMode { Default, ColumnName };
+        UserInputMode userInputMode;
+        string userInputStr;
+
+        sf::View boardView;
+
         TaskManager* taskManager_;
+        Column* activeColumn;
+        vector<Kanban::Column*> columns_;
+
         enum TaskStatus { Taken, Available };
         std::unordered_map<int, TaskStatus> taskIds_;
     public:
@@ -30,6 +38,8 @@ namespace Kanban
         ~Board();
         bool AddColumn(const string& name, const sf::RenderTarget& target, WindowPromptManager& windowPromptManager);
         void RemoveColumn(Column& column);
+        void SetActiveColumn(Column* column);
+
         // bool AddTaskToColumn(string colName, Task& task);
         void MoveView(sf::Keyboard::Key key, const float deltaTime);
 
@@ -40,6 +50,7 @@ namespace Kanban
         // void ReturnTasks(vector<Task>& tasks); // for use by columns
         vector<Task> GetAvailableTasks() const;
 
+        void ReadUserInput(char c);
         void DrawBoard(sf::RenderWindow& window);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
     };

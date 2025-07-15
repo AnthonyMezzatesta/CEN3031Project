@@ -23,7 +23,8 @@ namespace Kanban
                 throw std::runtime_error("could not load font");
             textObj.setFont(font);
         }
-        Task GetTask() { return task; }
+
+        Task& GetTask() { return task; }
         std::optional<int> getId() { return task.getId(); }
 
     };

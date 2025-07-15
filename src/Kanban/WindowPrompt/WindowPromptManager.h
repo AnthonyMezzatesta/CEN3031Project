@@ -45,14 +45,14 @@ struct WindowPromptManager
                 auto prompt = dynamic_cast<AddTaskWindowPrompt*>(GetPrompt(WindowPrompt::Type::AddTaskPrompt));
                 if (!prompt)
                 {
-                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    std::cerr << "could not recast WindowPrompt to AddTask Window Prompt" << endl;
                     return;
                 }
 
-                auto o = dynamic_cast<DataObserver<vector<Task>>* >(&observer);
+                auto o = dynamic_cast<DataObserver<Task>*>(&observer);
                 if (!o)
                 {
-                    std::cerr << "could not recast DataObserver<T> to DataObserver<vector<Task>>" << endl;
+                    std::cerr << "could not recast DataObserver<T> to DataObserver<Task>" << endl;
                     return;
                 }
 
@@ -68,7 +68,7 @@ struct WindowPromptManager
                 auto prompt = dynamic_cast<SettingsWindowPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
                 if (!prompt)
                 {
-                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    std::cerr << "could not recast WindowPrompt to Settings Window Prompt" << endl;
                     return;
                 }
 

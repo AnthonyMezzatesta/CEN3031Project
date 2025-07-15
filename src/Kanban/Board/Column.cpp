@@ -23,7 +23,7 @@ void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observe
         if (action == Observer::ActionEnum::Rename)
         {
             cout << "renaming column" << endl;
-            column_->name_ = "test_name";
+            column_->board_->SetActiveColumn(column_);
         }
         if (action == Observer::ActionEnum::Delete)
         {
@@ -33,17 +33,12 @@ void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observe
     }
 }
 
-void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, vector<Task>& tasks)
+void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& task)
 {
     if (event == Observer::EventEnum::TransferTask)
     {
-        const int prevSize = column_->tasks_.size();
-        column_->tasks_.resize(prevSize + tasks.size());
-        for (unsigned int i = 0; i < tasks.size(); i++)
-        {
-            column_->board_->SetTaskAsTaken(tasks[i + prevSize]);
-            column_->tasks_[i + prevSize] = new Kanban::TaskCard(tasks[i]);
-        }
+        column_->board_->SetTaskAsTaken(task);
+        column_->tasks_.push_back(new Kanban::TaskCard(task));
     }
 }
 
@@ -166,19 +161,19 @@ void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, con
     target.draw(rect_);
 
     int iconHeight = Icon::GetWidth() * 2;
-    int yheader = iconHeight + iconHeight / 2.f;
+    int yHeader = iconHeight + iconHeight / 2.f;
     if (!tasks_.empty())
     {
         int taskCount = tasksPerColumn;
         float taskWidth = size_.x * 0.75f;
         float xOffset = size_.x / 8.0f;
 
-        float taskHeight = (size_.y - yheader) / (taskCount + 1.0f);
+        float taskHeight = (size_.y - yHeader) / (taskCount + 1.0f);
         float yPadding = taskHeight / (taskCount);
 
         for (int i = 0; i < tasks_.size(); i++)
         {
-            float yOffset = (yPadding * i) + (taskHeight * i) + yheader;
+            float yOffset = (yPadding * i) + (taskHeight * i) + yHeader;
             tasks_[i]->Draw(sf::Vector2f(position.x + xOffset, position.y + yOffset),
                                 sf::Vector2f(taskWidth, taskHeight), {}, target);
         }
@@ -188,7 +183,7 @@ void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, con
 
     // draw column title
     int titleWidth = size_.x;
-    int titleHeight = yheader;
+    int titleHeight = yHeader;
     sf::Vector2f textSize(titleWidth, titleHeight);
-    Utilities::DrawText(target, text_, textSize, position, name_, 24);
+    Utilities::DrawText(target, text_, textSize, position, name_, titleHeight / 2);
 }

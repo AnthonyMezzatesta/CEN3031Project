@@ -37,10 +37,6 @@ void AddTaskWindowPrompt::ClearTaskElements() {
 void AddTaskWindowPrompt::Update() {
     if (isActive) isVisible = true;
 
-    // send tasksToDeliver_ to observers
-    if (!tasksToDeliver_.empty())
-        Notify(EventSystem::Observer::TransferTask);
-
     // update window prompt with currently available tasks
     if (!isActive)
     {
@@ -77,8 +73,8 @@ bool AddTaskWindowPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i 
     {
         if (iter->second->CheckCollision(mousePos))
         {
-            // move task to be sent to observers
-            tasksToDeliver_.push_back(iter->second->GetTask());
+            // send task to observers
+            Notify(EventSystem::Observer::TransferTask, iter->second->GetTask());
             taskElements_.erase(iter);
             delete iter->second;
             return true;

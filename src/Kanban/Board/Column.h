@@ -42,10 +42,10 @@ namespace Kanban
             void OnNotify(Observer::EventEnum event, Observer::ActionEnum& action) override;
             ActionObserver(Column* column) : column_(column) {}
         };
-        struct TaskObserver : public DataObserver<vector<Task>>
+        struct TaskObserver : public DataObserver<Task>
         {
             Column* column_;
-            void OnNotify(Observer::EventEnum event, vector<Task>& tasks) override;
+            void OnNotify(Observer::EventEnum event, Task& tasks) override;
             TaskObserver(Column* column) : column_(column) {}
         };
         friend ActionObserver;

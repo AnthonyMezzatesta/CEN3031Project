@@ -8,7 +8,7 @@
 using namespace std;
 
 Kanban::Board::Board(const sf::RenderTarget& target, TaskManager& taskManager) :
-    boardView(target.getDefaultView())
+    userInputMode(UserInputMode::Default), boardView(target.getDefaultView()), activeColumn(nullptr)
 {
     taskManager_ = &taskManager;
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
@@ -44,9 +44,16 @@ void Kanban::Board::RemoveColumn(Column& column)
         if (*iter == &column)
         {
             columns_.erase(iter);
+            delete &column;
             return;
         }
     }
+}
+
+void Kanban::Board::SetActiveColumn(Column* column)
+{
+    activeColumn = column;
+    userInputMode = UserInputMode::ColumnName;
 }
 
 // bool Kanban::Board::AddTaskToColumn(string colName, Task& task) {
@@ -117,12 +124,42 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
     {
         if (kvp.second == Available)
         {
-            if (auto id = taskManager_->getTask(kvp.first); id.has_value())
+            auto id = taskManager_->getTask(kvp.first);
+            if (id.has_value())
                 tasks.push_back(id.value());
         }
     }
 
     return tasks;
+}
+
+void Kanban::Board::ReadUserInput(char c)
+{
+    if (userInputMode == UserInputMode::Default)
+        return;
+
+    // std::cout << "ASCII character typed: " << c << std::endl;
+
+    if (c == '\t')
+        return;
+
+    if (c == '\b')
+        userInputStr.pop_back();
+    else if (c == '\n')
+    {
+        if (activeColumn && userInputMode == UserInputMode::ColumnName)
+        {
+            activeColumn = nullptr;
+            userInputStr.clear();
+            userInputMode = UserInputMode::Default;
+            return;
+        }
+    }
+    else
+        userInputStr.push_back(c);
+
+    if (activeColumn && userInputMode == UserInputMode::ColumnName)
+        activeColumn->SetName(userInputStr);
 }
 
 void Kanban::Board::DrawBoard(sf::RenderWindow& window)
@@ -152,8 +189,16 @@ void Kanban::Board::DrawBoard(sf::RenderWindow& window)
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
 {
-    // auto pixelPos = sf::Mouse::getPosition(target);
     auto mousePos = target.mapPixelToCoords(point, boardView);
+
+    // reset active column
+    if (activeColumn)
+    {
+        activeColumn = nullptr;
+        userInputMode = UserInputMode::Default;
+        userInputStr.clear();
+    }
+
     for (unsigned int i = 0; i < columns_.size(); i++)
     {
         if (columns_[i]->CheckCollision(mousePos))

@@ -34,16 +34,6 @@ public:
     bool IsActive() const { return isActive; }
     virtual void SetActive(bool value) { isActive = value; }
 protected:
-    // struct TaskEvent : public EventSystem::TaskSubject
-    // {
-    //     struct DummyPrompt;
-    //     class AddTaskWindowPrompt;
-    //
-    //     friend WindowPrompt;
-    //     friend DummyPrompt;
-    //     friend AddTaskWindowPrompt;
-    // };
-    // TaskEvent taskEvent;
     sf::Text text_;
     Type type_ = Default;
     bool isVisible = false;
@@ -60,7 +50,6 @@ struct DummyPrompt : public WindowPrompt
 };
 class AddTaskWindowPrompt final : public WindowPrompt, public EventSystem::TaskSubject
 {
-    const int defaultKey = -1;
     sf::RectangleShape bg;
     sf::Color bgColor = sf::Color(128, 128, 128, 255);
     std::unordered_map<int, Kanban::TaskOption*> taskElements_;
@@ -83,7 +72,6 @@ public:
 
 class SettingsWindowPrompt final : public WindowPrompt, public EventSystem::ActionSubject
 {
-    const int defaultKey = -1;
     sf::RectangleShape bg;
     sf::Color bgColor = sf::Color(128, 128, 128, 255);
     enum OptionEnum { Rename, Delete };

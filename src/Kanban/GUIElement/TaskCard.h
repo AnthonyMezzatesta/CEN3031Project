@@ -1,40 +1,27 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "Task.h"
-#include "TaskManager.h"
-#include "Task.h"
-#include "Utilities.h"
+#include "Icon.h"
 #include "GUIElement.h"
+#include "../Board/Column.h"
 
 namespace Kanban
 {
+    class Column;
+
     class TaskCard : public GUIElement
     {
+        enum Icons { Overdue, Delete };
         Task task_;
-        Icon overdueIcon_;
+        vector<Icon*> icons_;
+        Column* column_;
 
-        void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
-        {
-            // draw task name
-            Utilities::DrawText(target, textObj, size, basePos, task_.getName(), 16/*size.y * 0.15*/);
-
-            if (task_.isOverdue())
-            {
-                int x = basePos.x + size.x - Icon::GetWidth();
-                int y = basePos.y + size.y - Icon::GetWidth();
-                // overdueIcon_.SetScale(2);
-                overdueIcon_.Draw(x, y, target);
-            }
-        }
+        void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override;
     public:
-        TaskCard(Task& task) : GUIElement(sf::Color(190, 190, 190, 255)),
-            task_(task), overdueIcon_(Icon::Type::overdue, sf::Color::Red)
-        {
-            if (!font.loadFromFile(Utilities::fontPath))
-                throw std::runtime_error("could not load font");
-            textObj.setFont(font);
-        }
-        std::optional<int> getId() { return task_.getId(); }
+        TaskCard(Column* column, Task& task);
+        ~TaskCard();
 
+        bool CheckCollision(sf::Vector2f point) override;
+        std::optional<int> GetId() const { return task_.getId(); }
     };
 }

@@ -43,8 +43,8 @@ void Kanban::Board::RemoveColumn(Column& column)
     {
         if (*iter == &column)
         {
+            delete *iter;
             columns_.erase(iter);
-            delete &column;
             return;
         }
     }

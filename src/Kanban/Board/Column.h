@@ -26,8 +26,6 @@ namespace Kanban
         string name_;
         sf::Vector2f size_;
         std::vector<Kanban::TaskCard*> tasks_;
-        // sf::Sprite sprite_;
-        // sf::RenderTexture renderTexture_;
         sf::RectangleShape rect_;
         std::vector<Icon*> icons_;
         sf::Font font_;
@@ -57,9 +55,10 @@ namespace Kanban
             WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();
 
-        bool AddTask(Task& task);
-        bool RemoveTask(Kanban::TaskCard& task);
-        void ShowAddTaskPrompt();
+        // bool AddTask(Task& task);
+        // bool RemoveTask(Kanban::TaskCard& task);
+        void RemoveTaskCard(Kanban::TaskCard* card);
+        // void ShowAddTaskPrompt();
         void SelectIcon(Icon::Type type);
         void SelectTask(Kanban::TaskCard* task);
 

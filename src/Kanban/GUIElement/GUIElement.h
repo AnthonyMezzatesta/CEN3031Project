@@ -17,7 +17,7 @@ namespace Kanban
         virtual ~GUIElement() {}
         void Draw(sf::Vector2f position, sf::Vector2f size,
             sf::Vector2f origin, sf::RenderTarget& target);
-        bool CheckCollision(sf::Vector2f point);
+        virtual bool CheckCollision(sf::Vector2f point);
         virtual void Select();
         virtual void Deselect();
     };

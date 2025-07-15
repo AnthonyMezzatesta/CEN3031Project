@@ -51,6 +51,8 @@ Kanban::Column::Column(const string& name, const float width, const float height
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
     board_ = &board;
+    TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
+    selectedCard_ = nullptr;
 }
 
 Kanban::Column::~Column() {
@@ -105,23 +107,32 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
     {
         case Icon::Type::plus:
             cout << "plus icon selected" << endl;
-            windowPromptManager_->OnNotify(Observer::EventEnum::ShowPrompt,
+            windowPromptManager_->OnNotify(
+                Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
-                taskObserver_);
+                taskObserver_
+            );
             break;
         case Icon::Type::dots:
             cout << "dots icon selected" << endl;
-            windowPromptManager_->OnNotify(Observer::EventEnum::ShowPrompt,
+            windowPromptManager_->OnNotify(
+                Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::Settings,
-                actionObserver_);
+                actionObserver_
+            );
             break;
         default:
             break;
     }
 }
 
-void Kanban::Column::SelectTask(Kanban::TaskCard* task) {
-    task->Select();
+void Kanban::Column::SelectTaskCard(Kanban::TaskCard* card) {
+    if (selectedCard_)
+        selectedCard_->Deselect();
+
+    selectedCard_ = card;
+    card->Select();
+    TaskSubject::Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
 }
 
 bool Kanban::Column::CheckCollision(sf::Vector2f point) {
@@ -139,11 +150,21 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point) {
         {
             if (tasks_[i]->CheckCollision(point))
             {
-                SelectTask(tasks_[i]);
+                SelectTaskCard(tasks_[i]);
                 return true;
             }
         }
+        if (selectedCard_)
+        {
+            selectedCard_->Deselect();
+            selectedCard_ = nullptr;
+        }
         return true;
+    }
+    if (selectedCard_)
+    {
+        selectedCard_->Deselect();
+        selectedCard_ = nullptr;
     }
     return false;
 }
@@ -184,7 +205,7 @@ void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, con
         float taskHeight = (size_.y - yHeader) / (taskCount + 1.0f);
         float yPadding = taskHeight / (taskCount);
 
-        for (int i = 0; i < tasks_.size(); i++)
+        for (unsigned int i = 0; i < tasks_.size(); i++)
         {
             float yOffset = (yPadding * i) + (taskHeight * i) + yHeader;
             tasks_[i]->Draw(sf::Vector2f(position.x + xOffset, position.y + yOffset),

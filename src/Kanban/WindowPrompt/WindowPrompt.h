@@ -18,10 +18,9 @@ namespace Kanban {
 using std::cout;
 using std::endl;
 
-class WindowPrompt
+struct WindowPrompt
 {
-public:
-    enum Type { Default, AddTaskPrompt, SettingsPrompt};
+    enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt };
 
     virtual ~WindowPrompt() {}
 
@@ -34,7 +33,7 @@ public:
     bool IsActive() const { return isActive; }
     virtual void SetActive(bool value) { isActive = value; }
 protected:
-    sf::Text text_;
+    // sf::Text text_;
     Type type_ = Default;
     bool isVisible = false;
     bool isActive = false;
@@ -47,60 +46,4 @@ struct DummyPrompt : public WindowPrompt
     void Update() override {}
     void Draw(sf::RenderTarget& target) override {}
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override { return false; }
-};
-class AddTaskWindowPrompt final : public WindowPrompt, public EventSystem::TaskSubject
-{
-    sf::RectangleShape bg;
-    sf::Color bgColor = sf::Color(128, 128, 128, 255);
-    std::unordered_map<int, Kanban::TaskOption*> taskElements_;
-public:
-    AddTaskWindowPrompt(const sf::RenderWindow& target, Kanban::Board& board);
-
-    ~AddTaskWindowPrompt();
-
-    void ClearTaskElements();
-
-    // todo: add option to get tasks by filter
-    void Update() override;
-
-    void Deactivate();
-
-    bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
-
-    void Draw(sf::RenderTarget& target) override;
-};
-
-class SettingsWindowPrompt final : public WindowPrompt, public EventSystem::ActionSubject
-{
-    sf::RectangleShape bg;
-    sf::Color bgColor = sf::Color(128, 128, 128, 255);
-    enum OptionEnum { Rename, Delete };
-
-    static const char* OptionEnumToString(OptionEnum value);
-
-    class SettingsOption : public Kanban::GUIElement
-    {
-        OptionEnum type_;
-        string name_;
-        void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override;
-
-    public:
-        SettingsOption(OptionEnum type);
-        OptionEnum GetType();
-    };
-    SettingsOption* options_[2];
-
-public:
-    SettingsWindowPrompt(const sf::RenderWindow& target, Kanban::Board& board);
-
-    ~SettingsWindowPrompt();
-
-    // todo: add option to get tasks by filter
-    void Update() override;
-
-    void Deactivate();
-
-    bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
-
-    void Draw(sf::RenderTarget& target) override;
 };

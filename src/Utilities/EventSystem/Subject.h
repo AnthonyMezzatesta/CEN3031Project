@@ -70,8 +70,8 @@ namespace EventSystem
     protected:
         struct Node
         {
-            ObserverType* observer_;
-            Node* next_;
+            ObserverType* observer_ = nullptr;
+            Node* next_ = nullptr;
         };
         Node* head = nullptr;
         // todo: change type from std::queue to a custom circular array

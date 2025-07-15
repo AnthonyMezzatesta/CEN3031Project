@@ -20,11 +20,12 @@ namespace Kanban
 {
     using namespace EventSystem;
 
-    class Column final
+    class Column final : private EventSystem::TaskSubject
     {
         // int taskLimit;
         string name_;
         sf::Vector2f size_;
+        TaskCard* selectedCard_;
         std::vector<Kanban::TaskCard*> tasks_;
         sf::RectangleShape rect_;
         std::vector<Icon*> icons_;
@@ -60,7 +61,7 @@ namespace Kanban
         void RemoveTaskCard(Kanban::TaskCard* card);
         // void ShowAddTaskPrompt();
         void SelectIcon(Icon::Type type);
-        void SelectTask(Kanban::TaskCard* task);
+        void SelectTaskCard(Kanban::TaskCard* card);
 
         bool CheckCollision(sf::Vector2f point);
         void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos);

@@ -21,6 +21,7 @@ namespace Kanban
         TaskCard(Column* column, Task& task);
         ~TaskCard();
 
+        Task& GetTask() { return task_; }
         bool CheckCollision(sf::Vector2f point) override;
         std::optional<int> GetId() const { return task_.getId(); }
     };

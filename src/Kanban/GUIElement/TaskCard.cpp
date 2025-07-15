@@ -24,8 +24,8 @@ void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, 
     }
 }
 
-Kanban::TaskCard::TaskCard(Column* column, Task& task): GUIElement(sf::Color(190, 190, 190, 255)),
-                                                       task_(task), icons_(2) {
+Kanban::TaskCard::TaskCard(Column* column, Task& task):
+    GUIElement(sf::Color(190, 190, 190, 255)), task_(task), icons_(2) {
     if (!font.loadFromFile(Utilities::fontPath))
         throw std::runtime_error("could not load font");
     textObj.setFont(font);
@@ -36,13 +36,13 @@ Kanban::TaskCard::TaskCard(Column* column, Task& task): GUIElement(sf::Color(190
 }
 
 Kanban::TaskCard::~TaskCard() {
-    for (int i = 0; i < icons_.size(); i++)
+    for (unsigned int i = 0; i < icons_.size(); i++)
         delete icons_[i];
 }
 
 bool Kanban::TaskCard::CheckCollision(sf::Vector2f point)
 {
-    for (int i = 0; i < std::size(icons_); i++)
+    for (unsigned int i = 0; i < std::size(icons_); i++)
     {
         if (i == Icons::Delete && icons_[i]->CheckCollision(point))
         {

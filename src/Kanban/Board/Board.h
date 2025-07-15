@@ -9,7 +9,7 @@
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "TaskManager.h"
 
-struct WindowPromptManager;
+class WindowPromptManager;
 using std::vector;
 using std::string;
 

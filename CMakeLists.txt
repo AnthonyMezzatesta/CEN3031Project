@@ -21,6 +21,8 @@ include_directories(${SFML_INCLUDE_DIRS})
 set(SOURCES
         src/TaskManager/Task.cpp
         src/TaskManager/TaskManager.cpp
+        src/TaskManager/User.cpp
+        src/TaskManager/UserManager.cpp
 )
 
 set (SFML_SOURCES

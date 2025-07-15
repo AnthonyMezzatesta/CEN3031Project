@@ -35,8 +35,14 @@ set (SFML_SOURCES
         src/Kanban/GUIElement/Icon.cpp
         src/Kanban/GUIElement/TaskCard.h
         src/Kanban/GUIElement/TaskOption.h
-        src/Kanban/WindowPrompt/WindowPrompt.cpp
         src/Kanban/WindowPrompt/WindowPromptManager.h
+        src/Kanban/GUIElement/TaskCard.cpp
+        src/Kanban/WindowPrompt/AddTaskPrompt.cpp
+        src/Kanban/WindowPrompt/AddTaskPrompt.h
+        src/Kanban/WindowPrompt/SettingsPrompt.cpp
+        src/Kanban/WindowPrompt/SettingsPrompt.h
+        src/Kanban/WindowPrompt/TaskDetailsPrompt.cpp
+        src/Kanban/WindowPrompt/TaskDetailsPrompt.h
 )
 
 # Executables

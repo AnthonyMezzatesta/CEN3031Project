@@ -2,25 +2,52 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <unordered_map>
+
+#include "AddTaskPrompt.h"
 #include "Observer.h"
+#include "SettingsPrompt.h"
+#include "TaskDetailsPrompt.h"
 #include "WindowPrompt.h"
 #include "../Board/Board.h"
 using namespace EventSystem;
 
-struct WindowPromptManager
+class WindowPromptManager
 {
-    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board)
+    class TaskObserver : public DataObserver<Task>
+    {
+        WindowPromptManager* windowPromptManager_;
+    public:
+        void OnNotify(EventEnum event, Task& task) override
+        {
+            if (event != EventEnum::ShowPrompt)
+                return;
+
+            auto* prompt = dynamic_cast<TaskDetailsPrompt*>(windowPromptManager_->GetPrompt(WindowPrompt::Type::TaskDetailsPrompt));
+            if (!prompt)
+            {
+                std::cerr << "could not recast WindowPrompt to TaskDetailsPrompt" << endl;
+                return;
+            }
+
+            prompt->SetTask(task);
+            prompt->SetActive(true);
+        }
+        TaskObserver(WindowPromptManager* windowPromptManager) : windowPromptManager_(windowPromptManager) {}
+    };
+    friend TaskObserver;
+
+    WindowPrompt::Type activeWindow;
+    std::unordered_map<WindowPrompt::Type, WindowPrompt*> prompts_;
+public:
+    TaskObserver taskObserver_;
+
+    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board) : taskObserver_(this)
     {
         activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
-        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskWindowPrompt(
-            target,
-            board
-        );
-        prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsWindowPrompt(
-            target,
-            board
-        );
+        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board);
+        prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsPrompt(target, board);
+        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, board);
 
         UpdatePrompts();
     }
@@ -42,17 +69,17 @@ struct WindowPromptManager
             if (event == Observer::EventEnum::ShowPrompt && activeWindow != WindowPrompt::AddTaskPrompt)
             {
                 // show prompt and add column as an observer to prompt's TaskSubject event
-                auto prompt = dynamic_cast<AddTaskWindowPrompt*>(GetPrompt(WindowPrompt::Type::AddTaskPrompt));
+                auto prompt = dynamic_cast<AddTaskPrompt*>(GetPrompt(WindowPrompt::Type::AddTaskPrompt));
                 if (!prompt)
                 {
-                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    std::cerr << "could not recast WindowPrompt to AddTask Window Prompt" << endl;
                     return;
                 }
 
-                auto o = dynamic_cast<DataObserver<vector<Task>>* >(&observer);
+                auto o = dynamic_cast<DataObserver<Task>*>(&observer);
                 if (!o)
                 {
-                    std::cerr << "could not recast DataObserver<T> to DataObserver<vector<Task>>" << endl;
+                    std::cerr << "could not recast DataObserver<T> to DataObserver<Task>" << endl;
                     return;
                 }
 
@@ -61,14 +88,14 @@ struct WindowPromptManager
                 prompt->SetActive(true);
             }
         }
-        if (promptType == Observer::PromptEnum::Settings)
+        else if (promptType == Observer::PromptEnum::Settings)
         {
             if (event == Observer::EventEnum::ShowPrompt && activeWindow != WindowPrompt::SettingsPrompt)
             {
-                auto prompt = dynamic_cast<SettingsWindowPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
+                auto prompt = dynamic_cast<SettingsPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
                 if (!prompt)
                 {
-                    std::cerr << "could not recast WindowPrompt to SettingsWindowPrompt" << endl;
+                    std::cerr << "could not recast WindowPrompt to Settings Window Prompt" << endl;
                     return;
                 }
 
@@ -115,8 +142,4 @@ struct WindowPromptManager
         for (auto& kvp: prompts_)
             kvp.second->Draw(target);
     }
-
-private:
-    WindowPrompt::Type activeWindow;
-    std::unordered_map<WindowPrompt::Type, WindowPrompt*> prompts_;
 };

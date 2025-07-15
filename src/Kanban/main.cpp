@@ -92,6 +92,15 @@ int main() {
             {
                 board.MoveView(event.key.code, elapsedTime.asSeconds());
             }
+            if (event.type == sf::Event::TextEntered)
+            {
+                // 0-126 so that we skip DEL char
+                if (event.text.unicode < 127)
+                {
+                    char c = static_cast<char>(event.text.unicode);
+                    board.ReadUserInput(c);
+                }
+            }
         }
 
         window.clear(sf::Color::Black);

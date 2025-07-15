@@ -14,7 +14,7 @@ namespace Kanban
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
         {
             // draw task name
-            Utilities::DrawText(target, textObj, size, basePos, task.getName(), 24/*size.y * 0.15*/);
+            Utilities::DrawText(target, textObj, size, basePos, task.getName(), size.y / 4);
         }
     public:
         TaskOption(Task& task) : GUIElement(sf::Color(190, 190, 190, 255)), task(task)
@@ -23,7 +23,8 @@ namespace Kanban
                 throw std::runtime_error("could not load font");
             textObj.setFont(font);
         }
-        Task GetTask() { return task; }
+
+        Task& GetTask() { return task; }
         std::optional<int> getId() { return task.getId(); }
 
     };

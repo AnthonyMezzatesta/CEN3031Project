@@ -20,14 +20,13 @@ namespace Kanban
 {
     using namespace EventSystem;
 
-    class Column final
+    class Column final : private EventSystem::TaskSubject
     {
         // int taskLimit;
         string name_;
         sf::Vector2f size_;
+        TaskCard* selectedCard_;
         std::vector<Kanban::TaskCard*> tasks_;
-        // sf::Sprite sprite_;
-        // sf::RenderTexture renderTexture_;
         sf::RectangleShape rect_;
         std::vector<Icon*> icons_;
         sf::Font font_;
@@ -42,10 +41,10 @@ namespace Kanban
             void OnNotify(Observer::EventEnum event, Observer::ActionEnum& action) override;
             ActionObserver(Column* column) : column_(column) {}
         };
-        struct TaskObserver : public DataObserver<vector<Task>>
+        struct TaskObserver : public DataObserver<Task>
         {
             Column* column_;
-            void OnNotify(Observer::EventEnum event, vector<Task>& tasks) override;
+            void OnNotify(Observer::EventEnum event, Task& tasks) override;
             TaskObserver(Column* column) : column_(column) {}
         };
         friend ActionObserver;
@@ -57,11 +56,12 @@ namespace Kanban
             WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();
 
-        bool AddTask(Task& task);
-        bool RemoveTask(Kanban::TaskCard& task);
-        void ShowAddTaskPrompt();
+        // bool AddTask(Task& task);
+        // bool RemoveTask(Kanban::TaskCard& task);
+        void RemoveTaskCard(Kanban::TaskCard* card);
+        // void ShowAddTaskPrompt();
         void SelectIcon(Icon::Type type);
-        void SelectTask(Kanban::TaskCard* task);
+        void SelectTaskCard(Kanban::TaskCard* card);
 
         bool CheckCollision(sf::Vector2f point);
         void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos);

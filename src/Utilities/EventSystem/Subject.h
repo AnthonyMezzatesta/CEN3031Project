@@ -70,8 +70,8 @@ namespace EventSystem
     protected:
         struct Node
         {
-            ObserverType* observer_;
-            Node* next_;
+            ObserverType* observer_ = nullptr;
+            Node* next_ = nullptr;
         };
         Node* head = nullptr;
         // todo: change type from std::queue to a custom circular array
@@ -124,20 +124,19 @@ namespace EventSystem
                 RemoveAllObservers();
         }
     };
-    struct TaskSubject : public Subject<DataObserver<vector<Task>>>
+    struct TaskSubject : public Subject<DataObserver<Task>>
     {
         virtual ~TaskSubject() {}
     protected:
-        vector<Task> tasksToDeliver_;
-        void Notify(Observer::EventEnum event) override
+        void Notify(Observer::EventEnum event) override {}
+        void Notify(Observer::EventEnum event, Task& task)
         {
             Node* curr = head;
             while (curr)
             {
-                curr->observer_->OnNotify(event, tasksToDeliver_);
+                curr->observer_->OnNotify(event, task);
                 curr = curr->next_;
             }
-            tasksToDeliver_.clear();
         }
     };
 }

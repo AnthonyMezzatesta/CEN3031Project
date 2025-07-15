@@ -3,6 +3,9 @@ build/
 bin/
 out/
 
+# Aseprite files
+*.aseprite
+
 # CMake generated files
 cmake-build-*/
 CMakeCache.txt

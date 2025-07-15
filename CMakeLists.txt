@@ -8,10 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+#find_package(SQLite3 REQUIRED)
 find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
 
 # Include directories
 include_directories(include)
+include_directories(src/Utilities src/Utilities/EventSystem)
 include_directories(${SQLITE3_INCLUDE_DIRS})
 include_directories(${SFML_INCLUDE_DIRS})
 
@@ -23,13 +25,29 @@ set(SOURCES
         src/TaskManager/UserManager.cpp
 )
 
+set (SFML_SOURCES
+        src/Utilities/Utilities.cpp
+        src/Utilities/EventSystem/Subject.h
+        src/Utilities/EventSystem/Observer.h
+        src/Kanban/Board/Board.cpp
+        src/Kanban/Board/Column.cpp
+        src/Kanban/GUIElement/GUIElement.cpp
+        src/Kanban/GUIElement/Icon.cpp
+        src/Kanban/GUIElement/TaskCard.h
+        src/Kanban/GUIElement/TaskOption.h
+        src/Kanban/WindowPrompt/WindowPrompt.cpp
+        src/Kanban/WindowPrompt/WindowPromptManager.h
+)
+
 # Executables
 add_executable(TaskManager ${SOURCES} src/TaskManager/main.cpp)
-add_executable(Test_SFML src/Kanban/main.cpp)
+add_executable(Test_SFML ${SFML_SOURCES} ${SOURCES} src/Kanban/main.cpp)
 
 # Link libraries
 target_link_libraries(TaskManager ${SQLITE3_LIBRARIES})
 target_compile_options(TaskManager PRIVATE ${SQLITE3_CFLAGS_OTHER})
+target_link_libraries(Test_SFML ${SQLITE3_LIBRARIES})
+target_compile_options(Test_SFML PRIVATE ${SQLITE3_CFLAGS_OTHER})
 target_link_libraries(Test_SFML sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 
 # Set output directory

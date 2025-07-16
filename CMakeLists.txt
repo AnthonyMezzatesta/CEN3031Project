@@ -49,18 +49,35 @@ set (SFML_SOURCES
 add_executable(TaskManager ${SOURCES} src/TaskManager/main.cpp)
 add_executable(Test_SFML ${SFML_SOURCES} ${SOURCES} src/Kanban/main.cpp)
 
+# Test files
+set(TEST_SOURCES
+    tests/test_framework.cpp
+    tests/test_task.cpp
+    tests/test_user.cpp
+    tests/test_task_manager.cpp
+    tests/test_user_manager.cpp
+    tests/main.cpp
+)
+
+add_executable(RunTests ${SOURCES} ${TEST_SOURCES})
+
 # Link libraries
 target_link_libraries(TaskManager ${SQLITE3_LIBRARIES})
 target_compile_options(TaskManager PRIVATE ${SQLITE3_CFLAGS_OTHER})
 target_link_libraries(Test_SFML ${SQLITE3_LIBRARIES})
 target_compile_options(Test_SFML PRIVATE ${SQLITE3_CFLAGS_OTHER})
 target_link_libraries(Test_SFML sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+target_link_libraries(RunTests ${SQLITE3_LIBRARIES})
+target_compile_options(RunTests PRIVATE ${SQLITE3_CFLAGS_OTHER})
 
 # Set output directory
 set_target_properties(TaskManager PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 set_target_properties(Test_SFML PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+set_target_properties(RunTests PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 

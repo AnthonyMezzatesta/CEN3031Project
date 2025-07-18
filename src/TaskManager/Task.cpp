@@ -29,15 +29,15 @@ bool Task::isOverdue() const {
 // Updated toString to display priority
 std::string Task::toString() const {
     std::ostringstream oss;
-    oss << "Task[";
+    oss << "Task ";
     if (id_.has_value()) {
-        oss << "ID: " << id_.value() << ", ";
+        oss << "ID: " << id_.value() << "\n";
     }
-    oss << "Name: \"" << name_ << "\", "
-        << "Description: \"" << description_ << "\", "
-        << "Deadline: " << getDeadlineString() << ", "
+    oss << "Name: \"" << name_ << "\"\n"
+        << "Description: \"" << description_ << "\"\n"
+        << "Deadline: " << getDeadlineString() << "\n"
         << "Priority: " << priorityToString(priority_) << ", " // Added priority 
-        << "Overdue: " << (isOverdue() ? "Yes" : "No") << "]";
+        << "Overdue: " << (isOverdue() ? "Yes" : "No") << "\n";
     return oss.str();
 }
 

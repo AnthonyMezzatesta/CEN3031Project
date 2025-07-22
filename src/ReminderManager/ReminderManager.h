@@ -1,11 +1,12 @@
 #pragma once
 #include <iostream>
-#include <TaskManager.h>
+#include "TaskManager.h"
+#include "Subject.h"
 #include "Task.h"
 
-class ReminderManager
+class ReminderManager final : public EventSystem::BasicSubject
 {
-    const static int INTERVAL_SEC = 5;
+    const static int INTERVAL_SEC = 60;
     TaskManager taskManager_;
     std::vector<Task> tasksToRemind_;
     std::chrono::time_point<std::chrono::system_clock> lastCheck_;
@@ -35,8 +36,9 @@ public:
                 return hoursLeft <= 24; // Remind if within 1 day
             case Task::Priority::Low:
                 return hoursLeft <= 8;  // Remind if within 8 hours
+            default:
+                return false;
         }
-        return false;
     }
 
     void Reset()
@@ -61,5 +63,7 @@ public:
 
         lastCheck_ = now;
         Reset();
+
+        Notify(EventSystem::Observer::Update);
     }
 };

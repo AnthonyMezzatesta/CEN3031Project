@@ -25,7 +25,7 @@ class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubj
     SettingsOption* options_[2];
 
 public:
-    SettingsPrompt(const sf::RenderWindow& target, Kanban::Board& board);
+    SettingsPrompt(const sf::RenderWindow& target);
     ~SettingsPrompt();
 
     // todo: add option to get tasks by filter

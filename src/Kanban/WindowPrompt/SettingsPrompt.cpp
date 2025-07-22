@@ -29,9 +29,8 @@ SettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(sf::
 
 SettingsPrompt::OptionEnum SettingsPrompt::SettingsOption::GetType() { return type_; }
 
-SettingsPrompt::SettingsPrompt(const sf::RenderWindow& target, Kanban::Board& board) {
+SettingsPrompt::SettingsPrompt(const sf::RenderWindow& target) {
     type_ = WindowPrompt::Type::SettingsPrompt;
-    board_ = &board;
     view_ = target.getDefaultView();
     view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
     bg.setFillColor(bgColor);

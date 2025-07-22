@@ -98,12 +98,11 @@ int main()
     window.setFramerateLimit(60);
 
     ReminderManager reminderManager(taskManager);
-    Board board(window, taskManager);
-    WindowPromptManager windowPromptManager(window, board, reminderManager);
+    Board board(window, taskManager, reminderManager);
 
-    board.AddColumn("todo", window, windowPromptManager);
-    board.AddColumn("wip", window, windowPromptManager);
-    board.AddColumn("done", window, windowPromptManager);
+    board.AddColumn("todo");
+    board.AddColumn("wip");
+    board.AddColumn("done");
 
     while (window.isOpen())
     {
@@ -118,15 +117,12 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
                     sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-                    if (!windowPromptManager.CheckCollision(pixelPos, window))
-                        board.CheckCollision(pixelPos, window);
+                    board.CheckCollision(pixelPos, window);
                 }
             }
             if (event.type == sf::Event::KeyPressed)
             {
-                if (event.key.code == sf::Keyboard::F)
-                    windowPromptManager.ShowReminderPrompt();
-                board.MoveView(event.key.code, elapsedTime.asSeconds());
+                board.ProcessKeyEvent(event.key.code, elapsedTime.asSeconds());
             }
             if (event.type == sf::Event::TextEntered)
             {
@@ -146,16 +142,12 @@ int main()
 
         // update UI/GUI
         board.Update();
-        windowPromptManager.UpdatePrompts();
 
         // draw
-        board.DrawBoard(window);
-        windowPromptManager.Draw(window);
+        board.Draw(window);
 
         window.display();
     }
-
-    // userManager.logoutUser();
 
     return 0;
 }

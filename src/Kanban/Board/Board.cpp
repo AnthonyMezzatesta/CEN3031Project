@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
@@ -7,34 +8,77 @@
 #include "Board.h"
 using namespace std;
 
-Kanban::Board::Board(const sf::RenderTarget& target, TaskManager& taskManager) :
+void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
+    const int colCount = columns_.size();
+    auto targetSize = window.getSize();
+
+    int colWidth =  targetSize.x / (colPerScreen + 1);
+    int colHeight = targetSize.y * 0.75f;
+    int xPadding = colWidth / (colPerScreen + 1);
+    int yOffset = (targetSize.y - colHeight) / 2;
+
+    // drawing to render texture to allow for off-screen drawing
+    sf::RenderTexture renderTexture;
+    unsigned int rendTextWidth = (colCount+2) * xPadding + colWidth * (colCount+1);
+    if (!renderTexture.create(max(rendTextWidth, targetSize.x), targetSize.y))
+    {
+        cerr << "could not create render texture in Board.Draw()" << endl;
+        return;
+    }
+
+    // draw background
+    sf::RectangleShape r(sf::Vector2f(renderTexture.getSize().x, renderTexture.getSize().y));
+    r.setFillColor(sf::Color(160,160,160,255));
+    renderTexture.draw(r);
+
+    // draw columns
+    for (int i = 0; i < colCount; i++)
+    {
+        int xOffset = (i+1) * xPadding + colWidth * i;
+        columns_[i]->Render(sf::Vector2f(xOffset, yOffset), sf::Vector2f(colWidth, colHeight), renderTexture);
+    }
+
+    // draw add column button at next column pos
+    int addColumnPosX = rendTextWidth - colWidth - xPadding;
+    addColumnButton_.Draw(sf::Vector2f(addColumnPosX, yOffset), sf::Vector2f(colWidth, colHeight), {}, renderTexture);
+
+    // draw render texture within coordinate space of boardView
+    window.setView(boardView);
+    renderTexture.display();
+    window.draw(sf::Sprite(renderTexture.getTexture()));
+
+    // reset window's view
+    window.setView(window.getDefaultView());
+}
+
+void Kanban::Board::MoveView(sf::Keyboard::Key key, const float deltaTime) {
+    if (key == sf::Keyboard::Left)
+    {
+        boardView.move(-200 * deltaTime, 0.f);
+    }
+    else if (key == sf::Keyboard::Right)
+    {
+        boardView.move(200 * deltaTime, 0.f);
+    }
+}
+
+Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) :
     userInputMode(UserInputMode::Default), boardView(target.getDefaultView()), activeColumn(nullptr)
 {
+    windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager);
     taskManager_ = &taskManager;
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
 }
 
 Kanban::Board::~Board() {
+    delete windowPromptManager_;
     for (unsigned int i = 0; i < columns_.size(); i++)
         delete columns_[i];
 }
 
-bool Kanban::Board::AddColumn(const string& name, const sf::RenderTarget& target,
-    WindowPromptManager& windowPromptManager)
+void Kanban::Board::AddColumn(const string& name = "title")
 {
-    for (unsigned int i = 0; i < columns_.size(); i++)
-    {
-        if (columns_[i]->GetName() == name)
-        {
-            cout << "column name already taken" << endl;
-            return false;
-        }
-    }
-    auto targetSize = target.getSize();
-    int width =  targetSize.x / (colPerScreen + 1);
-    int height = targetSize.y * 0.75f;
-    columns_.push_back(new Column(name, width, height, windowPromptManager, *this));
-    return true;
+    columns_.push_back(new Column(name, *windowPromptManager_, *this));
 }
 
 void Kanban::Board::RemoveColumn(Column& column)
@@ -56,26 +100,6 @@ void Kanban::Board::SetActiveColumn(Column* column)
     userInputMode = UserInputMode::ColumnName;
 }
 
-// bool Kanban::Board::AddTaskToColumn(string colName, Task& task) {
-//     for (unsigned int i = 0; i < columns.size(); i++)
-//     {
-//         if (columns[i]->GetName() == colName)
-//             return columns[i]->AddTask(task);
-//     }
-//     return false;
-// }
-
-void Kanban::Board::MoveView(sf::Keyboard::Key key, const float deltaTime) {
-    if (key == sf::Keyboard::Left)
-    {
-        boardView.move(-200 * deltaTime, 0.f);
-    }
-    else if (key == sf::Keyboard::Right)
-    {
-        boardView.move(200 * deltaTime, 0.f);
-    }
-}
-
 // todo: add functionality to delete tasks that were removed from TaskManager
 void Kanban::Board::Update()
 {
@@ -86,15 +110,10 @@ void Kanban::Board::Update()
         if (task.getId().has_value() && taskIds_.find(task.getId().value()) == taskIds_.end())
             taskIds_[task.getId().value()] = Available;
     }
+
+    windowPromptManager_->UpdatePrompts();
 }
-// Task Kanban::Board::GetTask(int id)
-// {
-//     auto kvp = taskIds_.find(id);
-//     if (kvp == taskIds_.end() || kvp->second == Taken)
-//         return {};
-//
-//     return taskManager_->getTask(id).value_or(Task());
-// }
+
 void Kanban::Board::SetTaskAsTaken(Task& task)
 {
     if (task.getId().has_value())
@@ -112,11 +131,6 @@ void Kanban::Board::ReturnTask(std::optional<int> id)
         taskIds_[id.value()] = Available;
 }
 
-// void Kanban::Board::ReturnTasks(vector<Task>& tasks)
-// {
-//     for (auto& task : tasks)
-//         taskIds_[task.getId().value_or(-1)] = Available;
-// }
 vector<Task> Kanban::Board::GetAvailableTasks() const
 {
     vector<Task> tasks;
@@ -131,6 +145,17 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
     }
 
     return tasks;
+}
+
+void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key, const float deltaTime)
+{
+    if (key == sf::Keyboard::F)
+    {
+        windowPromptManager_->ShowReminderPrompt();
+        return;
+    }
+
+    MoveView(key, deltaTime);
 }
 
 void Kanban::Board::ReadUserInput(char c)
@@ -162,34 +187,18 @@ void Kanban::Board::ReadUserInput(char c)
         activeColumn->SetName(userInputStr);
 }
 
-void Kanban::Board::DrawBoard(sf::RenderWindow& window)
+void Kanban::Board::Draw(sf::RenderWindow& window)
 {
-    // columns don't resize based on number, they 'tile'
-
-    window.setView(boardView);
-
-    sf::RectangleShape r(sf::Vector2f(window.getSize().x, window.getSize().y));
-    r.setFillColor(sf::Color(160,160,160,255));
-    window.draw(r);
-
-    const int colCount = columns_.size();
-    auto targetSize = window.getSize();
-    int width =  targetSize.x / (colPerScreen + 1);
-    int height = targetSize.y * 0.75f;
-    int xPadding = width / (colPerScreen + 1);
-    int yOffset = (targetSize.y - height) / 2;
-    for (int i = 0; i < colCount; i++)
-    {
-        int xOffset = (i+1) * xPadding + width * i;
-        columns_[i]->Render(sf::Vector2f(xOffset, yOffset), window);
-    }
-
-    window.setView(window.getDefaultView());
+    DrawColumns(window);
+    windowPromptManager_->Draw(window);
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
 {
     auto mousePos = target.mapPixelToCoords(point, boardView);
+
+    if (windowPromptManager_->CheckCollision(point, target))
+        return true;
 
     // reset active column
     if (activeColumn)
@@ -199,10 +208,18 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
         userInputStr.clear();
     }
 
+    if (addColumnButton_.CheckCollision(mousePos))
+    {
+        cout << "button pressed" << endl;
+        AddColumn();
+        return true;
+    }
+
     for (unsigned int i = 0; i < columns_.size(); i++)
     {
         if (columns_[i]->CheckCollision(mousePos))
             return true;
     }
+
     return false;
 }

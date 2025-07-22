@@ -4,10 +4,13 @@
 #include <unordered_map>
 
 #include "AddTaskPrompt.h"
+#include "DummyPrompt.h"
 #include "Observer.h"
+#include "ReminderPrompt.h"
 #include "SettingsPrompt.h"
 #include "TaskDetailsPrompt.h"
 #include "WindowPrompt.h"
+#include "../../ReminderManager/ReminderManager.h"
 #include "../Board/Board.h"
 using namespace EventSystem;
 
@@ -41,13 +44,14 @@ class WindowPromptManager
 public:
     TaskObserver taskObserver_;
 
-    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board) : taskObserver_(this)
+    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board, ReminderManager& reminderManager) : taskObserver_(this)
     {
         activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board);
         prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsPrompt(target, board);
         prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, board);
+        prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(target, reminderManager);
 
         UpdatePrompts();
     }
@@ -111,6 +115,15 @@ public:
                 prompt->SetActive(true);
             }
         }
+    }
+
+    void ShowReminderPrompt()
+    {
+        if (!prompts_[activeWindow]->IsActive())
+            activeWindow = WindowPrompt::Type::Default;
+
+        activeWindow = WindowPrompt::ReminderPrompt;
+        prompts_[activeWindow]->SetActive(true);
     }
 
     WindowPrompt* GetPrompt(const WindowPrompt::Type type)

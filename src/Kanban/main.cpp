@@ -1,13 +1,13 @@
+#include <iostream>
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
-#include <iostream>
-#include <UserManager.h>
-
+#include "UserManager.h"
 #include "TaskManager.h"
 #include "Task.h"
 #include "Board/Board.h"
 #include "WindowPrompt/WindowPromptManager.h"
+#include "../ReminderManager/ReminderManager.h"
 
 using namespace std;
 using namespace Kanban;
@@ -97,8 +97,9 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
     window.setFramerateLimit(60);
 
+    ReminderManager reminderManager(taskManager);
     Board board(window, taskManager);
-    WindowPromptManager windowPromptManager(window, board);
+    WindowPromptManager windowPromptManager(window, board, reminderManager);
 
     board.AddColumn("todo", window, windowPromptManager);
     board.AddColumn("wip", window, windowPromptManager);
@@ -123,6 +124,8 @@ int main()
             }
             if (event.type == sf::Event::KeyPressed)
             {
+                if (event.key.code == sf::Keyboard::F)
+                    windowPromptManager.ShowReminderPrompt();
                 board.MoveView(event.key.code, elapsedTime.asSeconds());
             }
             if (event.type == sf::Event::TextEntered)
@@ -138,7 +141,10 @@ int main()
 
         window.clear(sf::Color::Black);
 
-        // update
+        // update systems
+        reminderManager.Update();
+
+        // update UI/GUI
         board.Update();
         windowPromptManager.UpdatePrompts();
 

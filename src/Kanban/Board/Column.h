@@ -22,9 +22,7 @@ namespace Kanban
 
     class Column final : private EventSystem::TaskSubject
     {
-        // int taskLimit;
         string name_;
-        sf::Vector2f size_;
         TaskCard* selectedCard_;
         std::vector<Kanban::TaskCard*> tasks_;
         sf::RectangleShape rect_;
@@ -52,8 +50,7 @@ namespace Kanban
         ActionObserver actionObserver_;
         TaskObserver taskObserver_;
     public:
-        Column(const string& name, const float width, const float height,
-            WindowPromptManager& windowPromptManager, Kanban::Board& board);
+        Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();
 
         // bool AddTask(Task& task);
@@ -64,11 +61,10 @@ namespace Kanban
         void SelectTaskCard(Kanban::TaskCard* card);
 
         bool CheckCollision(sf::Vector2f point);
-        void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos);
-        void Render(sf::Vector2f position, sf::RenderTarget& target, int tasksPerColumn = tasksPerColummn_);
+        void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos, int colWidth);
+        void Render(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target, int tasksPerColumn = tasksPerColummn_);
 
         string GetName() { return name_; }
         void SetName(string name) { name_ = std::move(name); }
-        // sf::RenderTexture& GetRenderTexture() { return renderTexture_; }
     };
 }

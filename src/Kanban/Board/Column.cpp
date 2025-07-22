@@ -41,9 +41,8 @@ void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& tas
     }
 }
 
-Kanban::Column::Column(const string& name, const float width, const float height,
-    WindowPromptManager& windowPromptManager, Kanban::Board& board) :
-    name_(name), size_(width, height), rect_(size_), actionObserver_(this), taskObserver_(this)
+Kanban::Column::Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board) :
+    name_(name), actionObserver_(this), taskObserver_(this)
 {
     font_.loadFromFile(Utilities::fontPath);
     text_.setFont(font_);
@@ -169,7 +168,7 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point) {
     return false;
 }
 
-void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos)
+void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos, int colWidth)
 {
     const int iconCount = icons_.size();
     for (int i = 0; i < iconCount; i++)
@@ -179,7 +178,7 @@ void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos)
         int iconXPadding = iconWidth;
 
         int totalIconWidth = (bgXPadding * iconCount) + (iconXPadding * iconCount) + (iconWidth * iconCount);
-        int x = basePos.x + size_.x - totalIconWidth;
+        int x = basePos.x + colWidth - totalIconWidth;
         int y = basePos.y + iconWidth;
 
         int xOffset = (bgXPadding * (i+1)) + (iconXPadding * i) + (iconWidth * i);
@@ -187,10 +186,10 @@ void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos)
     }
 }
 
-void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, const int tasksPerColumn) {
+void Kanban::Column::Render(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target, const int tasksPerColumn) {
 
     // draw background
-    rect_.setSize(size_);
+    rect_.setSize(size);
     rect_.setPosition(position);
     target.draw(rect_);
 
@@ -199,10 +198,10 @@ void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, con
     if (!tasks_.empty())
     {
         int taskCount = tasksPerColumn;
-        float taskWidth = size_.x * 0.75f;
-        float xOffset = size_.x / 8.0f;
+        float taskWidth = size.x * 0.75f;
+        float xOffset = size.x / 8.0f;
 
-        float taskHeight = (size_.y - yHeader) / (taskCount + 1.0f);
+        float taskHeight = (size.y - yHeader) / (taskCount + 1.0f);
         float yPadding = taskHeight / (taskCount);
 
         for (unsigned int i = 0; i < tasks_.size(); i++)
@@ -213,10 +212,10 @@ void Kanban::Column::Render(sf::Vector2f position, sf::RenderTarget& target, con
         }
     }
 
-    RenderIcons(target, position);
+    RenderIcons(target, position, size.x);
 
     // draw column title
-    int titleWidth = size_.x;
+    int titleWidth = size.x;
     int titleHeight = yHeader;
     sf::Vector2f textSize(titleWidth, titleHeight);
     Utilities::DrawText(target, text_, textSize, position, name_, titleHeight / 2);

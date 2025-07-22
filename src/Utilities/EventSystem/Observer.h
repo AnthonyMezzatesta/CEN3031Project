@@ -8,7 +8,7 @@ namespace EventSystem
 {
     struct Observer
     {
-        enum EventEnum { TransferTask, Action, ShowPrompt, HidePrompt };
+        enum EventEnum { TransferTask, Action, ShowPrompt, HidePrompt, Update };
         enum PromptEnum { AddTask, Settings };
         enum ActionEnum { Add, Rename, Move, Delete };
         virtual ~Observer() = 0;

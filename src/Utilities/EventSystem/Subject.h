@@ -106,7 +106,20 @@ namespace EventSystem
         }
         virtual void Notify(Observer::EventEnum event) = 0;
     };
-
+    struct BasicSubject : public Subject<>
+    {
+        virtual ~BasicSubject() {}
+    protected:
+        void Notify(Observer::EventEnum event) override
+        {
+            Node* curr = head;
+            while (curr)
+            {
+                curr->observer_->OnNotify(event);
+                curr = curr->next_;
+            }
+        }
+    };
     struct ActionSubject : public Subject<DataObserver<Observer::ActionEnum>>
     {
         virtual ~ActionSubject() {}

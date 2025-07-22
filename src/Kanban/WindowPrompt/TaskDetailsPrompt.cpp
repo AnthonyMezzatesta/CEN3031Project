@@ -5,10 +5,9 @@
 #include "TaskDetailsPrompt.h"
 using namespace std;
 
-TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, Kanban::Board& board)
+TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target)
 {
     type_ = WindowPrompt::Type::SettingsPrompt;
-    board_ = &board;
     view_ = target.getDefaultView();
     view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
     bg_.setFillColor(bgColor_);

@@ -1,6 +1,6 @@
 #pragma once
-#include <SFML/Graphics.hpp>
 #include <iostream>
+#include <SFML/Graphics.hpp>
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -18,9 +18,10 @@ namespace Kanban {
 using std::cout;
 using std::endl;
 
-struct WindowPrompt
+class WindowPrompt
 {
-    enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt };
+public:
+    enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt, ReminderPrompt };
 
     virtual ~WindowPrompt() {}
 
@@ -39,11 +40,4 @@ protected:
     bool isActive = false;
     Kanban::Board* board_ = nullptr;
     sf::View view_;
-};
-struct DummyPrompt : public WindowPrompt
-{
-    DummyPrompt() { type_ = Default; }
-    void Update() override {}
-    void Draw(sf::RenderTarget& target) override {}
-    bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override { return false; }
 };

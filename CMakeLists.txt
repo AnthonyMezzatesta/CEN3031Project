@@ -47,6 +47,7 @@ set (SFML_SOURCES
         src/ReminderManager/ReminderManager.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
+        src/Kanban/GUIElement/ScrollBar.h
 )
 
 # Executables

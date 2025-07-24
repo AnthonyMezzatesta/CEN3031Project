@@ -107,8 +107,9 @@ int main()
     while (window.isOpen())
     {
         sf::Event event{};
+        sf::Time elapsedTime = clock.restart();
+
         while (window.pollEvent(event)) {
-            sf::Time elapsedTime = clock.restart();
 
             if (event.type == sf::Event::Closed)
                 window.close();
@@ -120,9 +121,20 @@ int main()
                     board.CheckCollision(pixelPos, window);
                 }
             }
+            if (event.type == sf::Event::MouseButtonReleased)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    board.ProcessLeftClickReleased();
+                }
+            }
+            if (event.type == sf::Event::MouseMoved)
+            {
+                board.ProcessMouseMove(sf::Vector2i(event.mouseMove.x, event.mouseMove.y), window);
+            }
             if (event.type == sf::Event::KeyPressed)
             {
-                board.ProcessKeyEvent(event.key.code, elapsedTime.asSeconds());
+                board.ProcessKeyEvent(event.key.code);
             }
             if (event.type == sf::Event::TextEntered)
             {
@@ -141,7 +153,7 @@ int main()
         reminderManager.Update();
 
         // update UI/GUI
-        board.Update();
+        board.Update(window, elapsedTime.asSeconds());
 
         // draw
         board.Draw(window);

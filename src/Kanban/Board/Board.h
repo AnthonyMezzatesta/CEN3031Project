@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <SFML/Graphics.hpp>
 #include "Column.h"
+#include "../GUIElement/ScrollBar.h"
 #include "../../include/Task.h"
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "TaskManager.h"
@@ -35,12 +36,25 @@ namespace Kanban
         };
         AddColumnButton addColumnButton_;
 
-        const static int colPerScreen = 3;
-
         enum UserInputMode { Default, ColumnName };
         UserInputMode userInputMode;
         string userInputStr;
 
+        enum TaskStatus { Taken, Available };
+        std::unordered_map<int, TaskStatus> taskIds_;
+
+        const static int colPerScreen = 3;
+        int colWidth_;
+        int colHeight_;
+        int colPaddingX_;
+        int colPosY_;
+
+        const static int BOARD_SCROLL_SPEED = 1000;
+        float scrollMoveDelta_ = 0; // [0, 1]
+        bool scrollBarActive = false;
+        ScrollBar scrollBar_;
+
+        sf::RenderTexture renderTexture_;
         sf::View boardView;
 
         WindowPromptManager* windowPromptManager_;
@@ -48,26 +62,28 @@ namespace Kanban
         Column* activeColumn;
         vector<Kanban::Column*> columns_;
 
-        enum TaskStatus { Taken, Available };
-        std::unordered_map<int, TaskStatus> taskIds_;
-
+        void UpdateColumnValues(const sf::RenderWindow& window);
+        void UpdateRenderTexture(const sf::RenderWindow& window);
+        void UpdateBoardView(const sf::RenderWindow& window, const float deltaTime);
+        void UpdateScrollBar(const sf::RenderWindow& window, const float deltaTime);
         void DrawColumns(sf::RenderWindow& window);
-        void MoveView(sf::Keyboard::Key key, const float deltaTime);
     public:
         Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager);
         ~Board();
+
         void AddColumn(const string& name);
         void RemoveColumn(Column& column);
         void SetActiveColumn(Column* column);
-
-        void Update();
-        void SetTaskAsTaken(Task& task); // for use by columns
+        void SetTaskAsTaken(Task& task);
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessKeyEvent(sf::Keyboard::Key key, const float deltaTime);
+        void ProcessLeftClickReleased() { scrollBarActive = false; }
+        void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target);
+        void ProcessKeyEvent(sf::Keyboard::Key key);
         void ReadUserInput(char c);
-        void Draw(sf::RenderWindow& window);
+        void Update(const sf::RenderWindow& target, const float deltaTime);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
+        void Draw(sf::RenderWindow& window);
     };
 }

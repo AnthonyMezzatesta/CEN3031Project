@@ -23,7 +23,7 @@ namespace Kanban
     void GUIElement::Select()
     {
         selected = true;
-        rect.setOutlineColor(sf::Color::Cyan);
+        rect.setOutlineColor(sf::Color(61,176,176));
         rect.setOutlineThickness(3);
     }
 

@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Task.h"
 #include "Icon.h"
+#include "Utilities.h"
 #include "GUIElement.h"
 #include "../Board/Column.h"
 
@@ -18,7 +19,7 @@ namespace Kanban
 
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override;
     public:
-        TaskCard(Column* column, Task& task);
+        TaskCard(Column* column, Task& task, sf::Color fillColor = Utilities::fill1);
         ~TaskCard();
 
         Task& GetTask() { return task_; }

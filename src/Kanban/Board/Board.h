@@ -25,7 +25,7 @@ namespace Kanban
         {
             Icon plusIcon;
         public:
-            AddColumnButton() : GUIElement(sf::Color(112, 112, 112, 255)), plusIcon(Icon::Type::plus) {}
+            AddColumnButton() : GUIElement(Utilities::fill1), plusIcon(Icon::Type::plus) {}
         protected:
             void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
             {
@@ -33,12 +33,7 @@ namespace Kanban
                 // float offset = size.x / 2.0f - Icon::GetDefaultWidth() / 2.0f;
                 plusIcon.Draw(basePos.x, basePos.y, target);
             }
-        };
-        AddColumnButton addColumnButton_;
-
-        enum UserInputMode { Default, ColumnName };
-        UserInputMode userInputMode;
-        string userInputStr;
+        } addColumnButton_;
 
         enum TaskStatus { Taken, Available };
         std::unordered_map<int, TaskStatus> taskIds_;
@@ -67,23 +62,30 @@ namespace Kanban
         void UpdateBoardView(const sf::RenderWindow& window, const float deltaTime);
         void UpdateScrollBar(const sf::RenderWindow& window, const float deltaTime);
         void DrawColumns(sf::RenderWindow& window);
+        void DrawScrollBar(sf::RenderWindow& window);
     public:
+        enum UserInputMode { Default, ColumnName, MoveTask, ScrollBar };
+
         Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager);
         ~Board();
 
         void AddColumn(const string& name);
         void RemoveColumn(Column& column);
-        void SetActiveColumn(Column* column);
+        void SetActiveColumn(Column* column, UserInputMode mode = Default);
         void SetTaskAsTaken(Task& task);
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessLeftClickReleased() { scrollBarActive = false; }
+        void ProcessLeftClickReleased();
+
         void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target);
         void ProcessKeyEvent(sf::Keyboard::Key key);
         void ReadUserInput(char c);
         void Update(const sf::RenderWindow& target, const float deltaTime);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
         void Draw(sf::RenderWindow& window);
+    private:
+        UserInputMode userInputMode;
+        string userInputStr;
     };
 }

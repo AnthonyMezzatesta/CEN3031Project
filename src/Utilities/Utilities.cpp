@@ -4,6 +4,10 @@
 
 // redeclaring static variable
 std::string Utilities::fontPath = "../../resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf";
+sf::Color Utilities::fill0 = sf::Color(43,45,48,255);
+sf::Color Utilities::fill1 = sf::Color(83, 86, 88, 255);
+sf::Color Utilities::fill2 = sf::Color(190, 190, 190, 255);
+sf::Color Utilities::textColor = sf::Color(206,208,212,255);
 
 float Utilities::Lerp(float a, float b, float t) {
     return (1 - t) * a + t * b;

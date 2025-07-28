@@ -18,10 +18,10 @@ const char* SettingsPrompt::OptionEnumToString(OptionEnum value) {
 void SettingsPrompt::SettingsOption::DrawDetails(sf::RenderTarget& target, sf::Vector2f size,
     sf::Vector2f basePos) {
     // draw name
-    Utilities::DrawText(target, textObj, size, basePos, name_, 24/*size.y * 0.15*/);
+    Utilities::DrawText(target, textObj, size, basePos, name_, size.y / 4, Utilities::textColor);
 }
 
-SettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(sf::Color(190, 190, 190, 255)), type_(type), name_(OptionEnumToString(type_)) {
+SettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(Utilities::fill0), type_(type), name_(OptionEnumToString(type_)) {
     if (!font.loadFromFile(Utilities::fontPath))
         throw std::runtime_error("could not load font");
     textObj.setFont(font);
@@ -33,7 +33,7 @@ SettingsPrompt::SettingsPrompt(const sf::RenderWindow& target) {
     type_ = WindowPrompt::Type::SettingsPrompt;
     view_ = target.getDefaultView();
     view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
-    bg.setFillColor(bgColor);
+    bg.setFillColor(Utilities::fill1);
 
     // sf::Font font;
     // if (!font.loadFromFile(Utilities::fontPath))

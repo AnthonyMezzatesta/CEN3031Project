@@ -10,7 +10,7 @@ using namespace std;
 
 void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) {
     // draw task name
-    Utilities::DrawText(target, textObj, size, basePos, task_.getName(), size.y / 4);
+    Utilities::DrawText(target, textObj, size, basePos, task_.getName(), size.y / 4, Utilities::textColor);
 
     int x = basePos.x + size.x - icons_[Delete]->GetWidth();
     int y = basePos.y;
@@ -24,8 +24,8 @@ void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, 
     }
 }
 
-Kanban::TaskCard::TaskCard(Column* column, Task& task):
-    GUIElement(sf::Color(190, 190, 190, 255)), task_(task), icons_(2) {
+Kanban::TaskCard::TaskCard(Column* column, Task& task, sf::Color fillColor):
+    GUIElement(fillColor), task_(task), icons_(2) {
     if (!font.loadFromFile(Utilities::fontPath))
         throw std::runtime_error("could not load font");
     textObj.setFont(font);

@@ -91,11 +91,11 @@ void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
     unsigned int rendTextWidth = (colCount+2) * colPaddingX_ + colWidth_ * (colCount+1);
 
     // drawing to render texture to allow for off-screen drawing
-    renderTexture_.clear();
+    renderTexture_.clear(sf::Color::Transparent);
 
     // draw background
     sf::RectangleShape r(sf::Vector2f(renderTexture_.getSize().x, renderTexture_.getSize().y));
-    r.setFillColor(sf::Color(160,160,160,255));
+    r.setFillColor(sf::Color(30,31,34,255));
     renderTexture_.draw(r);
 
     // draw columns
@@ -118,10 +118,23 @@ void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
     window.setView(window.getDefaultView());
 }
 
+void Kanban::Board::DrawScrollBar(sf::RenderWindow& window)
+{
+    window.setView(boardView);
+
+    float x = window.getView().getCenter().x - window.getSize().x/2.f; // move scroll bar along with view
+    sf::Vector2f pos(x, renderTexture_.getSize().y * 0.9625f);
+    sf::Vector2f size(window.getSize().x, renderTexture_.getSize().y * 0.0375f);
+
+    scrollBar_.Draw(window, pos, size);
+
+    window.setView(window.getDefaultView());
+}
+
 // ====================================== Public Functions ======================================
 
 Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) :
-    userInputMode(UserInputMode::Default), scrollBar_(target), boardView(target.getDefaultView()), activeColumn(nullptr)
+    boardView(target.getDefaultView()), activeColumn(nullptr), userInputMode(UserInputMode::Default)
 {
     UpdateColumnValues(target);
     UpdateRenderTexture(target);
@@ -138,7 +151,7 @@ Kanban::Board::~Board() {
 
 void Kanban::Board::AddColumn(const string& name = "title")
 {
-    columns_.push_back(new Column(name, *windowPromptManager_, *this));
+    columns_.push_back(new Column(name, sf::Vector2f(colWidth_, colHeight_), *windowPromptManager_, *this));
 }
 
 void Kanban::Board::RemoveColumn(Column& column)
@@ -154,10 +167,10 @@ void Kanban::Board::RemoveColumn(Column& column)
     }
 }
 
-void Kanban::Board::SetActiveColumn(Column* column)
+void Kanban::Board::SetActiveColumn(Column* column, UserInputMode mode)
 {
     activeColumn = column;
-    userInputMode = UserInputMode::ColumnName;
+    userInputMode = mode;
 }
 
 void Kanban::Board::SetTaskAsTaken(Task& task)
@@ -193,12 +206,41 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
     return tasks;
 }
 
+void Kanban::Board::ProcessLeftClickReleased()
+{
+    if (scrollBarActive)
+        scrollBarActive = false;
+    else
+    {
+        // OnPressed clears active column and sets a new one, if viable
+        // OnRelease clears active column for appropriate input modes
+        /** thus, upon selecting to rename...
+         * In CheckCollision(), active column is cleared then set
+         * on click release, active column is not reset
+         * user types a new name for column
+         * upon clicking or pressing the enter key, active column is reset
+         */
+        if (userInputMode == UserInputMode::ColumnName)
+            return;
+
+        userInputMode = Default;
+        if (activeColumn)
+            activeColumn->ProcessLeftClickReleased();
+        activeColumn = nullptr;
+    }
+}
+
 void Kanban::Board::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
 {
-    if (!scrollBarActive)
+    auto mousePos = target.mapPixelToCoords(pixelPos, boardView);
+    if (scrollBarActive)
+    {
+        scrollMoveDelta_ = scrollBar_.Move(mousePos);
         return;
+    }
 
-    scrollMoveDelta_ = scrollBar_.Move(pixelPos, target);
+    if (activeColumn && userInputMode == UserInputMode::ScrollBar)
+        activeColumn->ProcessMouseMove(mousePos);
 }
 
 void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key)
@@ -212,7 +254,7 @@ void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key)
 
 void Kanban::Board::ReadUserInput(char c)
 {
-    if (userInputMode == UserInputMode::Default)
+    if (userInputMode != UserInputMode::ColumnName)
         return;
 
     // std::cout << "ASCII character typed: " << c << std::endl;
@@ -224,7 +266,7 @@ void Kanban::Board::ReadUserInput(char c)
         userInputStr.pop_back();
     else if (c == '\n')
     {
-        if (activeColumn && userInputMode == UserInputMode::ColumnName)
+        if (activeColumn)
         {
             activeColumn = nullptr;
             userInputStr.clear();
@@ -235,7 +277,7 @@ void Kanban::Board::ReadUserInput(char c)
     else
         userInputStr.push_back(c);
 
-    if (activeColumn && userInputMode == UserInputMode::ColumnName)
+    if (activeColumn)
         activeColumn->SetName(userInputStr);
 }
 
@@ -246,6 +288,9 @@ void Kanban::Board::Update(const sf::RenderWindow& target, const float deltaTime
     UpdateRenderTexture(target);
     UpdateBoardView(target, deltaTime);
     UpdateScrollBar(target, deltaTime);
+
+    for (Column* col : columns_)
+        col->Update(colWidth_, colHeight_, deltaTime);
 
     // add new tasks
     auto allTasks = taskManager_->getAllTasks();
@@ -268,14 +313,14 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
         userInputStr.clear();
     }
 
-    scrollBarActive = scrollBar_.CheckCollision(point, target);
+    auto mousePos = target.mapPixelToCoords(point, boardView);
+
+    scrollBarActive = scrollBar_.CheckCollision(mousePos);
     if (scrollBarActive)
         return true;
 
     if (windowPromptManager_->CheckCollision(point, target))
         return true;
-
-    auto mousePos = target.mapPixelToCoords(point, boardView);
 
     if (addColumnButton_.CheckCollision(mousePos))
     {
@@ -296,6 +341,6 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
 void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
+    DrawScrollBar(window);
     windowPromptManager_->Draw(window);
-    scrollBar_.Draw(window);
 }

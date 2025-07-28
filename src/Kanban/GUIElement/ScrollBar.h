@@ -3,6 +3,7 @@
 #include <valarray>
 #include <SFML/Graphics.hpp>
 #include "GUIElement.h"
+#include "Utilities.h"
 using std::cout;
 using std::endl;
 
@@ -10,35 +11,32 @@ namespace Kanban
 {
     class ScrollBar
     {
-        struct Bar final : public GUIElement
+        struct Bar
         {
             unsigned int width_ = 0;
-            void SetPosition(float x, float y) { rect.setPosition(x, y); }
-            sf::Vector2f GetPosition() { return rect.getPosition(); }
-            void Draw(sf::Vector2f position, sf::Vector2f size, sf::Vector2f origin, sf::RenderTarget& target) override
+            void SetPosition(float x, float y) { rect_.setPosition(x, y); }
+            sf::Vector2f GetPosition() { return rect_.getPosition(); }
+            void Draw(sf::Vector2f size, sf::RenderTarget& target, sf::Transform& parentTransform)
             {
-                rect.setPosition(rect.getPosition().x, position.y + size.y / 4);
-                rect.setSize(sf::Vector2f(width_, size.y/2));
-                rect.setFillColor(sf::Color::Black);
-                // rect.setOrigin(origin);
-                target.draw(rect);
+                rect_.setPosition(rect_.getPosition().x, size.y / 4);
+                rect_.setSize(sf::Vector2f(width_, size.y/2));
+                rect_.setFillColor(sf::Color(120,122,123,255));
+                target.draw(rect_, parentTransform);
             }
-        protected:
-            void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override {}
-        };
+            bool CheckCollision(sf::Vector2f point) { return rect_.getGlobalBounds().contains(point); }
+        private:
+            sf::RectangleShape rect_;
+        } bar_;
 
         const static int SCROLL_SPEED = 1000;
         bool isVisible_ = false;
         int anchorXLocal = 0;
         float targetPosX_ = 0.0f;
-        Bar bar_;
-        sf::View view_;
+        sf::Color bgColor_;
         sf::RectangleShape rectBG_;
+        sf::Transform transform_;
     public:
-        ScrollBar(const sf::RenderTarget& target) : view_(target.getDefaultView()), rectBG_(sf::Vector2f(target.getSize().x, target.getSize().y))
-        {
-            view_.setViewport(sf::FloatRect(0.f, 0.95f, 1.f, 0.05f));
-        }
+        ScrollBar() : bgColor_(63,66,68,255), rectBG_(sf::Vector2f(10, 10)) {}
 
         void Enable()
         {
@@ -51,16 +49,18 @@ namespace Kanban
             bar_.SetPosition(0, 0);
         }
 
-        float Move(sf::Vector2i point, sf::RenderWindow& target)
+        float Move(sf::Vector2f point)
         {
-            auto mousePos = target.mapPixelToCoords(point, view_);
             float maxPosX = rectBG_.getSize().x - bar_.width_;
+
+            // world to local
+            point = transform_.getInverse().transformPoint(point);
 
             // origin is top left corner, (0,0) locally
             // so we're setting rect.pos.x to where the mouse is and translating the scroll bar's pos...
             // so that the point at which we started dragging is centered at the current mouse position
             // we're also clamping the offset so that we keep the scroll bar within the window's bounds
-            targetPosX_ = std::clamp(mousePos.x - anchorXLocal, 0.f, maxPosX);
+            targetPosX_ = std::clamp(point.x - anchorXLocal, 0.f, maxPosX);
 
             // return normalized position of targetPosX [0, 1]
             return Utilities::InvLerp(0, maxPosX, targetPosX_);
@@ -83,39 +83,39 @@ namespace Kanban
             return Utilities::InvLerpClamped(0, maxPosX, targetPosX_);
         }
 
-        bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
+        bool CheckCollision(sf::Vector2f point)
         {
             if (!isVisible_)
                 return false;
 
-            auto mousePos = target.mapPixelToCoords(point, view_);
+            // world to local
+            point = transform_.getInverse().transformPoint(point);
 
             // returning true only if collided with bar for bar drag state
-            if (bar_.CheckCollision(mousePos))
+            if (bar_.CheckCollision(point))
             {
                 // get offset from bar's origin to mouse pos for use as an 'origin' when dragging the scroll bar
-                anchorXLocal = mousePos.x - bar_.GetPosition().x;
+                anchorXLocal = point.x - bar_.GetPosition().x;
                 return true;
             }
             return false;
         }
 
-        void Draw(sf::RenderTarget& target)
+        void Draw(sf::RenderTarget& target, sf::Vector2f position, sf::Vector2f size, float rotation = 0)
         {
             if (!isVisible_)
                 return;
 
-            sf::Vector2f size(target.getSize().x, target.getSize().y);
-
-            target.setView(view_);
-
             rectBG_.setSize(size);
-            rectBG_.setFillColor(sf::Color::White);
-            target.draw(rectBG_);
+            rectBG_.setFillColor(bgColor_);
 
-            bar_.Draw({}, size, {}, target);
+            transform_ = sf::Transform::Identity; // reset
+            transform_.translate(position.x, position.y);
+            transform_.rotate(rotation);
 
-            target.setView(target.getDefaultView());
+            target.draw(rectBG_, transform_);
+
+            bar_.Draw(size, target, transform_);
         }
     };
 }

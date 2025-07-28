@@ -13,7 +13,7 @@ AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& boar
     board_ = &board;
     view_ = target.getDefaultView();
     view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
-    bg.setFillColor(bgColor);
+    bg.setFillColor(Utilities::fill1);
 
     // sf::Font font;
     // if (!font.loadFromFile(Utilities::fontPath))

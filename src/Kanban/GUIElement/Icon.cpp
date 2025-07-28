@@ -32,8 +32,9 @@ void Icon::Draw(int x, int y, sf::RenderTarget& target) {
 }
 
 bool Icon::CheckCollision(sf::Vector2f point) const {
-    auto pos = sprite_.getPosition();
     float scale = sprite_.getScale().x;
+    auto pos = sprite_.getPosition();
+    pos -= sf::Vector2f(sideLenPixel/2.f * scale, (sideLenPixel/2.f * scale));
     sf::FloatRect bgBounds(pos.x, pos.y, sideLenPixel * 2 * scale, sideLenPixel * 2 * scale);
     return bgBounds.contains(point);
     // return sprite_.getGlobalBounds().contains(point);

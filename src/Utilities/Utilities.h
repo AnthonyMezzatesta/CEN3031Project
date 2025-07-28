@@ -6,6 +6,10 @@ using std::string;
 struct Utilities
 {
     static string fontPath;
+    static sf::Color fill0;
+    static sf::Color fill1;
+    static sf::Color fill2;
+    static sf::Color textColor;
 
     static float Lerp(float a, float b, float t);
     static float InvLerp(float a, float b, float v);

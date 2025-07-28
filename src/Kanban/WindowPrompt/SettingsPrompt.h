@@ -7,7 +7,6 @@
 class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
 {
     sf::RectangleShape bg;
-    sf::Color bgColor = sf::Color(128, 128, 128, 255);
     enum OptionEnum { Rename, Delete };
 
     static const char* OptionEnumToString(OptionEnum value);

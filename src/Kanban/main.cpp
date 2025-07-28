@@ -33,9 +33,25 @@ void CreateTasks(TaskManager& taskManager)
                "Submit the quarterly expense report to accounting",
                lastWeek, Task::Priority::Low);
 
-    Task task4(4, "Code review",
+    Task task4(4, "test4",
                "Review and approve pending code changes in the repository",
                fewDays, Task::Priority::Medium);
+
+    Task task5(5, "test5",
+               "Review and approve pending code changes in the repository",
+               tomorrow, Task::Priority::Medium);
+
+    Task task6(6, "test6",
+               "Review and approve pending code changes in the repository",
+               fewDays, Task::Priority::Medium);
+
+    Task task7(7, "test7",
+               "Review and approve pending code changes in the repository",
+               fewDays, Task::Priority::Low);
+
+    Task task8(8, "test8",
+               "Review and approve pending code changes in the repository",
+               tomorrow, Task::Priority::High);
 
     if (taskManager.addTask(task1)) {
         std::cout << "✓ Added: " << task1.getName() << " (Priority: "
@@ -44,17 +60,37 @@ void CreateTasks(TaskManager& taskManager)
 
     if (taskManager.addTask(task2)) {
         std::cout << "✓ Added: " << task2.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task2.getPriority()) << ")" << std::endl;
     }
 
     if (taskManager.addTask(task3)) {
         std::cout << "✓ Added: " << task3.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task3.getPriority()) << ")" << std::endl;
     }
 
     if (taskManager.addTask(task4)) {
         std::cout << "✓ Added: " << task4.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task4.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task5)) {
+        std::cout << "✓ Added: " << task5.getName() << " (Priority: "
+        << Task::priorityToString(task5.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task6)) {
+        std::cout << "✓ Added: " << task6.getName() << " (Priority: "
+        << Task::priorityToString(task6.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task7)) {
+        std::cout << "✓ Added: " << task7.getName() << " (Priority: "
+        << Task::priorityToString(task7.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task8)) {
+        std::cout << "✓ Added: " << task8.getName() << " (Priority: "
+        << Task::priorityToString(task8.getPriority()) << ")" << std::endl;
     }
 }
 
@@ -160,6 +196,8 @@ int main()
 
         window.display();
     }
+
+    userManager.clearAllUsers();
 
     return 0;
 }

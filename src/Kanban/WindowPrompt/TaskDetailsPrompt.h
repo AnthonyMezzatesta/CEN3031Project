@@ -21,9 +21,10 @@ class TaskDetailsPrompt final : public WindowPrompt, public EventSystem::TaskSub
     // };
     // SettingsOption* options_[2];
 
-    sf::RectangleShape bg_;
+
     sf::Color bgColor_ = sf::Color(128, 128, 128, 255);
-    Task task_;
+
+
 public:
     TaskDetailsPrompt(const sf::RenderWindow& target);
     ~TaskDetailsPrompt() {}
@@ -32,6 +33,50 @@ public:
     void Update() override;
     void Deactivate();
 
+    sf::RectangleShape bg_;
+
+
+    void HandleClick(sf::Vector2i mousePos);
+
+    Task task_;
+
+
+    // Input fields for task details
+    bool editMode_ = false;
+    std::string nameInput_;
+    std::string descriptionInput_;
+    std::chrono::system_clock::time_point deadlineInput_;
+    std::string deadlineInputStr_; // String representation of deadline for editing
+    Task::Priority priorityInput_ = Task::Priority::None;
+
+    void SaveEdits(TaskManager& taskManager);
+
+
+
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
     void Draw(sf::RenderTarget& target) override;
+
+    // Fields for highlighting
+    enum EditField {
+        FIELD_NONE,
+        FIELD_NAME,
+        FIELD_DESCRIPTION,
+        FIELD_DEADLINE,
+        FIELD_PRIORITY
+    };
+    
+    EditField currentField_ = FIELD_NONE;
+
+    // Date editing segments
+    enum DateSegment {
+        DATE_YEAR,
+        DATE_MONTH,
+        DATE_DAY,
+        DATE_HOUR,
+        DATE_MINUTE,
+        DATE_SECOND,
+        DATE_SEGMENTS_COUNT
+    };
+
+    DateSegment currentDateSegment_ = DATE_YEAR;
 };

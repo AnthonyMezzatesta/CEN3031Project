@@ -30,16 +30,18 @@ public:
         Priority priority = Priority::None);
 
     std::optional<int> getId() const { return id_; }
+    
+    // Getters
     const std::string& getName() const { return name_; }
     const std::string& getDescription() const { return description_; }
     const std::chrono::system_clock::time_point& getDeadline() const { return deadline_; }
-    Priority getPriority() const {return priority_;} // Added priority getter
-
-    void setId(int id) { id_ = id; }
+    Priority getPriority() const { return priority_; }
+    
+    // Setters
     void setName(const std::string& name) { name_ = name; }
     void setDescription(const std::string& description) { description_ = description; }
     void setDeadline(const std::chrono::system_clock::time_point& deadline) { deadline_ = deadline; }
-    void setPriority(Priority priority) {priority_ = priority;} // Added priority setter
+    void setPriority(Priority priority) { priority_ = priority; }
     void setTaskCompleted() { completed_ = true; archived = true; }
     void set_time_completed(const std::chrono::system_clock::time_point& currentTime) { time_of_completion = currentTime; }
 

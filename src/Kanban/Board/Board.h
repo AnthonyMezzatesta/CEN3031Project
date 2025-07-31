@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -10,6 +11,7 @@
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "TaskManager.h"
 #include "../../ReminderManager/ReminderManager.h"
+#include "../GUIElement/ScrollableTexture.h"
 
 class WindowPromptManager;
 using std::vector;
@@ -21,11 +23,29 @@ namespace Kanban
 
     class Board
     {
+        struct ReminderIconObserver final : public EventSystem::BasicObserver
+        {
+            Icon* icon_;
+            ReminderIconObserver(Icon* icon = nullptr) : icon_(icon) {}
+        protected:
+            void OnNotify(EventSystem::Observer::EventEnum event) override
+            {
+                if (!icon_)
+                    return;
+
+                if (event == EventSystem::Observer::Activate)
+                    icon_->ToggleSecondLayer(true);
+                else if (event == EventSystem::Observer::Deactivate)
+                    icon_->ToggleSecondLayer(false);
+            }
+        } reminderIconObserver_;
+        friend ReminderIconObserver;
+
         class AddColumnButton final : public GUIElement
         {
             Icon plusIcon;
         public:
-            AddColumnButton() : GUIElement(Utilities::fill1), plusIcon(Icon::Type::plus) {}
+            AddColumnButton() : GUIElement(Utilities::fill2), plusIcon(Icon::Type::plus) {}
         protected:
             void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
             {
@@ -44,25 +64,22 @@ namespace Kanban
         int colPaddingX_;
         int colPosY_;
 
-        const static int BOARD_SCROLL_SPEED = 1000;
-        float scrollMoveDelta_ = 0; // [0, 1]
-        bool scrollBarActive = false;
-        ScrollBar scrollBar_;
-
-        sf::RenderTexture renderTexture_;
+        ScrollableTexture scrollTexture_;
         sf::View boardView;
 
         WindowPromptManager* windowPromptManager_;
         TaskManager* taskManager_;
         Column* activeColumn;
         vector<Kanban::Column*> columns_;
+        vector<Icon*> icons_;
+
+        Icon::Type iconArray[2] { Icon::Type::bell, Icon::Type::dots };
 
         void UpdateColumnValues(const sf::RenderWindow& window);
-        void UpdateRenderTexture(const sf::RenderWindow& window);
-        void UpdateBoardView(const sf::RenderWindow& window, const float deltaTime);
-        void UpdateScrollBar(const sf::RenderWindow& window, const float deltaTime);
+        void UpdateScrollTexture(const sf::RenderWindow& window, const float deltaTime);
         void DrawColumns(sf::RenderWindow& window);
         void DrawScrollBar(sf::RenderWindow& window);
+        void DrawIcons(sf::RenderWindow& window);
     public:
         enum UserInputMode { Default, ColumnName, MoveTask, ScrollBar };
 
@@ -79,7 +96,6 @@ namespace Kanban
         void ProcessLeftClickReleased();
 
         void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target);
-        void ProcessKeyEvent(sf::Keyboard::Key key);
         void ReadUserInput(char c);
         void Update(const sf::RenderWindow& target, const float deltaTime);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);

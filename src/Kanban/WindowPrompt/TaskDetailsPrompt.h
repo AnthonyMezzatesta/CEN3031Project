@@ -29,7 +29,7 @@ public:
     ~TaskDetailsPrompt() {}
 
     void SetTask(const Task& task) { task_ = task; }
-    void Update() override;
+    void Update(const float deltaTime) override;
     void Deactivate();
 
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;

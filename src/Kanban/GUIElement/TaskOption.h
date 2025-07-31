@@ -18,7 +18,7 @@ namespace Kanban
             Utilities::DrawText(target, textObj, size, basePos, task.getName(), size.y / 4, Utilities::textColor);
         }
     public:
-        TaskOption(Task& task) : GUIElement(Utilities::fill0), task(task)
+        TaskOption(Task& task) : GUIElement(Utilities::fill1), task(task)
         {
             if (!font.loadFromFile(Utilities::fontPath))
                 throw std::runtime_error("could not load font");

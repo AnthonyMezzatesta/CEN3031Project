@@ -9,7 +9,7 @@ TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target)
 {
     type_ = WindowPrompt::Type::SettingsPrompt;
     view_ = target.getDefaultView();
-    view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
+    view_.setViewport(viewPortLeft_);
     bg_.setFillColor(bgColor_);
 
     // sf::Font font;
@@ -18,7 +18,7 @@ TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target)
     // text_.setFont(font);
 }
 
-void TaskDetailsPrompt::Update()
+void TaskDetailsPrompt::Update(const float deltaTime)
 {
     if (isActive) isVisible = true;
 }

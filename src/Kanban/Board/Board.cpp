@@ -22,68 +22,30 @@ void Kanban::Board::UpdateColumnValues(const sf::RenderWindow& window)
     colPosY_ = (targetSize.y - colHeight_) / 2;
 }
 
-void Kanban::Board::UpdateRenderTexture(const sf::RenderWindow& window)
+void Kanban::Board::UpdateScrollTexture(const sf::RenderWindow& window, const float deltaTime)
 {
-    const int colCount = columns_.size();
+    // for updating render texture size
     auto targetSize = window.getSize();
-
-    // calculating width of all columns and their padding, plus another column and padding for the addColumnButton
+    const int colCount = columns_.size();
+    // calculating width of all columns and their padding,
+    // plus another column and padding for the addColumnButton
     unsigned int rendTextWidth = (colCount+2) * colPaddingX_ + colWidth_ * (colCount+1);
     rendTextWidth = max(rendTextWidth, targetSize.x);
+    sf::Vector2u textureSize(rendTextWidth, targetSize.y);
 
-    // don't recreate texture if there's been no change to dimensions
-    if (rendTextWidth == renderTexture_.getSize().x)
-        return;
+    // for updating scroll bar
+    bool enableScrollBar = columns_.size() >= colPerScreen;
+    float scrollBarWidthRatio = window.getSize().x / static_cast<float>(textureSize.x);
 
-    if (!renderTexture_.create(rendTextWidth, targetSize.y))
-    {
-        cerr << "could not create render texture in Board.Draw()" << endl;
-    }
-}
-
-void Kanban::Board::UpdateBoardView(const sf::RenderWindow& window, const float deltaTime)
-{
+    // for updating boardView pos
     float defaultCenterX = window.getSize().x/2.f;
     float maxDistX = (columns_.size() - colPerScreen + 1) * (colWidth_ + colPaddingX_);
     float maxCenterX = defaultCenterX + maxDistX;
 
-    // move boardView, according to position of scroll bar, independent of frame rate
-    float targetPosX = Utilities::LerpClamped(defaultCenterX, maxCenterX, scrollMoveDelta_);
-    if (targetPosX != boardView.getCenter().x)
-    {
-        float originalCenterY = boardView.getCenter().y;
-        float currPosX = boardView.getCenter().x;
-        float velocity = BOARD_SCROLL_SPEED * deltaTime; // pixels per second
+    scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio, textureSize,
+        boardView.getCenter().x, defaultCenterX, maxCenterX, deltaTime);
 
-        // move towards target position
-        boardView.setCenter(Utilities::LerpClamped(currPosX, targetPosX, velocity), originalCenterY);
-
-        // clamp position if close enough
-        if (std::abs(targetPosX - boardView.getCenter().x) < 0.0001f)
-            boardView.setCenter(targetPosX, originalCenterY);
-    }
-
-    // clamp position of boardView so that it is within bounds of renderTexture
-    // useful for adjusting view when columns are removed
-    if (boardView.getCenter().x > maxCenterX)
-        boardView.setCenter(maxCenterX, boardView.getCenter().y);
-}
-
-void Kanban::Board::UpdateScrollBar(const sf::RenderWindow& window, const float deltaTime)
-{
-    // only allow scrolling view when columnCount exceeds the columns drawn per screen
-    // note: this includes the add column button
-    if (columns_.size() >= colPerScreen)
-    {
-        float scrollBarWidthRatio = window.getSize().x / static_cast<float>(renderTexture_.getSize().x);
-        scrollBar_.Enable();
-        scrollMoveDelta_ = scrollBar_.Update(scrollBarWidthRatio, deltaTime);
-    }
-    else
-    {
-        scrollMoveDelta_ = 0;
-        scrollBar_.Disable();
-    }
+    boardView.setCenter(scrollTexture_.GetValue(), boardView.getCenter().y);
 }
 
 void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
@@ -91,30 +53,28 @@ void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
     unsigned int rendTextWidth = (colCount+2) * colPaddingX_ + colWidth_ * (colCount+1);
 
     // drawing to render texture to allow for off-screen drawing
-    renderTexture_.clear(sf::Color::Transparent);
+    auto& renderTexture = scrollTexture_.GetTexture();
+    renderTexture.clear(sf::Color::Transparent);
 
     // draw background
-    sf::RectangleShape r(sf::Vector2f(renderTexture_.getSize().x, renderTexture_.getSize().y));
-    r.setFillColor(sf::Color(30,31,34,255));
-    renderTexture_.draw(r);
+    sf::RectangleShape r(sf::Vector2f(renderTexture.getSize().x, renderTexture.getSize().y));
+    r.setFillColor(Utilities::fill0);
+    renderTexture.draw(r);
 
     // draw columns
     for (int i = 0; i < colCount; i++)
     {
         int xOffset = (i+1) * colPaddingX_ + colWidth_ * i;
-        columns_[i]->Render(sf::Vector2f(xOffset, colPosY_), sf::Vector2f(colWidth_, colHeight_), renderTexture_);
+        columns_[i]->Render(sf::Vector2f(xOffset, colPosY_), sf::Vector2f(colWidth_, colHeight_), renderTexture);
     }
 
     // draw add column button at next column pos
     int addColumnPosX = rendTextWidth - colWidth_ - colPaddingX_;
-    addColumnButton_.Draw(sf::Vector2f(addColumnPosX, colPosY_), sf::Vector2f(colWidth_, colHeight_), {}, renderTexture_);
+    addColumnButton_.Draw(sf::Vector2f(addColumnPosX, colPosY_), sf::Vector2f(colWidth_, colHeight_), {}, renderTexture);
 
     // draw render texture within coordinate space of boardView
     window.setView(boardView);
-    renderTexture_.display();
-    window.draw(sf::Sprite(renderTexture_.getTexture()));
-
-    // reset window's view
+    scrollTexture_.DrawTexture(window);
     window.setView(window.getDefaultView());
 }
 
@@ -122,29 +82,59 @@ void Kanban::Board::DrawScrollBar(sf::RenderWindow& window)
 {
     window.setView(boardView);
 
-    float x = window.getView().getCenter().x - window.getSize().x/2.f; // move scroll bar along with view
-    sf::Vector2f pos(x, renderTexture_.getSize().y * 0.9625f);
-    sf::Vector2f size(window.getSize().x, renderTexture_.getSize().y * 0.0375f);
+    float windowWidth = window.getSize().x;
+    float textureHeight = scrollTexture_.GetTexture().getSize().y;
+    float x = window.getView().getCenter().x - windowWidth/2.f; // move scroll bar along with view
+    sf::Vector2f pos(x, textureHeight * 0.9625f);
+    sf::Vector2f size(windowWidth, textureHeight * 0.0375f);
 
-    scrollBar_.Draw(window, pos, size);
+    scrollTexture_.DrawScrollBar(window, pos, size);
 
     window.setView(window.getDefaultView());
 }
 
+void Kanban::Board::DrawIcons(sf::RenderWindow& window)
+{
+    if (icons_.empty())
+        return;
+
+    int iconCount = icons_.size();
+    int iconWidth = (3 * icons_[0]->GetWidth()) / 2;
+    int y = icons_[0]->GetWidth() / 2;
+    int iconPaddingX = iconWidth / 2;
+    auto baseX = window.getSize().x - iconWidth;
+    for (int i = 0; i < iconCount; i++)
+    {
+        int x = baseX - (iconWidth + iconPaddingX) * (iconCount - i);
+        icons_[i]->Draw(x, y, window );
+    }
+}
+
 // ====================================== Public Functions ======================================
 
-Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) :
-    boardView(target.getDefaultView()), activeColumn(nullptr), userInputMode(UserInputMode::Default)
+Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) : boardView(target.getDefaultView()), activeColumn(nullptr), userInputMode(UserInputMode::Default)
 {
-    UpdateColumnValues(target);
-    UpdateRenderTexture(target);
     windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager);
     taskManager_ = &taskManager;
+    reminderManager.AddObserver(reminderIconObserver_);
+
+    UpdateColumnValues(target);
+
+    for (unsigned int i = 0; i < std::size(iconArray); i++)
+    {
+        icons_.push_back(new Icon(iconArray[i]));
+
+        if (iconArray[i] == Icon::Type::bell)
+            reminderIconObserver_.icon_ = icons_[i];
+    }
+
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
 }
 
 Kanban::Board::~Board() {
     delete windowPromptManager_;
+    for (unsigned int i = 0; i < icons_.size(); i++)
+        delete icons_[i];
     for (unsigned int i = 0; i < columns_.size(); i++)
         delete columns_[i];
 }
@@ -208,9 +198,9 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
 
 void Kanban::Board::ProcessLeftClickReleased()
 {
-    if (scrollBarActive)
-        scrollBarActive = false;
-    else
+    windowPromptManager_->ProcessLeftClickReleased();
+
+    if (!scrollTexture_.ProcessLeftClickReleased())
     {
         // OnPressed clears active column and sets a new one, if viable
         // OnRelease clears active column for appropriate input modes
@@ -232,24 +222,14 @@ void Kanban::Board::ProcessLeftClickReleased()
 
 void Kanban::Board::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
 {
+    windowPromptManager_->ProcessMouseMove(pixelPos, target);
+
     auto mousePos = target.mapPixelToCoords(pixelPos, boardView);
-    if (scrollBarActive)
-    {
-        scrollMoveDelta_ = scrollBar_.Move(mousePos);
+    if (scrollTexture_.ProcessMouseMove(mousePos))
         return;
-    }
 
     if (activeColumn && userInputMode == UserInputMode::ScrollBar)
         activeColumn->ProcessMouseMove(mousePos);
-}
-
-void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key)
-{
-    if (key == sf::Keyboard::F)
-    {
-        windowPromptManager_->ShowReminderPrompt();
-        return;
-    }
 }
 
 void Kanban::Board::ReadUserInput(char c)
@@ -285,9 +265,7 @@ void Kanban::Board::ReadUserInput(char c)
 void Kanban::Board::Update(const sf::RenderWindow& target, const float deltaTime)
 {
     UpdateColumnValues(target);
-    UpdateRenderTexture(target);
-    UpdateBoardView(target, deltaTime);
-    UpdateScrollBar(target, deltaTime);
+    UpdateScrollTexture(target, deltaTime);
 
     for (Column* col : columns_)
         col->Update(colWidth_, colHeight_, deltaTime);
@@ -300,7 +278,7 @@ void Kanban::Board::Update(const sf::RenderWindow& target, const float deltaTime
             taskIds_[task.getId().value()] = Available;
     }
 
-    windowPromptManager_->UpdatePrompts();
+    windowPromptManager_->UpdatePrompts(deltaTime);
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
@@ -315,8 +293,7 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
 
     auto mousePos = target.mapPixelToCoords(point, boardView);
 
-    scrollBarActive = scrollBar_.CheckCollision(mousePos);
-    if (scrollBarActive)
+    if (scrollTexture_.CheckScrollBarCollision(mousePos))
         return true;
 
     if (windowPromptManager_->CheckCollision(point, target))
@@ -327,6 +304,17 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
         cout << "adding column" << endl;
         AddColumn();
         return true;
+    }
+
+    for (unsigned int i = 0; i < icons_.size(); i++)
+    {
+        if (icons_[i]->CheckCollision(static_cast<sf::Vector2f>(point)))
+        {
+            if (icons_[i]->GetType() == Icon::bell)
+                windowPromptManager_->ShowReminderPrompt();
+
+            return true;
+        }
     }
 
     for (unsigned int i = 0; i < columns_.size(); i++)
@@ -342,5 +330,6 @@ void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
     DrawScrollBar(window);
+    DrawIcons(window);
     windowPromptManager_->Draw(window);
 }

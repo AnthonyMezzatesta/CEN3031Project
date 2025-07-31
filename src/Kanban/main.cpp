@@ -168,10 +168,6 @@ int main()
             {
                 board.ProcessMouseMove(sf::Vector2i(event.mouseMove.x, event.mouseMove.y), window);
             }
-            if (event.type == sf::Event::KeyPressed)
-            {
-                board.ProcessKeyEvent(event.key.code);
-            }
             if (event.type == sf::Event::TextEntered)
             {
                 // 0-126 so that we skip DEL char

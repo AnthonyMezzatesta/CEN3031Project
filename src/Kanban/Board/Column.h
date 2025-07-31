@@ -7,10 +7,10 @@
 #include "Observer.h"
 #include "../GUIElement/Icon.h"
 #include "../GUIElement/TaskCard.h"
-#include "../GUIElement/ScrollBar.h"
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "../Utilities/EventSystem/Subject.h"
 #include "Board.h"
+#include "../GUIElement/ScrollableTexture.h"
 
 using std::string;
 using std::runtime_error;
@@ -26,33 +26,27 @@ namespace Kanban
         const static int tasksPerColummn_ = 5;
         string name_;
         TaskCard* selectedCard_;
-        std::vector<Kanban::TaskCard*> tasks_;
+        std::vector<TaskCard*> tasks_;
 
         sf::Transform transformStatic_;
         sf::Transform transformDynamic_;
         sf::RenderTexture textureStatic_;
-        sf::RenderTexture textureDynamic_;
         sf::RectangleShape bgRect_;
-        sf::Color textColor_ = sf::Color(206,208,212,255);
 
         std::vector<Icon*> icons_;
         sf::Font font_;
         sf::Text text_;
-        Kanban::Board* board_;
+        Board* board_;
         WindowPromptManager* windowPromptManager_;
 
-        int yHeader_;
+        float yHeader_;
         float taskHeight_;
         float taskPaddingY_;
         unsigned int columnHeight_;
         unsigned int textureHeight_;
         float texturePaddingY_;
 
-        const static int SCROLL_SPEED = 1000;
-        float scrollMoveDelta_ = 0; // [0, 1]
-        bool scrollBarActive = false;
-        ScrollBar scrollBar_;
-        float startRenderY_ = 0;
+        ScrollableTexture scrollTexture_;
 
         struct ActionObserver : public DataObserver<Observer::ActionEnum>
         {
@@ -71,8 +65,7 @@ namespace Kanban
 
         void UpdateValues(float height);
         void UpdateRenderTexture(const float width);
-        void UpdateRendering(const float deltaTime);
-        void UpdateScrollBar(const float deltaTime);
+        void UpdateScrollTexture(const float width, const float deltaTime);
         void RenderStaticDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target);
         void ClearSelectedTask();
     public:

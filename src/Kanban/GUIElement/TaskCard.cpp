@@ -31,8 +31,8 @@ Kanban::TaskCard::TaskCard(Column* column, Task& task, sf::Color fillColor):
     textObj.setFont(font);
 
     column_ = column;
-    icons_[Overdue] = new Icon(Icon::Type::overdue, sf::Color::Red, 0.5f);
-    icons_[Delete] = new Icon(Icon::Type::minus, sf::Color(96,96,96,255), 0.5f);
+    icons_[Overdue] = new Icon(Icon::Type::overdue, Utilities::priorityHigh, {}, 0.5f);
+    icons_[Delete] = new Icon(Icon::Type::minus, Utilities::icon1, {}, 0.5f);
 }
 
 Kanban::TaskCard::~TaskCard() {

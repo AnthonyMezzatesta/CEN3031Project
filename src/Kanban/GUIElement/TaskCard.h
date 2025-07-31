@@ -19,7 +19,7 @@ namespace Kanban
 
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override;
     public:
-        TaskCard(Column* column, Task& task, sf::Color fillColor = Utilities::fill1);
+        TaskCard(Column* column, Task& task, sf::Color fillColor = Utilities::fill2);
         ~TaskCard();
 
         Task& GetTask() { return task_; }

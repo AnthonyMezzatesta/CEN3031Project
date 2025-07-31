@@ -5,7 +5,7 @@
 struct DummyPrompt : public WindowPrompt
 {
     DummyPrompt() { type_ = Default; }
-    void Update() override {}
+    void Update(const float deltaTime) override {}
     void Draw(sf::RenderTarget& target) override {}
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override { return false; }
 };

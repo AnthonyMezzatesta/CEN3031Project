@@ -29,6 +29,7 @@ set (SFML_SOURCES
         src/Utilities/Utilities.cpp
         src/Utilities/EventSystem/Subject.h
         src/Utilities/EventSystem/Observer.h
+        src/ReminderManager/ReminderManager.h
         src/Kanban/Board/Board.cpp
         src/Kanban/Board/Column.cpp
         src/Kanban/GUIElement/GUIElement.cpp
@@ -40,14 +41,14 @@ set (SFML_SOURCES
         src/Kanban/WindowPrompt/WindowPromptManager.h
         src/Kanban/WindowPrompt/AddTaskPrompt.cpp
         src/Kanban/WindowPrompt/AddTaskPrompt.h
-        src/Kanban/WindowPrompt/SettingsPrompt.cpp
-        src/Kanban/WindowPrompt/SettingsPrompt.h
+        src/Kanban/WindowPrompt/ColumnSettingsPrompt.cpp
+        src/Kanban/WindowPrompt/ColumnSettingsPrompt.h
         src/Kanban/WindowPrompt/TaskDetailsPrompt.cpp
         src/Kanban/WindowPrompt/TaskDetailsPrompt.h
-        src/ReminderManager/ReminderManager.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
         src/Kanban/GUIElement/ScrollBar.h
+        src/Kanban/GUIElement/ScrollableTexture.h
 )
 
 # Executables
@@ -91,7 +92,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # Print build information

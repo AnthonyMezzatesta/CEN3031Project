@@ -7,7 +7,7 @@
 #include "DummyPrompt.h"
 #include "Observer.h"
 #include "ReminderPrompt.h"
-#include "SettingsPrompt.h"
+#include "ColumnSettingsPrompt.h"
 #include "TaskDetailsPrompt.h"
 #include "WindowPrompt.h"
 #include "../../ReminderManager/ReminderManager.h"
@@ -49,11 +49,11 @@ public:
         activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board);
-        prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsPrompt(target);
+        prompts_[WindowPrompt::Type::SettingsPrompt] = new ColumnSettingsPrompt(target);
         prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target);
         prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(target, reminderManager);
 
-        UpdatePrompts();
+        UpdatePrompts(0);
     }
 
     ~WindowPromptManager()
@@ -96,7 +96,7 @@ public:
         {
             if (event == Observer::EventEnum::ShowPrompt && activeWindow != WindowPrompt::SettingsPrompt)
             {
-                auto prompt = dynamic_cast<SettingsPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
+                auto prompt = dynamic_cast<ColumnSettingsPrompt*>(GetPrompt(WindowPrompt::Type::SettingsPrompt));
                 if (!prompt)
                 {
                     std::cerr << "could not recast WindowPrompt to Settings Window Prompt" << endl;
@@ -134,10 +134,20 @@ public:
         return prompts_[WindowPrompt::Type::Default];
     }
 
-    void UpdatePrompts()
+    void UpdatePrompts(const float deltaTime)
     {
         for (auto& kvp: prompts_)
-            kvp.second->Update();
+            kvp.second->Update(deltaTime);
+    }
+
+    void ProcessLeftClickReleased()
+    {
+        prompts_[activeWindow]->ProcessLeftClickReleased();
+    }
+
+    void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
+    {
+        prompts_[activeWindow]->ProcessMouseMove(pixelPos, target);
     }
 
     bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target)

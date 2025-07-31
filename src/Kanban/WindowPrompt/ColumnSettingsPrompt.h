@@ -4,7 +4,7 @@
 #include "WindowPrompt.h"
 #include "../Board/Board.h"
 
-class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
+class ColumnSettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
 {
     sf::RectangleShape bg;
     enum OptionEnum { Rename, Delete };
@@ -22,13 +22,12 @@ class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubj
         OptionEnum GetType();
     };
     SettingsOption* options_[2];
-
 public:
-    SettingsPrompt(const sf::RenderWindow& target);
-    ~SettingsPrompt();
+    ColumnSettingsPrompt(const sf::RenderWindow& target);
+    ~ColumnSettingsPrompt();
 
     // todo: add option to get tasks by filter
-    void Update() override;
+    void Update(const float deltaTime) override;
     void Deactivate();
 
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;

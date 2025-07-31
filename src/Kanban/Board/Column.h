@@ -53,6 +53,7 @@ namespace Kanban
         Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();
 
+        std::vector<Kanban::TaskCard*> GetTaskOptions() const { return tasks_; }
         // bool AddTask(Task& task);
         // bool RemoveTask(Kanban::TaskCard& task);
         void RemoveTaskCard(Kanban::TaskCard* card);

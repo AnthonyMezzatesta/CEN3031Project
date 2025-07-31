@@ -29,15 +29,15 @@ public:
     virtual void Draw(sf::RenderTarget& target) = 0;
     virtual bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) = 0;
 
+    bool isActive = false;
     Type GetType() const { return type_; }
     bool IsVisible() const { return isVisible; }
+    bool isVisible = false; // Moved to public for easier access
     bool IsActive() const { return isActive; }
     virtual void SetActive(bool value) { isActive = value; }
 protected:
     // sf::Text text_;
     Type type_ = Default;
-    bool isVisible = false;
-    bool isActive = false;
     Kanban::Board* board_ = nullptr;
     sf::View view_;
 };

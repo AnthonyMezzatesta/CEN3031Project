@@ -6,6 +6,7 @@
 #include "GUIElement.h"
 #include "../Board/Column.h"
 #include "TaskCard.h"
+#include <optional>
 using namespace std;
 
 void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) {
@@ -23,6 +24,7 @@ void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, 
         icons_[Overdue]->Draw(x, y, target);
     }
 }
+
 
 Kanban::TaskCard::TaskCard(Column* column, Task& task):
     GUIElement(sf::Color(190, 190, 190, 255)), task_(task), icons_(2) {
@@ -52,4 +54,8 @@ bool Kanban::TaskCard::CheckCollision(sf::Vector2f point)
     }
 
     return rect.getGlobalBounds().contains(point);
+}
+
+bool Kanban::TaskCard::ContainsPoint(const sf::Vector2f& point) const {
+    return boundingBox_.getGlobalBounds().contains(point);
 }

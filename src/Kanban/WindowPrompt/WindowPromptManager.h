@@ -153,6 +153,12 @@ public:
     void Draw(sf::RenderWindow& target)
     {
         for (auto& kvp: prompts_)
-            kvp.second->Draw(target);
+        {
+            if (kvp.second && kvp.second->isVisible) {
+                //std::cout << "Drawing prompt: " << static_cast<int>(kvp.first) << std::endl; // Debug
+                target.setView(target.getDefaultView()); // Ensure default view before drawing
+                kvp.second->Draw(target);
+            }
+        }
     }
 };

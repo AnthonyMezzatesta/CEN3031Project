@@ -64,6 +64,7 @@ Kanban::Column::~Column() {
     }
 }
 
+
 void Kanban::Column::RemoveTaskCard(Kanban::TaskCard* card)
 {
     for (auto iter = tasks_.begin(); iter != tasks_.end(); ++iter)
@@ -105,22 +106,22 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
         case Icon::Type::plus:
-            cout << "plus icon selected" << endl;
+            std::cout << "Plus icon clicked - showing AddTaskPrompt" << std::endl;
             windowPromptManager_->OnNotify(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
                 taskObserver_
             );
+            std::cout << "AddTaskPrompt should now be visible" << std::endl;
             break;
         case Icon::Type::dots:
-            cout << "dots icon selected" << endl;
+            std::cout << "Dots icon clicked - showing SettingsPrompt" << std::endl;
             windowPromptManager_->OnNotify(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::Settings,
                 actionObserver_
             );
-            break;
-        default:
+            std::cout << "SettingsPrompt should now be visible" << std::endl;
             break;
     }
 }

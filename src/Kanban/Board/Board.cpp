@@ -98,6 +98,8 @@ void Kanban::Board::SetActiveColumn(Column* column)
 {
     activeColumn = column;
     userInputMode = UserInputMode::ColumnName;
+    userInputStr = column->GetName(); // Initialize with current name
+    std::cout << "Column active for renaming: " << userInputStr << std::endl;
 }
 
 // todo: add functionality to delete tasks that were removed from TaskManager
@@ -190,7 +192,7 @@ void Kanban::Board::ReadUserInput(char c)
 void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
-    windowPromptManager_->Draw(window);
+    //windowPromptManager_->Draw(window);
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
@@ -222,4 +224,25 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
     }
 
     return false;
+}
+
+std::optional<Task> Kanban::Board::GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window) {
+    // Convert pixel position to board view coordinates
+    sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos, boardView);
+
+    // Loop through all columns and their task cards
+    for (auto* column : columns_) {
+        auto taskCards = column->GetTaskOptions();
+        for (auto* taskCard : taskCards) {
+            if (taskCard && taskCard->ContainsPoint(worldPos)) {
+                return taskCard->GetTask();
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+void Kanban::Board::DrawBoard(sf::RenderWindow& window)
+{
+    DrawColumns(window);
 }

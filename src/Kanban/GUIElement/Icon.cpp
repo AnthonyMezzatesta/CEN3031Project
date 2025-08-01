@@ -3,7 +3,7 @@
 #include "Icon.h"
 using namespace std;
 
-Icon::Icon(Type type, sf::Color color, sf::Color accent, float scaleFactor) : sideLenPixel(defaultSideLenPixel), type(type) {
+Icon::Icon(Type type, float scaleFactor, sf::Color color, sf::Color accent) : sideLenPixel(defaultSideLenPixel), type(type) {
     if (!texture_.loadFromFile(iconsPath))
         throw std::runtime_error("could not load icons sprite sheet");
 
@@ -26,13 +26,16 @@ Icon::Icon(Type type, sf::Color color, sf::Color accent, float scaleFactor) : si
 void Icon::Draw(int x, int y, sf::RenderTarget& target) {
     sf::RectangleShape bgOutline(sf::Vector2f(sideLenPixel * 2, sideLenPixel * 2));
     bgOutline.setFillColor(sf::Color::Black);
-    bgOutline.setPosition(x - sideLenPixel/2.f, y - sideLenPixel/2.f);
+    bgOutline.setPosition(x, y);
 
     sf::RectangleShape bgFill(bgOutline.getSize());
     bgFill.setFillColor(Utilities::fill3);
     bgFill.scale(0.8, 0.8);
     bgFill.setPosition(bgOutline.getPosition());
     bgFill.move(bgOutline.getSize().x * 0.1, bgOutline.getSize().y * 0.1);
+
+    x += sideLenPixel/2.f;
+    y += sideLenPixel/2.f;
 
     layer1_.setPosition(x, y);
 
@@ -48,10 +51,9 @@ void Icon::Draw(int x, int y, sf::RenderTarget& target) {
 }
 
 bool Icon::CheckCollision(sf::Vector2f point) const {
-    float scale = layer1_.getScale().x;
     auto pos = layer1_.getPosition();
-    pos -= sf::Vector2f(sideLenPixel/2.f * scale, (sideLenPixel/2.f * scale));
-    sf::FloatRect bgBounds(pos.x, pos.y, sideLenPixel * 2 * scale, sideLenPixel * 2 * scale);
+    pos -= sf::Vector2f(sideLenPixel/2.f, (sideLenPixel/2.f));
+    sf::FloatRect bgBounds(pos.x, pos.y, sideLenPixel * 2, sideLenPixel * 2);
     return bgBounds.contains(point);
     // return sprite_.getGlobalBounds().contains(point);
 }

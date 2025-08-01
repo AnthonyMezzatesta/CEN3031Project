@@ -3,8 +3,6 @@
 #include "Utilities.h"
 #include "Icon.h"
 #include "../Board/Column.h"
-#include "GUIElement.h"
-#include "../Board/Column.h"
 #include "TaskCard.h"
 using namespace std;
 
@@ -12,13 +10,14 @@ void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, 
     // draw task name
     Utilities::DrawText(target, textObj, size, basePos, task_.getName(), size.y / 4, Utilities::textColor);
 
-    int x = basePos.x + size.x - icons_[Delete]->GetWidth();
-    int y = basePos.y;
-    icons_[Delete]->Draw(x, y,target);
+    Icon* deleteIcon = icons_[Delete];
+    float x = basePos.x + size.x - deleteIcon->GetWidth() * 0.625f;
+    float y = basePos.y - deleteIcon->GetWidth() * 0.325f;
+    deleteIcon->Draw(x, y,target);
 
     if (task_.isOverdue())
     {
-        x = basePos.x - icons_[Overdue]->GetWidth() / 4;
+        x = basePos.x;
         y = basePos.y + size.y - icons_[Overdue]->GetWidth();
         icons_[Overdue]->Draw(x, y, target);
     }
@@ -31,8 +30,8 @@ Kanban::TaskCard::TaskCard(Column* column, Task& task, sf::Color fillColor):
     textObj.setFont(font);
 
     column_ = column;
-    icons_[Overdue] = new Icon(Icon::Type::overdue, Utilities::priorityHigh, {}, 0.5f);
-    icons_[Delete] = new Icon(Icon::Type::minus, Utilities::icon1, {}, 0.5f);
+    icons_[Overdue] = new Icon(Icon::Type::overdue, 0.5f, Utilities::priorityHigh);
+    icons_[Delete] = new Icon(Icon::Type::minus, 0.5f, Utilities::icon1);
 }
 
 Kanban::TaskCard::~TaskCard() {

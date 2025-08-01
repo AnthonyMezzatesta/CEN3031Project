@@ -285,14 +285,13 @@ void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos,
     for (int i = 0; i < iconCount; i++)
     {
         const int iconWidth = icons_[i]->GetWidth();
-        int bgXPadding = iconWidth / 2;
-        int iconXPadding = iconWidth;
+        int iconPadding = iconWidth / 4;
 
-        int totalIconWidth = (bgXPadding * iconCount) + (iconXPadding * iconCount) + (iconWidth * iconCount);
+        int totalIconWidth = (iconPadding + iconWidth) * iconCount;
         int x = basePos.x + colWidth - totalIconWidth;
-        int y = basePos.y + iconWidth;
+        int y = basePos.y + iconPadding;
 
-        int xOffset = (bgXPadding * (i+1)) + (iconXPadding * i) + (iconWidth * i);
+        int xOffset = (iconPadding + iconWidth) * i;
         icons_[i]->Draw(x + xOffset, y, target);
     }
 }

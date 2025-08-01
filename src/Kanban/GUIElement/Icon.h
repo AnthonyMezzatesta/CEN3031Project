@@ -7,13 +7,14 @@ class Icon
 {
 public:
     enum Type { plus, overdue, dots, minus, bell, bellDot };
-    Icon(Type type, sf::Color color = Utilities::icon1, sf::Color accent = Utilities::priorityHigh, float scaleFactor = 1);
+    Icon(Type type, float scaleFactor = 1, sf::Color color = Utilities::icon1, sf::Color accent = Utilities::priorityHigh);
 
     void Draw(int x, int y, sf::RenderTarget& target);
     bool CheckCollision(sf::Vector2f point) const;
 
     static int GetDefaultWidth() { return defaultSideLenPixel; }
-    int GetWidth() const { return sideLenPixel; }
+    // int GetWidth() const { return sideLenPixel; }
+    int GetWidth() const { return sideLenPixel * 2; } // accounting for border
     Type GetType() const { return type; }
     void ToggleSecondLayer(bool value) { drawSecondLayer_ = value; }
 protected:

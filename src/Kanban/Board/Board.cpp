@@ -99,13 +99,13 @@ void Kanban::Board::DrawIcons(sf::RenderWindow& window)
         return;
 
     int iconCount = icons_.size();
-    int iconWidth = (3 * icons_[0]->GetWidth()) / 2;
-    int y = icons_[0]->GetWidth() / 2;
+    int iconWidth = icons_[0]->GetWidth();
+    int y = iconWidth / 2;
     int iconPaddingX = iconWidth / 2;
-    auto baseX = window.getSize().x - iconWidth;
+    auto baseX = window.getSize().x - iconWidth - iconPaddingX;
     for (int i = 0; i < iconCount; i++)
     {
-        int x = baseX - (iconWidth + iconPaddingX) * (iconCount - i);
+        int x = baseX - (iconWidth + iconPaddingX) * (iconCount - i - 1);
         icons_[i]->Draw(x, y, window );
     }
 }

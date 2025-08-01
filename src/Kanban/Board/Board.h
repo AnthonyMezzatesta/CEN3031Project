@@ -39,19 +39,19 @@ namespace Kanban
                     icon_->ToggleSecondLayer(false);
             }
         } reminderIconObserver_;
-        friend ReminderIconObserver;
 
         class AddColumnButton final : public GUIElement
         {
             Icon plusIcon;
         public:
-            AddColumnButton() : GUIElement(Utilities::fill2), plusIcon(Icon::Type::plus) {}
+            AddColumnButton() : GUIElement(Utilities::fill2), plusIcon(Icon::Type::plus, 2.0f) {}
         protected:
             void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
             {
-                // icon pos is based on top left of icon, excluding icon bg...
-                // float offset = size.x / 2.0f - Icon::GetDefaultWidth() / 2.0f;
-                plusIcon.Draw(basePos.x, basePos.y, target);
+                // icon pos is based on top left of icon
+                size /= 2.0f;
+                float iconCenter = plusIcon.GetWidth() / 2.0f;
+                plusIcon.Draw(basePos.x + size.x - iconCenter, basePos.y + size.y - iconCenter, target);
             }
         } addColumnButton_;
 

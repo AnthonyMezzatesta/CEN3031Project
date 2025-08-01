@@ -45,7 +45,7 @@ void Kanban::Board::UpdateScrollTexture(const sf::RenderWindow& window, const fl
     scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio, textureSize,
         boardView.getCenter().x, defaultCenterX, maxCenterX, deltaTime);
 
-    boardView.setCenter(scrollTexture_.GetValue(), boardView.getCenter().y);
+    boardView.setCenter(scrollTexture_.GetScrollDelta(), boardView.getCenter().y);
 }
 
 void Kanban::Board::DrawColumns(sf::RenderWindow& window) {

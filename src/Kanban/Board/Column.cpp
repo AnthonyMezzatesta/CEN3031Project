@@ -246,7 +246,7 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point)
     // transform point from global space to local space
     auto staticPoint = transformStatic_.getInverse().transformPoint(point);
     auto dynamicPoint = transformDynamic_.getInverse().transformPoint(point);
-    dynamicPoint += sf::Vector2f(0, scrollTexture_.GetValue()); // adjust by amount scrolled
+    dynamicPoint += sf::Vector2f(0, scrollTexture_.GetScrollDelta()); // adjust by amount scrolled
 
     ClearSelectedTask();
 
@@ -325,10 +325,6 @@ void Kanban::Column::Render(sf::Vector2f position, sf::Vector2f size, sf::Render
     transformDynamic_.translate(position.x, position.y + yHeader_);
 
     // draw column texture
-    // textureDynamic_.display();
-    // sf::Sprite sprite(textureDynamic_.getTexture());
-    // sprite.setTextureRect(sf::IntRect(0, startRenderY_, textureDynamic_.getSize().x, columnHeight_ - yHeader_));
-    // target.draw(sprite, transformDynamic_);
-    sf::IntRect rect(0, scrollTexture_.GetValue(), textureDynamic.getSize().x, columnHeight_ - yHeader_);
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, columnHeight_ - yHeader_);
     scrollTexture_.DrawTexture(target, rect, transformDynamic_);
 }

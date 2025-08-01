@@ -17,6 +17,12 @@ class AddTaskPrompt final : public WindowPrompt, public EventSystem::TaskSubject
     ScrollableTexture scrollTexture_;
     const static int tasksPerScreen_ = 5;
 
+    int headerHeight_;
+    float taskWidth_;
+    float xOffset_;
+    float taskHeight_;
+    float taskPaddingY_;
+
     sf::Transform transformDynamic_;
 
     void UpdateValues();

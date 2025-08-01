@@ -8,23 +8,31 @@
 #include "../Board/Board.h"
 #include "AddTaskPrompt.h"
 
+void AddTaskPrompt::UpdateValues()
+{
+    auto size = view_.getSize();
+
+    headerHeight_ = size.y * 0.15f;
+    taskWidth_ = size.x * 0.75f;
+    xOffset_ = size.x / 8.0f;
+    taskHeight_ = (size.y - headerHeight_) / (tasksPerScreen_ + 1.0f);
+    taskPaddingY_ = taskHeight_ / (tasksPerScreen_ + 1.0f);
+}
+
 void AddTaskPrompt::UpdateScrollTexture(const float deltaTime)
 {
     auto size = view_.getSize();
 
     int taskCount = taskElements_.size();
-    int headerHeight = size.y * 0.15f;
-    float taskHeight = (size.y - headerHeight) / (tasksPerScreen_ + 1.0f);
-    float taskPaddingY = taskHeight / (tasksPerScreen_ + 1.0f);
     float extraTaskCount = std::max(taskCount - tasksPerScreen_, 0);
 
     float defaultStartY = 0;
-    float maxDistY = (taskPaddingY + taskHeight) * extraTaskCount;
+    float maxDistY = (taskPaddingY_ + taskHeight_) * extraTaskCount;
     float maxStartY = defaultStartY + maxDistY;
 
     bool enableScrollBar = taskElements_.size() > tasksPerScreen_;
-    float defaultTextureHeight = size.y - headerHeight;
-    float textureHeight = defaultTextureHeight + (taskPaddingY * (extraTaskCount+1) + taskHeight * extraTaskCount);
+    float defaultTextureHeight = size.y - headerHeight_;
+    float textureHeight = defaultTextureHeight + (taskPaddingY_ + taskHeight_) * extraTaskCount;
     float scrollBarWidthRatio = defaultTextureHeight / textureHeight;
     sf::Vector2u textureSize(size.x, textureHeight);
 
@@ -58,6 +66,7 @@ void AddTaskPrompt::ClearTaskElements() {
 void AddTaskPrompt::Update(const float deltaTime) {
     if (isActive) isVisible = true;
 
+    UpdateValues();
     UpdateScrollTexture(deltaTime);
 
     // update window prompt with currently available tasks
@@ -84,13 +93,7 @@ void AddTaskPrompt::ProcessLeftClickReleased()
     if (!isVisible)
         return;
 
-    if (!scrollTexture_.ProcessLeftClickReleased())
-        return;
-
-    // // deactivate prompt if released click outside of it
-    // if (isActive && isVisible)
-    //     Deactivate();
-
+    scrollTexture_.ProcessLeftClickReleased();
 }
 
 void AddTaskPrompt::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
@@ -99,8 +102,7 @@ void AddTaskPrompt::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& ta
         return;
 
     auto mousePos = target.mapPixelToCoords(pixelPos, view_);
-    if (scrollTexture_.ProcessMouseMove(mousePos))
-        return;
+    scrollTexture_.ProcessMouseMove(mousePos);
 }
 
 bool AddTaskPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point) {
@@ -126,9 +128,10 @@ bool AddTaskPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point)
     if (scrollTexture_.CheckScrollBarCollision(mousePos))
         return true;
 
-    // transform point from view space to local space
+    // transform point from view space to local texture space
     auto dynamicPoint = transformDynamic_.getInverse().transformPoint(mousePos);
-    dynamicPoint.y += scrollTexture_.GetValue(); // adjust by amount scrolled
+    dynamicPoint.y += scrollTexture_.GetScrollDelta(); // adjust by amount scrolled
+
     for (auto iter = taskElements_.begin(); iter != taskElements_.end(); ++iter)
     {
         if (iter->second->CheckCollision(dynamicPoint))
@@ -163,7 +166,7 @@ void AddTaskPrompt::Draw(sf::RenderTarget& target) {
 
     // draw horizontal line
     sf::RectangleShape line(sf::Vector2f(size.x * 0.5f, headerHeight * 0.05f));
-    line.setPosition(sf::Vector2f(size.x * 0.25f, headerHeight));
+    line.setPosition(sf::Vector2f(size.x * 0.25f, headerHeight * 0.9f));
     line.setFillColor(Utilities::fill1);
     target.draw(line);
 
@@ -176,30 +179,26 @@ void AddTaskPrompt::Draw(sf::RenderTarget& target) {
     textureDynamic.clear(sf::Color::Transparent);
 
     transformDynamic_ = sf::Transform::Identity; // reset
-    transformDynamic_.translate(0, headerHeight);
+    transformDynamic_.translate(0, headerHeight + taskPaddingY_);
 
-    float taskWidth = size.x * 0.75f;
-    float xOffset = size.x / 8.0f;
-    float taskHeight = (size.y - headerHeight) / (tasksPerScreen_ + 1.0f);
-    float yPadding = taskHeight / (tasksPerScreen_ + 1.0f);
     int i = 0;
     for (auto& kvp : taskElements_)
     {
-        float yOffset = yPadding * (i+1) + taskHeight * i;
-        kvp.second->Draw(sf::Vector2f(xOffset, yOffset),
-                           sf::Vector2f(taskWidth, taskHeight), {}, textureDynamic);
+        float yOffset = (taskPaddingY_ + taskHeight_) * i;
+        kvp.second->Draw(sf::Vector2f(xOffset_, yOffset),
+                           sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
         i++;
     }
 
     // draw scrollable texture
-    float defaultTextureHeight = size.y - headerHeight;
-    sf::IntRect rect(0, scrollTexture_.GetValue(), textureDynamic.getSize().x, defaultTextureHeight);
+    float defaultTextureHeight = size.y - headerHeight - taskPaddingY_;
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight);
     scrollTexture_.DrawTexture(target, rect, transformDynamic_);
 
     // draw scroll bar
-    int taskStartY = headerHeight + yPadding;
+    int taskStartY = headerHeight + taskPaddingY_;
     sf::Vector2f barPos(size.x, taskStartY);
-    sf::Vector2f barSize(size.y - taskStartY, (size.x - taskWidth)/4.f);
+    sf::Vector2f barSize(size.y - taskStartY, (size.x - taskWidth_)/8.0f);
     scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
 
     target.setView(target.getDefaultView());

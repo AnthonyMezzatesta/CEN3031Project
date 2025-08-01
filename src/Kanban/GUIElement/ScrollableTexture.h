@@ -19,7 +19,7 @@ class ScrollableTexture
         if (texture_.getSize() != size)
         {
             if (!texture_.create(size.x, size.y))
-                std::cerr << "could not create dynamic render texture in Column.Render()" << endl;
+                std::cerr << "could not create render texture in ScrollableTexture" << endl;
         }
     }
     void UpdateRendering(const float minTarget, const float maxTarget, const float deltaTime)
@@ -55,7 +55,7 @@ class ScrollableTexture
     }
 public:
 
-    float GetValue() const { return valueToLerp_; }
+    float GetScrollDelta() const { return valueToLerp_; }
     sf::RenderTexture& GetTexture() { return texture_; }
 
     bool ProcessLeftClickReleased()

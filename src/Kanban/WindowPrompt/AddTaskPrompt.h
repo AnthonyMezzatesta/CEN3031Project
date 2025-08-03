@@ -5,7 +5,6 @@
 #include "WindowPrompt.h"
 #include "WindowResizeHandler.h"
 #include "../GUIElement/TaskOption.h"
-#include "../Board/Board.h"
 #include "../GUIElement/ScrollableTexture.h"
 
 class AddTaskPrompt final : public WindowPrompt, public EventSystem::TaskSubject

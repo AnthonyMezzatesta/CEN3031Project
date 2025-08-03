@@ -230,7 +230,7 @@ public:
             delete o;
     }
 
-    void Update(const float deltaTime)
+    void Update(const float deltaTime) override
     {
         if (isActive) isVisible = true;
 
@@ -245,7 +245,7 @@ public:
         selectedOption_ = nullptr;
     }
 
-    void ProcessLeftClickReleased()
+    void ProcessLeftClickReleased() override
     {
         if (!isVisible)
             return;
@@ -253,7 +253,7 @@ public:
         scrollTexture_.ProcessLeftClickReleased();
     }
 
-    void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
+    void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) override
     {
         if (!isVisible)
             return;
@@ -262,7 +262,7 @@ public:
         scrollTexture_.ProcessMouseMove(mousePos);
     }
     
-    bool CheckCollision(sf::RenderWindow& window, sf::Vector2i point) {
+    bool CheckCollision(sf::RenderWindow& window, sf::Vector2i point) override {
         // transform point from global space to local view space
         auto mousePos = window.mapPixelToCoords(point, view_);
 
@@ -315,7 +315,7 @@ public:
         return true;
     }
 
-    void Draw(sf::RenderTarget& target)
+    void Draw(sf::RenderTarget& target) override
     {
         if (!isVisible)
             return;

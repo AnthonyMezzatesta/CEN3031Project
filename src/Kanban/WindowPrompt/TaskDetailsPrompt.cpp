@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include "Utilities.h"
-#include "../Board/Board.h"
 #include "TaskDetailsPrompt.h"
 using namespace std;
 

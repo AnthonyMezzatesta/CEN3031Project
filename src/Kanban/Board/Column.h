@@ -17,8 +17,6 @@ using std::runtime_error;
 using std::cout;
 using std::endl;
 
-class WindowPromptManager;
-
 namespace Kanban
 {
     class Board;

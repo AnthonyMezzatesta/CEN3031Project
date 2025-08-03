@@ -6,7 +6,6 @@
 #include "Subject.h"
 #include "WindowResizeHandler.h"
 #include "../GUIElement/TaskOption.h"
-#include "../Board/Board.h"
 #include "AddTaskPrompt.h"
 
 void AddTaskPrompt::UpdateValues()

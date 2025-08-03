@@ -1,7 +1,7 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 #include "Utilities.h"
-#include "../Board/Board.h"
+#include "../Kanban/GUIElement/GUIElement.h"
 #include "ColumnSettingsPrompt.h"
 using std::string;
 

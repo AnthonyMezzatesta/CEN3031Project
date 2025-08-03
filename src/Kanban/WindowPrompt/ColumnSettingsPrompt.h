@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Subject.h"
 #include "WindowPrompt.h"
-#include "../Board/Board.h"
+#include "../Kanban/GUIElement/GUIElement.h"
 
 class ColumnSettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
 {

@@ -40,6 +40,7 @@ set (SFML_SOURCES
         src/Kanban/GUIElement/TaskCard.cpp
         src/Kanban/WindowPrompt/WindowPrompt.h
         src/Kanban/WindowPrompt/WindowPromptManager.h
+        src/Kanban/WindowPrompt/WindowPromptManager.cpp
         src/Kanban/WindowPrompt/AddTaskPrompt.cpp
         src/Kanban/WindowPrompt/ColumnSettingsPrompt.cpp
         src/Kanban/WindowPrompt/TaskDetailsPrompt.cpp

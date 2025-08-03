@@ -210,8 +210,7 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
         case Icon::Type::plus:
-            cout << "plus icon selected" << endl;
-            windowPromptManager_->OnNotify(
+            windowPromptManager_->ShowPrompt(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
                 taskObserver_,
@@ -219,8 +218,7 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
             );
             break;
         case Icon::Type::dots:
-            cout << "dots icon selected" << endl;
-            windowPromptManager_->OnNotify(
+            windowPromptManager_->ShowPrompt(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::Settings,
                 actionObserver_

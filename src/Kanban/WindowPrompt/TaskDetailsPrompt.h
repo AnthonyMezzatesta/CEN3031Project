@@ -2,7 +2,6 @@
 #include <SFML/Graphics.hpp>
 #include "../Utilities/EventSystem/Subject.h"
 #include "WindowPrompt.h"
-#include "../Board/Board.h"
 
 class TaskDetailsPrompt final : public WindowPrompt, public EventSystem::TaskSubject
 {

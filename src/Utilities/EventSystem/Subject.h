@@ -14,14 +14,18 @@ namespace EventSystem
     {
         Subject()
         {
-            for (int i = 0; i < nodePoolMaxSize; i++)
-                nodePool.push(new Node);
+            GrowPool();
         }
         virtual ~Subject()
         {
             RemoveAllObservers();
             for (; !nodePool.empty(); nodePool.pop())
                 delete nodePool.front();
+        }
+        void GrowPool()
+        {
+            for (int i = 0; i < nodePoolStartSize; i++)
+                nodePool.push(new Node);
         }
         bool AddObserver(ObserverType& observer)
         {
@@ -76,11 +80,11 @@ namespace EventSystem
         Node* head = nullptr;
         // todo: change type from std::queue to a custom circular array
         queue<Node*> nodePool;
-        const static int nodePoolMaxSize = 10;
+        const static int nodePoolStartSize = 10;
         Node* GetFromPool()
         {
             if (nodePool.empty())
-                return nullptr;
+                GrowPool();
 
             Node* node = nodePool.front();
             nodePool.pop();
@@ -120,12 +124,27 @@ namespace EventSystem
             }
         }
     };
+    struct WindowResizeSubject : public Subject<WindowResizeObserver>
+    {
+        virtual ~WindowResizeSubject() {}
+    protected:
+        void Notify(Observer::EventEnum event) override {}
+        void Notify(Observer::EventEnum event, const sf::View& view)
+        {
+            Node* curr = head;
+            while (curr)
+            {
+                curr->observer_->OnNotify(event, view);
+                curr = curr->next_;
+            }
+        }
+    };
     struct ActionSubject : public Subject<DataObserver<Observer::ActionEnum>>
     {
         virtual ~ActionSubject() {}
     protected:
         void Notify(Observer::EventEnum event) override {}
-        void Notify(Observer::EventEnum event, Observer::ActionEnum action)
+        void Notify(Observer::EventEnum event, const Observer::ActionEnum action)
         {
             Node* curr = head;
             while (curr)
@@ -142,7 +161,7 @@ namespace EventSystem
         virtual ~TaskSubject() {}
     protected:
         void Notify(Observer::EventEnum event) override {}
-        void Notify(Observer::EventEnum event, Task& task)
+        void Notify(Observer::EventEnum event, const Task& task)
         {
             Node* curr = head;
             while (curr)

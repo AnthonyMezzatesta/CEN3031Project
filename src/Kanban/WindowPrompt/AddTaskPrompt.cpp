@@ -4,6 +4,7 @@
 #include "Task.h"
 #include "Utilities.h"
 #include "Subject.h"
+#include "WindowResizeHandler.h"
 #include "../GUIElement/TaskOption.h"
 #include "../Board/Board.h"
 #include "AddTaskPrompt.h"
@@ -17,6 +18,7 @@ void AddTaskPrompt::UpdateValues()
     xOffset_ = size.x / 8.0f;
     taskHeight_ = (size.y - headerHeight_) / (tasksPerScreen_ + 1.0f);
     taskPaddingY_ = taskHeight_ / (tasksPerScreen_ + 1.0f);
+    defaultTextureHeight_ = size.y - (taskPaddingY_ * 2 + headerHeight_);
 }
 
 void AddTaskPrompt::UpdateScrollTexture(const float deltaTime)
@@ -31,16 +33,68 @@ void AddTaskPrompt::UpdateScrollTexture(const float deltaTime)
     float maxStartY = defaultStartY + maxDistY;
 
     bool enableScrollBar = taskElements_.size() > tasksPerScreen_;
-    float defaultTextureHeight = size.y - headerHeight_;
-    float textureHeight = defaultTextureHeight + (taskPaddingY_ + taskHeight_) * extraTaskCount;
-    float scrollBarWidthRatio = defaultTextureHeight / textureHeight;
+    float textureHeight = defaultTextureHeight_ + maxDistY;
+    float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight;
     sf::Vector2u textureSize(size.x, textureHeight);
 
     scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio,
         textureSize, {}, defaultStartY, maxStartY, deltaTime);
 }
 
-AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board) {
+void AddTaskPrompt::DrawStaticElements(sf::RenderTarget& target)
+{
+    auto size = target.getSize();
+
+    bg.setSize(sf::Vector2f(size.x, size.y));
+    target.draw(bg);
+
+    // draw title text
+    string titleStr = "Available Tasks";
+    Utilities::DrawText(target, text_, sf::Vector2f(size.x, headerHeight_),
+        sf::Vector2f(0, headerHeight_ / 8.f), titleStr, headerHeight_/2, Utilities::textColor);
+
+    // draw horizontal line
+    sf::RectangleShape line(sf::Vector2f(size.x * 0.5f, headerHeight_ * 0.05f));
+    line.setPosition(sf::Vector2f(size.x * 0.25f, headerHeight_ * 0.95f));
+    line.setFillColor(Utilities::fill1);
+    target.draw(line);
+}
+
+void AddTaskPrompt::DrawDynamicElements(sf::RenderTarget& target)
+{
+    if (taskElements_.empty())
+        return;
+
+    auto size = target.getSize();
+
+    auto& textureDynamic = scrollTexture_.GetTexture();
+    textureDynamic.clear(sf::Color::Transparent);
+
+    transformDynamic_ = sf::Transform::Identity; // reset
+    transformDynamic_.translate(0, headerHeight_ + taskPaddingY_);
+
+    int i = 0;
+    for (auto& kvp : taskElements_)
+    {
+        float yOffset = (taskPaddingY_ + taskHeight_) * i;
+        kvp.second->Draw(sf::Vector2f(xOffset_, yOffset),
+                         sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
+        i++;
+    }
+
+    // draw scrollable texture
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight_);
+    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
+
+    // draw scroll bar
+    int taskStartY = headerHeight_ + taskPaddingY_;
+    sf::Vector2f barSize(defaultTextureHeight_, (size.x - taskWidth_)/8.0f);
+    sf::Vector2f barPos(size.x - xOffset_ + barSize.y + taskPaddingY_, taskStartY);
+    scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
+}
+
+AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board,
+    WindowResizeHandler& windowResizeHandler) : WindowPrompt(windowResizeHandler) {
     if (!font_.loadFromFile(Utilities::fontPath))
         throw std::runtime_error("could not load font");
     text_.setFont(font_);
@@ -152,54 +206,9 @@ void AddTaskPrompt::Draw(sf::RenderTarget& target) {
         return;
 
     target.setView(view_);
-    auto size = target.getSize();
-    int headerHeight = size.y * 0.15f;
 
-    // static elements
-    bg.setSize(sf::Vector2f(size.x, size.y));
-    target.draw(bg);
-
-    // draw title text
-    string titleStr = "Available Tasks";
-    Utilities::DrawText(target, text_, sf::Vector2f(size.x, headerHeight),
-        {}, titleStr, headerHeight/2, Utilities::textColor);
-
-    // draw horizontal line
-    sf::RectangleShape line(sf::Vector2f(size.x * 0.5f, headerHeight * 0.05f));
-    line.setPosition(sf::Vector2f(size.x * 0.25f, headerHeight * 0.9f));
-    line.setFillColor(Utilities::fill1);
-    target.draw(line);
-
-
-    // dynamic elements
-    if (taskElements_.empty())
-        return;
-
-    auto& textureDynamic = scrollTexture_.GetTexture();
-    textureDynamic.clear(sf::Color::Transparent);
-
-    transformDynamic_ = sf::Transform::Identity; // reset
-    transformDynamic_.translate(0, headerHeight + taskPaddingY_);
-
-    int i = 0;
-    for (auto& kvp : taskElements_)
-    {
-        float yOffset = (taskPaddingY_ + taskHeight_) * i;
-        kvp.second->Draw(sf::Vector2f(xOffset_, yOffset),
-                           sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
-        i++;
-    }
-
-    // draw scrollable texture
-    float defaultTextureHeight = size.y - headerHeight - taskPaddingY_;
-    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight);
-    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
-
-    // draw scroll bar
-    int taskStartY = headerHeight + taskPaddingY_;
-    sf::Vector2f barPos(size.x, taskStartY);
-    sf::Vector2f barSize(size.y - taskStartY, (size.x - taskWidth_)/8.0f);
-    scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
+    DrawStaticElements(target);
+    DrawDynamicElements(target);
 
     target.setView(target.getDefaultView());
 }

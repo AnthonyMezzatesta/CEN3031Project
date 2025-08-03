@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <SFML/Graphics.hpp>
+#include "WindowResizeHandler.h"
 #include "../ReminderManager/ReminderManager.h"
 #include "WindowPrompt.h"
 
@@ -16,7 +17,8 @@ class ReminderPrompt final : public WindowPrompt
     sf::RectangleShape bg_;
     ReminderManager* reminderManager_;
 public:
-    ReminderPrompt(const sf::RenderWindow& target, ReminderManager& reminderManager)
+    ReminderPrompt(const sf::RenderWindow& target, ReminderManager& reminderManager,
+        WindowResizeHandler& windowResizeHandler) : WindowPrompt(windowResizeHandler)
     {
         if (!font_.loadFromFile(Utilities::fontPath))
             throw std::runtime_error("could not load font");

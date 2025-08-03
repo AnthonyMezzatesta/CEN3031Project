@@ -25,7 +25,7 @@ class TaskDetailsPrompt final : public WindowPrompt, public EventSystem::TaskSub
     sf::Color bgColor_ = sf::Color(128, 128, 128, 255);
     Task task_;
 public:
-    TaskDetailsPrompt(const sf::RenderWindow& target);
+    TaskDetailsPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler);
     ~TaskDetailsPrompt() {}
 
     void SetTask(const Task& task) { task_ = task; }

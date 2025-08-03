@@ -5,8 +5,8 @@
 #include "UserManager.h"
 #include "TaskManager.h"
 #include "Task.h"
+#include "WindowResizeHandler.h"
 #include "Board/Board.h"
-#include "WindowPrompt/WindowPromptManager.h"
 #include "../ReminderManager/ReminderManager.h"
 
 using namespace std;
@@ -130,11 +130,13 @@ int main()
     User currentUser = SetupUser(taskManager, userManager);
 
     sf::Clock clock;
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
+    auto defaultWindowSize = Utilities::defaultWindowSize;
+    sf::RenderWindow window(sf::VideoMode(defaultWindowSize.x, defaultWindowSize.y), Utilities::windowTitle, Utilities::windowStyle);
     window.setFramerateLimit(60);
 
+    WindowResizeHandler windowResizeHandler;
     ReminderManager reminderManager(taskManager);
-    Board board(window, taskManager, reminderManager);
+    Board board(window, taskManager, reminderManager, windowResizeHandler);
 
     board.AddColumn("todo");
     board.AddColumn("wip");

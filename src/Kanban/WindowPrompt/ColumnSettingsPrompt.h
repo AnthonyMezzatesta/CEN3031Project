@@ -23,7 +23,7 @@ class ColumnSettingsPrompt final : public WindowPrompt, public EventSystem::Acti
     };
     SettingsOption* options_[2];
 public:
-    ColumnSettingsPrompt(const sf::RenderWindow& target);
+    ColumnSettingsPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler);
     ~ColumnSettingsPrompt();
 
     // todo: add option to get tasks by filter

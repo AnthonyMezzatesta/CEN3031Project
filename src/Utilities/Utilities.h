@@ -6,6 +6,10 @@ using std::string;
 
 struct Utilities
 {
+    static int windowStyle;
+    static string windowTitle;
+    static sf::Vector2i defaultWindowSize;
+
     static string fontPath;
     static sf::Color fill0;
     static sf::Color fill1;

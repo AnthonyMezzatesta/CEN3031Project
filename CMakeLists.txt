@@ -29,6 +29,7 @@ set (SFML_SOURCES
         src/Utilities/Utilities.cpp
         src/Utilities/EventSystem/Subject.h
         src/Utilities/EventSystem/Observer.h
+        src/Utilities/WindowResizeHandler.h
         src/ReminderManager/ReminderManager.h
         src/Kanban/Board/Board.cpp
         src/Kanban/Board/Column.cpp
@@ -40,15 +41,14 @@ set (SFML_SOURCES
         src/Kanban/WindowPrompt/WindowPrompt.h
         src/Kanban/WindowPrompt/WindowPromptManager.h
         src/Kanban/WindowPrompt/AddTaskPrompt.cpp
-        src/Kanban/WindowPrompt/AddTaskPrompt.h
         src/Kanban/WindowPrompt/ColumnSettingsPrompt.cpp
-        src/Kanban/WindowPrompt/ColumnSettingsPrompt.h
         src/Kanban/WindowPrompt/TaskDetailsPrompt.cpp
-        src/Kanban/WindowPrompt/TaskDetailsPrompt.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
-        src/Kanban/GUIElement/ScrollBar.h
-        src/Kanban/GUIElement/ScrollableTexture.h
+        src/Kanban/WindowPrompt/WindowResizePrompt.h
+        src/Kanban/GUIElement/NamedButton.h
+        src/Kanban/GUIElement/ScrollableTexture.cpp
+        src/Kanban/GUIElement/ScrollBar.cpp
 )
 
 # Executables

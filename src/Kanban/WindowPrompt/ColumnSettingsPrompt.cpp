@@ -23,15 +23,12 @@ void ColumnSettingsPrompt::SettingsOption::DrawDetails(sf::RenderTarget& target,
     Utilities::DrawText(target, textObj, size, basePos, name_, size.y / 4, Utilities::textColor);
 }
 
-ColumnSettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(Utilities::fill1), type_(type), name_(OptionEnumToString(type_)) {
-    if (!font.loadFromFile(Utilities::fontPath))
-        throw std::runtime_error("could not load font");
-    textObj.setFont(font);
-}
+ColumnSettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(Utilities::fill1), type_(type), name_(OptionEnumToString(type_)) {}
 
 ColumnSettingsPrompt::OptionEnum ColumnSettingsPrompt::SettingsOption::GetType() { return type_; }
 
-ColumnSettingsPrompt::ColumnSettingsPrompt(const sf::RenderWindow& target) {
+ColumnSettingsPrompt::ColumnSettingsPrompt(const sf::RenderWindow& target,
+    WindowResizeHandler& windowResizeHandler) : WindowPrompt(windowResizeHandler) {
     type_ = WindowPrompt::Type::SettingsPrompt;
     view_ = target.getDefaultView();
     view_.setViewport(viewPortLeft_);

@@ -112,11 +112,15 @@ void Kanban::Board::DrawIcons(sf::RenderWindow& window)
 
 // ====================================== Public Functions ======================================
 
-Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) : boardView(target.getDefaultView()), activeColumn(nullptr), userInputMode(UserInputMode::Default)
+Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager,
+    ReminderManager& reminderManager, WindowResizeHandler& windowResizeHandler) :
+    boardView(target.getDefaultView()), windowResizeObserver_(boardView),
+    activeColumn(nullptr), userInputMode(UserInputMode::Default)
 {
-    windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager);
+    windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager, windowResizeHandler);
     taskManager_ = &taskManager;
     reminderManager.AddObserver(reminderIconObserver_);
+    windowResizeHandler.AddObserver(windowResizeObserver_);
 
     UpdateColumnValues(target);
 
@@ -141,7 +145,7 @@ Kanban::Board::~Board() {
 
 void Kanban::Board::AddColumn(const string& name = "title")
 {
-    columns_.push_back(new Column(name, sf::Vector2f(colWidth_, colHeight_), *windowPromptManager_, *this));
+    columns_.push_back(new Column(name, *windowPromptManager_, *this));
 }
 
 void Kanban::Board::RemoveColumn(Column& column)
@@ -163,7 +167,7 @@ void Kanban::Board::SetActiveColumn(Column* column, UserInputMode mode)
     userInputMode = mode;
 }
 
-void Kanban::Board::SetTaskAsTaken(Task& task)
+void Kanban::Board::SetTaskAsTaken(const Task& task)
 {
     if (task.getId().has_value())
     {
@@ -262,13 +266,13 @@ void Kanban::Board::ReadUserInput(char c)
 }
 
 // todo: add functionality to delete tasks that were removed from TaskManager
-void Kanban::Board::Update(const sf::RenderWindow& target, const float deltaTime)
+void Kanban::Board::Update(const sf::RenderWindow& window, const float deltaTime)
 {
-    UpdateColumnValues(target);
-    UpdateScrollTexture(target, deltaTime);
+    UpdateColumnValues(window);
+    UpdateScrollTexture(window, deltaTime);
 
     for (Column* col : columns_)
-        col->Update(colWidth_, colHeight_, deltaTime);
+        col->Update(window.getSize().x, colWidth_, colHeight_, deltaTime);
 
     // add new tasks
     auto allTasks = taskManager_->getAllTasks();
@@ -311,7 +315,9 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
         if (icons_[i]->CheckCollision(static_cast<sf::Vector2f>(point)))
         {
             if (icons_[i]->GetType() == Icon::bell)
-                windowPromptManager_->ShowReminderPrompt();
+                windowPromptManager_->ShowPrompt(WindowPrompt::Type::ReminderPrompt);
+            else if (icons_[i]->GetType() == Icon::dots)
+                windowPromptManager_->ShowPrompt(WindowPrompt::Type::WindowResizePrompt);
 
             return true;
         }

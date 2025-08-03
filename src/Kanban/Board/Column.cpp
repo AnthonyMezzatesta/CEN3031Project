@@ -19,7 +19,7 @@ using namespace EventSystem;
 
 // ===================================== Private Functions =====================================
 
-void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::ActionEnum& action)
+void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, const Observer::ActionEnum& action)
 {
     if (event == Observer::EventEnum::Action)
     {
@@ -36,7 +36,7 @@ void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observe
     }
 }
 
-void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& task)
+void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, const Task& task)
 {
     if (event == Observer::EventEnum::TransferTask)
     {
@@ -45,17 +45,15 @@ void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& tas
     }
 }
 
-void Kanban::Column::UpdateValues(float height)
+void Kanban::Column::UpdateValues(float width, float height)
 {
     columnHeight_ = height;
-    int taskCount = tasks_.size();
-    int iconHeight = Icon::GetDefaultWidth() * 2;
-    yHeader_ = iconHeight * 1.5f;
-    texturePaddingY_ = yHeader_ * 2;
-    taskHeight_ = (columnHeight_ - texturePaddingY_) / (tasksPerColummn_ + 1.0f);
+    taskWidth_ = width * 0.75f;
+    taskOffsetX_ = width / 8.0f;
+    headerHeight_ = icons_[0]->GetWidth() * 1.5f;
+    taskHeight_ = (columnHeight_ - headerHeight_) / (tasksPerColummn_ + 1.0f);
     taskPaddingY_ = taskHeight_ / (tasksPerColummn_ + 1.0f);
-    float extraTaskCount = std::max(taskCount - tasksPerColummn_, 0);
-    textureHeight_ = columnHeight_ + (taskPaddingY_ + taskHeight_) * extraTaskCount;
+    defaultTextureHeight_ = columnHeight_ - (taskPaddingY_ + headerHeight_);
 }
 
 void Kanban::Column::UpdateRenderTexture(const float width)
@@ -76,7 +74,8 @@ void Kanban::Column::UpdateScrollTexture(const float columnWidth, const float de
     float maxStartY = defaultStartY + maxDistY;
 
     bool enableScrollBar = tasks_.size() > tasksPerColummn_;
-    float scrollBarWidthRatio = columnHeight_ / static_cast<float>(textureHeight_);
+    float textureHeight_ = defaultTextureHeight_ + maxDistY;
+    float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight_;
     sf::Vector2u textureSize(columnWidth, textureHeight_);
 
     scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio,
@@ -94,17 +93,16 @@ void Kanban::Column::RenderStaticDetails(sf::Vector2f position, sf::Vector2f siz
 
     // draw column title
     int titleWidth = size.x;
-    int titleHeight = yHeader_;
+    int titleHeight = headerHeight_;
     sf::Vector2f textSize(titleWidth, titleHeight);
     Utilities::DrawText(textureStatic_, text_, textSize, {}, name_, titleHeight / 2, Utilities::textColor);
 
     RenderIcons(textureStatic_, {}, size.x);
 
     // draw scroll bar
-    float taskWidth = size.x * 0.75f;
-    int taskStartY = yHeader_ + taskPaddingY_;
+    int taskStartY = headerHeight_ + taskPaddingY_;
     sf::Vector2f barPos(size.x, taskStartY);
-    sf::Vector2f barSize(columnHeight_ - taskStartY, (size.x - taskWidth)/4.f);
+    sf::Vector2f barSize(defaultTextureHeight_ - taskPaddingY_, (size.x - taskWidth_)/4.f);
     scrollTexture_.DrawScrollBar(textureStatic_, barPos, barSize, 90);
 
     transformStatic_ = sf::Transform::Identity;
@@ -112,6 +110,30 @@ void Kanban::Column::RenderStaticDetails(sf::Vector2f position, sf::Vector2f siz
 
     textureStatic_.display();
     target.draw(sf::Sprite(textureStatic_.getTexture()), transformStatic_);
+}
+
+void Kanban::Column::RenderDynamicDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target)
+{
+    auto& textureDynamic = scrollTexture_.GetTexture();
+    textureDynamic.clear(sf::Color::Transparent);
+
+    if (!tasks_.empty())
+    {
+        float borderPaddingY = taskPaddingY_;
+        for (unsigned int i = 0; i < tasks_.size(); i++)
+        {
+            float yOffset = borderPaddingY + (taskPaddingY_ + taskHeight_) * i;
+            tasks_[i]->Draw(sf::Vector2f(taskOffsetX_, yOffset),
+                            sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
+        }
+    }
+
+    transformDynamic_ = sf::Transform::Identity; // reset
+    transformDynamic_.translate(position.x, position.y + headerHeight_);
+
+    // draw column texture
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight_);
+    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
 }
 
 void Kanban::Column::ClearSelectedTask()
@@ -125,13 +147,10 @@ void Kanban::Column::ClearSelectedTask()
 
 // ====================================== Public Functions ======================================
 
-Kanban::Column::Column(const string& name, sf::Vector2f initSize,
+Kanban::Column::Column(const string& name,
     WindowPromptManager& windowPromptManager, Kanban::Board& board) :
     name_(name), actionObserver_(this), taskObserver_(this)
 {
-    UpdateValues(initSize.y);
-    UpdateRenderTexture(initSize.x);
-
     font_.loadFromFile(Utilities::fontPath);
     text_.setFont(font_);
     icons_.push_back(new Icon(Icon::Type::plus));
@@ -234,9 +253,15 @@ void Kanban::Column::ProcessMouseMove(sf::Vector2f mousePosGlobal)
     scrollTexture_.ProcessMouseMove(localPoint);
 }
 
-void Kanban::Column::Update(const float columnWidth, const float columnHeight, const float deltaTime)
+void Kanban::Column::Update(const float screenWidth, const float columnWidth, const float columnHeight, const float deltaTime)
 {
-    UpdateValues(columnHeight);
+    for (auto* icon : icons_)
+        icon->Update(screenWidth);
+
+    for (auto* card : tasks_)
+        card->UpdateIcons(screenWidth);
+
+    UpdateValues(columnWidth, columnHeight);
     UpdateRenderTexture(columnWidth);
     UpdateScrollTexture(columnWidth, deltaTime);
 }
@@ -302,28 +327,7 @@ void Kanban::Column::Render(sf::Vector2f position, sf::Vector2f size, sf::Render
     // and translate what we draw to global space
     // then when doing collision detection, we convert from global space to local
 
-    auto& textureDynamic = scrollTexture_.GetTexture();
-    textureDynamic.clear(sf::Color::Transparent);
 
     RenderStaticDetails(position, size, target);
-
-    if (!tasks_.empty())
-    {
-        float taskWidth = size.x * 0.75f;
-        float taskOffsetX = size.x / 8.0f;
-        float borderPaddingY = taskPaddingY_;
-        for (unsigned int i = 0; i < tasks_.size(); i++)
-        {
-            float yOffset = borderPaddingY + (taskPaddingY_ + taskHeight_) * i;
-            tasks_[i]->Draw(sf::Vector2f(taskOffsetX, yOffset),
-                            sf::Vector2f(taskWidth, taskHeight_), {}, textureDynamic);
-        }
-    }
-
-    transformDynamic_ = sf::Transform::Identity; // reset
-    transformDynamic_.translate(position.x, position.y + yHeader_);
-
-    // draw column texture
-    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, columnHeight_ - yHeader_);
-    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
+    RenderDynamicDetails(position, size, target);
 }

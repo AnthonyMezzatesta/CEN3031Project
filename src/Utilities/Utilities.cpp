@@ -4,6 +4,9 @@
 using std::string;
 
 // redeclaring static variable
+int Utilities::windowStyle = sf::Style::Titlebar | sf::Style::Close;
+string Utilities::windowTitle = "CyclePlanner";
+sf::Vector2i Utilities::defaultWindowSize = sf::Vector2i(1280, 720);
 string Utilities::fontPath = "../../resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf";
 sf::Color Utilities::fill0 = sf::Color(30,31,34,255);
 sf::Color Utilities::fill1 = sf::Color(43,45,48);

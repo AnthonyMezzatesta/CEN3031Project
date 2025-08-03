@@ -5,7 +5,8 @@
 #include "TaskDetailsPrompt.h"
 using namespace std;
 
-TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target)
+TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler) :
+    WindowPrompt(windowResizeHandler)
 {
     type_ = WindowPrompt::Type::SettingsPrompt;
     view_ = target.getDefaultView();

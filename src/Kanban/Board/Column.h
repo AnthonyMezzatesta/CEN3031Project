@@ -23,7 +23,7 @@ namespace Kanban
 
     class Column final : private EventSystem::TaskSubject
     {
-        const static int tasksPerColummn_ = 5;
+        const static int tasksPerColummn_ = 6;
         string name_;
         TaskCard* selectedCard_;
         std::vector<TaskCard*> tasks_;
@@ -39,37 +39,39 @@ namespace Kanban
         Board* board_;
         WindowPromptManager* windowPromptManager_;
 
-        float yHeader_;
+        float headerHeight_;
+        float taskWidth_;
+        float taskOffsetX_;
         float taskHeight_;
         float taskPaddingY_;
         unsigned int columnHeight_;
-        unsigned int textureHeight_;
-        float texturePaddingY_;
+        float defaultTextureHeight_;
 
         ScrollableTexture scrollTexture_;
 
         struct ActionObserver : public DataObserver<Observer::ActionEnum>
         {
             Column* column_;
-            void OnNotify(Observer::EventEnum event, Observer::ActionEnum& action) override;
+            void OnNotify(Observer::EventEnum event, const Observer::ActionEnum& action) override;
             ActionObserver(Column* column) : column_(column) {}
         } actionObserver_;
         struct TaskObserver : public DataObserver<Task>
         {
             Column* column_;
-            void OnNotify(Observer::EventEnum event, Task& tasks) override;
+            void OnNotify(Observer::EventEnum event, const Task& tasks) override;
             TaskObserver(Column* column) : column_(column) {}
         } taskObserver_;
         friend ActionObserver;
         friend TaskObserver;
 
-        void UpdateValues(float height);
+        void UpdateValues(float width, float height);
         void UpdateRenderTexture(const float width);
         void UpdateScrollTexture(const float width, const float deltaTime);
         void RenderStaticDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target);
+        void RenderDynamicDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target);
         void ClearSelectedTask();
     public:
-        Column(const string& name, sf::Vector2f initSize, WindowPromptManager& windowPromptManager, Kanban::Board& board);
+        Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();
 
         // bool AddTask(Task& task);
@@ -81,7 +83,7 @@ namespace Kanban
 
         void ProcessLeftClickReleased();
         void ProcessMouseMove(sf::Vector2f mousePosGlobal);
-        void Update(const float columnWidth, const float columnHeight, const float deltaTime);
+        void Update(const float screenWidth, const float columnWidth, const float columnHeight, const float deltaTime);
 
         bool CheckCollision(sf::Vector2f point);
         void RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos, int colWidth);

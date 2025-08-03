@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include "WindowResizeHandler.h"
 #include "../Board/Board.h"
 
 namespace Kanban {
@@ -13,8 +14,11 @@ using std::endl;
 class WindowPrompt
 {
 public:
-    enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt, ReminderPrompt };
+    enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt, ReminderPrompt, WindowResizePrompt };
 
+    WindowPrompt(WindowResizeHandler& windowResizeHandler) : windowResizeObserver_(view_) {
+        windowResizeHandler.AddObserver(windowResizeObserver_);
+    }
     virtual ~WindowPrompt() {}
 
     virtual void Update(const float deltaTime) = 0;
@@ -35,4 +39,6 @@ protected:
     sf::View view_;
     sf::FloatRect viewPortLeft_  = sf::FloatRect(0.0f, 0.0f, 0.5f, 0.5f);
     sf::FloatRect viewPortRight_ = sf::FloatRect(0.5f, 0.0f, 0.5f, 0.5f);
+private:
+    EventSystem::WindowResizeObserver windowResizeObserver_;
 };

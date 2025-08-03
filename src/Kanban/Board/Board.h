@@ -6,7 +6,6 @@
 #include <unordered_set>
 #include <SFML/Graphics.hpp>
 #include "Column.h"
-#include "../GUIElement/ScrollBar.h"
 #include "../../include/Task.h"
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "TaskManager.h"
@@ -24,23 +23,6 @@ namespace Kanban
 
     class Board
     {
-        struct ReminderIconObserver final : public EventSystem::BasicObserver
-        {
-            Icon* icon_;
-            ReminderIconObserver(Icon* icon = nullptr) : icon_(icon) {}
-        protected:
-            void OnNotify(EventSystem::Observer::EventEnum event) override
-            {
-                if (!icon_)
-                    return;
-
-                if (event == EventSystem::Observer::Activate)
-                    icon_->ToggleSecondLayer(true);
-                else if (event == EventSystem::Observer::Deactivate)
-                    icon_->ToggleSecondLayer(false);
-            }
-        } reminderIconObserver_;
-
         class AddColumnButton final : public GUIElement
         {
             Icon plusIcon;

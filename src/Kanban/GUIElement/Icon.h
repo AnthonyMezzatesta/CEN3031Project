@@ -2,15 +2,15 @@
 #include <string>
 #include <Utilities.h>
 #include <SFML/Graphics.hpp>
-
 #include "Observer.h"
 #include "WindowResizeHandler.h"
 
-struct  Icon
+struct Icon final : public EventSystem::BasicObserver
 {
     enum Type { plus, overdue, dots, minus, bell, bellDot };
     Icon(Type type, float scaleFactor = 1, sf::Color color = Utilities::icon1, sf::Color accent = Utilities::priorityHigh);
 
+    void OnNotify(EventEnum event) override;
     void Update(int screenWidth);
 
     void Draw(int x, int y, sf::RenderTarget& target);
@@ -20,8 +20,7 @@ struct  Icon
     // int GetWidth() const { return sideLenPixel; }
     int GetWidth() const { return sideLenPixel * 2; } // accounting for border
     Type GetType() const { return type; }
-    void ToggleSecondLayer(bool value) { drawSecondLayer_ = value; }
-protected:
+private:
     const static int defaultSideLenPixel = 16;
     int sideLenPixel;
     float defaultScaleRatio;
@@ -33,4 +32,5 @@ protected:
     std::string iconsPath = "../../resources/Icons.png";
 
     void SetScale(float factor);
+    void ToggleSecondLayer(bool value) { drawSecondLayer_ = value; }
 };

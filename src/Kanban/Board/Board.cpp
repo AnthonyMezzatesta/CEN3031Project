@@ -119,7 +119,6 @@ Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager,
 {
     windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager, windowResizeHandler);
     taskManager_ = &taskManager;
-    reminderManager.AddObserver(reminderIconObserver_);
     windowResizeHandler.AddObserver(windowResizeObserver_);
 
     UpdateColumnValues(target);
@@ -128,8 +127,9 @@ Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager,
     {
         icons_.push_back(new Icon(iconArray[i]));
 
+        // link notification bell icon with reminder manager
         if (iconArray[i] == Icon::Type::bell)
-            reminderIconObserver_.icon_ = icons_[i];
+            reminderManager.AddObserver(*icons_[i]);
     }
 
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));

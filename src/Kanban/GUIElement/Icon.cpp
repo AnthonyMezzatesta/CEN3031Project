@@ -25,6 +25,13 @@ Icon::Icon(Type type, float scaleFactor, sf::Color color, sf::Color accent) : si
     sideLenPixel *= defaultScaleRatio;
 }
 
+void Icon::OnNotify(EventEnum event) {
+    if (event == EventEnum::Activate)
+        ToggleSecondLayer(true);
+    else if (event == EventEnum::Deactivate)
+        ToggleSecondLayer(false);
+}
+
 void Icon::Update(int screenWidth) {
     // get ratio from default to projected scaleFactor
     float scaleFactor = screenWidth / static_cast<float>(Utilities::defaultWindowSize.x);

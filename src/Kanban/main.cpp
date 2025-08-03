@@ -6,8 +6,10 @@
 #include "TaskManager.h"
 #include "Task.h"
 #include "WindowResizeHandler.h"
-#include "Board/Board.h"
+#include "../OutsideBoardThing.h"
+#include "../GUIStateMachine/GUIStateMachine.h"
 #include "../ReminderManager/ReminderManager.h"
+#include "Board/Board.h"
 
 using namespace std;
 using namespace Kanban;
@@ -136,11 +138,13 @@ int main()
 
     WindowResizeHandler windowResizeHandler;
     ReminderManager reminderManager(taskManager);
-    Board board(window, taskManager, reminderManager, windowResizeHandler);
+    WindowPromptManager windowPromptManager(window, reminderManager, windowResizeHandler);
+    OutsideBoardThing outsideBoardThing(reminderManager, windowPromptManager);
+    Board board(window, taskManager, windowResizeHandler, windowPromptManager);
 
-    board.AddColumn("todo");
-    board.AddColumn("wip");
-    board.AddColumn("done");
+    GUIStateMachine guiStateMachine;
+    guiStateMachine.AddState(&board);
+    guiStateMachine.SwitchState(board.GetStateType());
 
     while (window.isOpen())
     {
@@ -156,19 +160,27 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
                     sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-                    board.CheckCollision(pixelPos, window);
+
+                    if (outsideBoardThing.CheckCollision(pixelPos, window))
+                        continue;
+                    if (windowPromptManager.CheckCollision(pixelPos, window))
+                        continue;
+                    guiStateMachine.GetCurrentState()->CheckCollision(pixelPos, window);
                 }
             }
             if (event.type == sf::Event::MouseButtonReleased)
             {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    board.ProcessLeftClickReleased();
+                    windowPromptManager.ProcessLeftClickReleased();
+                    guiStateMachine.GetCurrentState()->ProcessLeftClickReleased();
                 }
             }
             if (event.type == sf::Event::MouseMoved)
             {
-                board.ProcessMouseMove(sf::Vector2i(event.mouseMove.x, event.mouseMove.y), window);
+                sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
+                windowPromptManager.ProcessMouseMove(mousePos, window);
+                guiStateMachine.GetCurrentState()->ProcessMouseMove(mousePos, window);
             }
             if (event.type == sf::Event::TextEntered)
             {
@@ -176,7 +188,7 @@ int main()
                 if (event.text.unicode < 127)
                 {
                     char c = static_cast<char>(event.text.unicode);
-                    board.ReadUserInput(c);
+                    guiStateMachine.GetCurrentState()->ReadUserInput(c);
                 }
             }
         }
@@ -187,10 +199,13 @@ int main()
         reminderManager.Update();
 
         // update UI/GUI
-        board.Update(window, elapsedTime.asSeconds());
+        guiStateMachine.GetCurrentState()->Update(window, elapsedTime.asSeconds());
+        windowPromptManager.UpdatePrompts(elapsedTime.asSeconds());
 
         // draw
-        board.Draw(window);
+        guiStateMachine.GetCurrentState()->Draw(window);
+        outsideBoardThing.Draw(window);
+        windowPromptManager.Draw(window);
 
         window.display();
     }

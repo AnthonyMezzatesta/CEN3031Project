@@ -12,7 +12,7 @@
 #include "WindowPrompt.h"
 #include "WindowResizePrompt.h"
 #include "../../ReminderManager/ReminderManager.h"
-#include "../Board/Board.h"
+
 using namespace EventSystem;
 
 class WindowPromptManager
@@ -34,7 +34,7 @@ class WindowPromptManager
             }
 
             prompt->SetTask(task);
-            prompt->SetActive(true);
+            prompt->Activate();
         }
         TaskObserver(WindowPromptManager* windowPromptManager) : windowPromptManager_(windowPromptManager) {}
     };
@@ -45,16 +45,16 @@ class WindowPromptManager
 public:
     TaskObserver taskObserver_;
 
-    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board, ReminderManager& reminderManager,
+    WindowPromptManager(const sf::RenderWindow& window, ReminderManager& reminderManager,
         WindowResizeHandler& windowResizeHandler) : taskObserver_(this)
     {
         activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt(windowResizeHandler);
-        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board, windowResizeHandler);
-        prompts_[WindowPrompt::Type::SettingsPrompt] = new ColumnSettingsPrompt(target, windowResizeHandler);
-        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, windowResizeHandler);
-        prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(target, reminderManager, windowResizeHandler);
-        prompts_[WindowPrompt::Type::WindowResizePrompt] = new WindowResizePrompt(target, board, windowResizeHandler);
+        prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(window, windowResizeHandler);
+        prompts_[WindowPrompt::Type::SettingsPrompt] = new ColumnSettingsPrompt(window, windowResizeHandler);
+        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(window, windowResizeHandler);
+        prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(window, reminderManager, windowResizeHandler);
+        prompts_[WindowPrompt::Type::WindowResizePrompt] = new WindowResizePrompt(window, windowResizeHandler);
 
         UpdatePrompts(0.f);
     }
@@ -66,7 +66,7 @@ public:
     }
 
     template <typename T>
-    void OnNotify(Observer::EventEnum event, Observer::PromptEnum promptType, DataObserver<T>& observer)
+    void OnNotify(Observer::EventEnum event, Observer::PromptEnum promptType, DataObserver<T>& observer, vector<Task> tasks = {})
     {
         if (!prompts_[activeWindow]->IsActive())
             activeWindow = WindowPrompt::Type::Default;
@@ -92,7 +92,8 @@ public:
 
                 activeWindow = WindowPrompt::AddTaskPrompt;
                 prompt->AddObserver(*o);
-                prompt->SetActive(true);
+                prompt->Activate();
+                prompt->UpdateTaskElements(tasks);
             }
         }
         else if (promptType == Observer::PromptEnum::Settings)
@@ -115,18 +116,18 @@ public:
 
                 activeWindow = WindowPrompt::SettingsPrompt;
                 prompt->AddObserver(*o);
-                prompt->SetActive(true);
+                prompt->Activate();
             }
         }
     }
 
     void ShowPrompt(WindowPrompt::Type type)
     {
-        if (!prompts_[activeWindow]->IsActive())
-            activeWindow = WindowPrompt::Type::Default;
+        if (prompts_[activeWindow]->IsActive())
+            prompts_[activeWindow]->Deactivate();
 
         activeWindow = type;
-        prompts_[activeWindow]->SetActive(true);
+        prompts_[activeWindow]->Activate();
     }
 
     WindowPrompt* GetPrompt(const WindowPrompt::Type type)

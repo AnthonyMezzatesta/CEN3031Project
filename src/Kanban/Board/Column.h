@@ -17,8 +17,11 @@ using std::runtime_error;
 using std::cout;
 using std::endl;
 
+class WindowPromptManager;
+
 namespace Kanban
 {
+    class Board;
     using namespace EventSystem;
 
     class Column final : private EventSystem::TaskSubject
@@ -71,7 +74,7 @@ namespace Kanban
         void RenderDynamicDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target);
         void ClearSelectedTask();
     public:
-        Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board);
+        Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board* board);
         ~Column();
 
         // bool AddTask(Task& task);

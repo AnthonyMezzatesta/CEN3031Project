@@ -28,7 +28,7 @@ public:
 
     // todo: add option to get tasks by filter
     void Update(const float deltaTime) override;
-    void Deactivate();
+    void Deactivate() override;
 
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
     void Draw(sf::RenderTarget& target) override;

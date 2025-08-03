@@ -18,7 +18,7 @@ namespace Kanban
             Utilities::DrawText(target, textObj, size, basePos, task.getName(), size.y / 4, Utilities::textColor);
         }
     public:
-        TaskOption(Task& task) : GUIElement(Utilities::fill1), task(task) {}
+        TaskOption(const Task& task) : GUIElement(Utilities::fill1), task(task) {}
 
         Task& GetTask() { return task; }
         std::optional<int> getId() { return task.getId(); }

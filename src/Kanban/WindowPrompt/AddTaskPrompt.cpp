@@ -93,14 +93,13 @@ void AddTaskPrompt::DrawDynamicElements(sf::RenderTarget& target)
     scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
 }
 
-AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board,
-    WindowResizeHandler& windowResizeHandler) : WindowPrompt(windowResizeHandler) {
+AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler) :
+    WindowPrompt(windowResizeHandler) {
     if (!font_.loadFromFile(Utilities::fontPath))
         throw std::runtime_error("could not load font");
     text_.setFont(font_);
 
     type_ = WindowPrompt::Type::AddTaskPrompt;
-    board_ = &board;
     view_ = target.getDefaultView();
     view_.setViewport(viewPortLeft_);
     bg.setFillColor(Utilities::fill2);
@@ -108,6 +107,16 @@ AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& boar
 
 AddTaskPrompt::~AddTaskPrompt() {
     ClearTaskElements();
+}
+
+void AddTaskPrompt::UpdateTaskElements(const vector<Task>& tasks) {
+    // update window prompt with currently available tasks
+    ClearTaskElements();
+    for (const Task& task : tasks)
+    {
+        if (task.getId().has_value())
+            taskElements_[task.getId().value()] = new Kanban::TaskOption(task);
+    }
 }
 
 void AddTaskPrompt::ClearTaskElements() {
@@ -122,23 +131,10 @@ void AddTaskPrompt::Update(const float deltaTime) {
 
     UpdateValues();
     UpdateScrollTexture(deltaTime);
-
-    // update window prompt with currently available tasks
-    if (!isActive)
-    {
-        ClearTaskElements();
-        auto allTasks = board_->GetAvailableTasks();
-        for (Task& task : allTasks)
-        {
-            if (task.getId().has_value())
-                taskElements_[task.getId().value()] = new Kanban::TaskOption(task);
-        }
-    }
 }
 
 void AddTaskPrompt::Deactivate() {
-    isActive = false;
-    isVisible = false;
+    WindowPrompt::Deactivate();
     RemoveAllObservers();
 }
 

@@ -93,59 +93,36 @@ void Kanban::Board::DrawScrollBar(sf::RenderWindow& window)
     window.setView(window.getDefaultView());
 }
 
-void Kanban::Board::DrawIcons(sf::RenderWindow& window)
-{
-    if (icons_.empty())
-        return;
 
-    int iconCount = icons_.size();
-    int iconWidth = icons_[0]->GetWidth();
-    int y = iconWidth / 2;
-    int iconPaddingX = iconWidth / 2;
-    auto baseX = window.getSize().x - iconWidth - iconPaddingX;
-    for (int i = 0; i < iconCount; i++)
-    {
-        int x = baseX - (iconWidth + iconPaddingX) * (iconCount - i - 1);
-        icons_[i]->Draw(x, y, window );
-    }
-}
 
 // ====================================== Public Functions ======================================
 
 Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager,
-    ReminderManager& reminderManager, WindowResizeHandler& windowResizeHandler) :
-    boardView(target.getDefaultView()), windowResizeObserver_(boardView),
+    WindowResizeHandler& windowResizeHandler, WindowPromptManager& windowPromptManager) :
+    GUIState(StateEnum::Board), boardView(target.getDefaultView()), windowResizeObserver_(boardView),
     activeColumn(nullptr), userInputMode(UserInputMode::Default)
 {
-    windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager, windowResizeHandler);
     taskManager_ = &taskManager;
+    windowPromptManager_ = &windowPromptManager;
     windowResizeHandler.AddObserver(windowResizeObserver_);
 
-    UpdateColumnValues(target);
+    // UpdateColumnValues(target);
 
-    for (unsigned int i = 0; i < std::size(iconArray); i++)
-    {
-        icons_.push_back(new Icon(iconArray[i]));
-
-        // link notification bell icon with reminder manager
-        if (iconArray[i] == Icon::Type::bell)
-            reminderManager.AddObserver(*icons_[i]);
-    }
+    AddColumn("todo");
+    AddColumn("wip");
+    AddColumn("done");
 
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
 }
 
 Kanban::Board::~Board() {
-    delete windowPromptManager_;
-    for (unsigned int i = 0; i < icons_.size(); i++)
-        delete icons_[i];
     for (unsigned int i = 0; i < columns_.size(); i++)
         delete columns_[i];
 }
 
 void Kanban::Board::AddColumn(const string& name = "title")
 {
-    columns_.push_back(new Column(name, *windowPromptManager_, *this));
+    columns_.push_back(new Column(name, *windowPromptManager_, this));
 }
 
 void Kanban::Board::RemoveColumn(Column& column)
@@ -202,8 +179,6 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
 
 void Kanban::Board::ProcessLeftClickReleased()
 {
-    windowPromptManager_->ProcessLeftClickReleased();
-
     if (!scrollTexture_.ProcessLeftClickReleased())
     {
         // OnPressed clears active column and sets a new one, if viable
@@ -226,8 +201,6 @@ void Kanban::Board::ProcessLeftClickReleased()
 
 void Kanban::Board::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
 {
-    windowPromptManager_->ProcessMouseMove(pixelPos, target);
-
     auto mousePos = target.mapPixelToCoords(pixelPos, boardView);
     if (scrollTexture_.ProcessMouseMove(mousePos))
         return;
@@ -281,8 +254,6 @@ void Kanban::Board::Update(const sf::RenderWindow& window, const float deltaTime
         if (task.getId().has_value() && taskIds_.find(task.getId().value()) == taskIds_.end())
             taskIds_[task.getId().value()] = Available;
     }
-
-    windowPromptManager_->UpdatePrompts(deltaTime);
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
@@ -300,27 +271,11 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
     if (scrollTexture_.CheckScrollBarCollision(mousePos))
         return true;
 
-    if (windowPromptManager_->CheckCollision(point, target))
-        return true;
-
     if (addColumnButton_.CheckCollision(mousePos))
     {
         cout << "adding column" << endl;
         AddColumn();
         return true;
-    }
-
-    for (unsigned int i = 0; i < icons_.size(); i++)
-    {
-        if (icons_[i]->CheckCollision(static_cast<sf::Vector2f>(point)))
-        {
-            if (icons_[i]->GetType() == Icon::bell)
-                windowPromptManager_->ShowPrompt(WindowPrompt::Type::ReminderPrompt);
-            else if (icons_[i]->GetType() == Icon::dots)
-                windowPromptManager_->ShowPrompt(WindowPrompt::Type::WindowResizePrompt);
-
-            return true;
-        }
     }
 
     for (unsigned int i = 0; i < columns_.size(); i++)
@@ -336,6 +291,4 @@ void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
     DrawScrollBar(window);
-    DrawIcons(window);
-    windowPromptManager_->Draw(window);
 }

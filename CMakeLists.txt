@@ -63,6 +63,9 @@ set(TEST_SOURCES
     tests/test_task_manager.cpp
     tests/test_user_manager.cpp
     tests/main.cpp
+        src/GUIStateMachine/GUIStateMachine.h
+        src/GUIStateMachine/GUIState.h
+        src/OutsideBoardThing.h
 )
 
 add_executable(RunTests ${SOURCES} ${TEST_SOURCES})

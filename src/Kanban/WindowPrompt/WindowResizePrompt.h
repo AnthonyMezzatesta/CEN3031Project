@@ -204,14 +204,13 @@ class WindowResizePrompt final : public WindowPrompt
         scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
     }
 public:
-    WindowResizePrompt(const sf::RenderWindow& target, Kanban::Board& board, WindowResizeHandler& windowResizeHandler) :
+    WindowResizePrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler) :
         WindowPrompt(windowResizeHandler), saveButton_("Save"), cancelButton_("Cancel") {
         if (!font_.loadFromFile(Utilities::fontPath))
             throw std::runtime_error("could not load font");
         text_.setFont(font_);
 
         type_ = WindowPrompt::Type::WindowResizePrompt;
-        board_ = &board;
         view_ = target.getDefaultView();
         view_.setViewport(viewPortLeft_);
         bg.setFillColor(Utilities::fill2);
@@ -239,12 +238,11 @@ public:
         UpdateScrollTexture(deltaTime);
     }
 
-    void Deactivate() {
+    void Deactivate() override {
+        WindowPrompt::Deactivate();
         if (selectedOption_)
             selectedOption_->Deselect();
         selectedOption_ = nullptr;
-        isActive = false;
-        isVisible = false;
     }
 
     void ProcessLeftClickReleased()

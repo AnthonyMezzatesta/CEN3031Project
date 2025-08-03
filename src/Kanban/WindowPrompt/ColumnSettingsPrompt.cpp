@@ -48,8 +48,7 @@ void ColumnSettingsPrompt::Update(const float deltaTime) {
 }
 
 void ColumnSettingsPrompt::Deactivate() {
-    isActive = false;
-    isVisible = false;
+    WindowPrompt::Deactivate();
     RemoveAllObservers();
 }
 

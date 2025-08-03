@@ -36,12 +36,6 @@ public:
         if (isActive) isVisible = true;
     }
 
-    void Deactivate()
-    {
-        isActive = false;
-        isVisible = false;
-    }
-
     void DrawColumn(DetailType type, sf::Vector2f size, sf::Vector2f basePos, vector<Task>& tasks, sf::RenderTarget& target)
     {
         string titleText;

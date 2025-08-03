@@ -2,17 +2,15 @@
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
-#include "TaskManager.h"
 #include "Task.h"
-#include "Column.h"
 #include "Board.h"
 #include "../GUIElement/GUIElement.h"
-#include "../GUIElement/ScrollBar.h"
 #include "../GUIElement/Icon.h"
 #include "../GUIElement/TaskCard.h"
 #include "../WindowPrompt/WindowPromptManager.h"
 #include "Utilities.h"
 #include "Subject.h"
+#include "Column.h"
 
 using namespace std;
 using namespace EventSystem;
@@ -148,7 +146,7 @@ void Kanban::Column::ClearSelectedTask()
 // ====================================== Public Functions ======================================
 
 Kanban::Column::Column(const string& name,
-    WindowPromptManager& windowPromptManager, Kanban::Board& board) :
+    WindowPromptManager& windowPromptManager, Kanban::Board* board) :
     name_(name), actionObserver_(this), taskObserver_(this)
 {
     font_.loadFromFile(Utilities::fontPath);
@@ -156,7 +154,7 @@ Kanban::Column::Column(const string& name,
     icons_.push_back(new Icon(Icon::Type::plus));
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
-    board_ = &board;
+    board_ = board;
     TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
     selectedCard_ = nullptr;
 }
@@ -216,7 +214,8 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
             windowPromptManager_->OnNotify(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
-                taskObserver_
+                taskObserver_,
+                board_->GetAvailableTasks()
             );
             break;
         case Icon::Type::dots:

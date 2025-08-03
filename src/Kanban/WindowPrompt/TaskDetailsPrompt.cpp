@@ -26,8 +26,7 @@ void TaskDetailsPrompt::Update(const float deltaTime)
 
 void TaskDetailsPrompt::Deactivate()
 {
-    isActive = false;
-    isVisible = false;
+    WindowPrompt::Deactivate();
     RemoveAllObservers();
 }
 

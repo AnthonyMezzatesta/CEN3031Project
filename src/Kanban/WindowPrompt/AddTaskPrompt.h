@@ -31,13 +31,14 @@ class AddTaskPrompt final : public WindowPrompt, public EventSystem::TaskSubject
     void DrawStaticElements(sf::RenderTarget& target);
     void DrawDynamicElements(sf::RenderTarget& target);
 public:
-    AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board, WindowResizeHandler& windowResizeHandler);
+    AddTaskPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler);
     ~AddTaskPrompt();
 
+    void UpdateTaskElements(const vector<Task>& tasks);
     void ClearTaskElements();
 
     void Update(const float deltaTime) override;
-    void Deactivate();
+    void Deactivate() override;
 
     void ProcessLeftClickReleased() override;
     void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) override;

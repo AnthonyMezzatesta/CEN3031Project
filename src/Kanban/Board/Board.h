@@ -5,11 +5,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <SFML/Graphics.hpp>
-#include "Column.h"
-#include "../../include/Task.h"
-#include "../WindowPrompt/WindowPromptManager.h"
+#include "Task.h"
 #include "TaskManager.h"
+#include "Column.h"
+#include "../WindowPrompt/WindowPromptManager.h"
 #include "WindowResizeHandler.h"
+#include "../../GUIStateMachine/GUIState.h"
 #include "../../ReminderManager/ReminderManager.h"
 #include "../GUIElement/ScrollableTexture.h"
 
@@ -21,7 +22,7 @@ namespace Kanban
 {
     class Column;
 
-    class Board
+    class Board final : public GUIState
     {
         class AddColumnButton final : public GUIElement
         {
@@ -55,19 +56,16 @@ namespace Kanban
         TaskManager* taskManager_;
         Column* activeColumn;
         vector<Kanban::Column*> columns_;
-        vector<Icon*> icons_;
-
-        Icon::Type iconArray[2] { Icon::Type::bell, Icon::Type::dots };
 
         void UpdateColumnValues(const sf::RenderWindow& window);
         void UpdateScrollTexture(const sf::RenderWindow& window, const float deltaTime);
         void DrawColumns(sf::RenderWindow& window);
         void DrawScrollBar(sf::RenderWindow& window);
-        void DrawIcons(sf::RenderWindow& window);
     public:
         enum UserInputMode { Default, ColumnName, MoveTask, ScrollBar };
 
-        Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager, WindowResizeHandler& windowResizeHandler);
+        Board(const sf::RenderWindow& target, TaskManager& taskManager,
+            WindowResizeHandler& windowResizeHandler, WindowPromptManager& windowPromptManager);
         ~Board();
 
         void AddColumn(const string& name);
@@ -77,13 +75,12 @@ namespace Kanban
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessLeftClickReleased();
-
-        void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target);
-        void ReadUserInput(char c);
-        void Update(const sf::RenderWindow& window, const float deltaTime);
-        bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
-        void Draw(sf::RenderWindow& window);
+        void ProcessLeftClickReleased() override;
+        void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) override;
+        void ReadUserInput(char c) override;
+        void Update(const sf::RenderWindow& window, const float deltaTime) override;
+        bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target) override;
+        void Draw(sf::RenderWindow& window) override;
     private:
         UserInputMode userInputMode;
         string userInputStr;

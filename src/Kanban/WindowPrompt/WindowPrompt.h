@@ -2,11 +2,6 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "WindowResizeHandler.h"
-#include "../Board/Board.h"
-
-namespace Kanban {
-    class Board;
-}
 
 using std::cout;
 using std::endl;
@@ -30,12 +25,15 @@ public:
     Type GetType() const { return type_; }
     bool IsVisible() const { return isVisible; }
     bool IsActive() const { return isActive; }
-    virtual void SetActive(bool value) { isActive = value; }
+    virtual void Deactivate() {
+        isActive = false;
+        isVisible = false;
+    }
+    virtual void Activate() { isActive = true; }
 protected:
     Type type_ = Default;
     bool isVisible = false;
     bool isActive = false;
-    Kanban::Board* board_ = nullptr;
     sf::View view_;
     sf::FloatRect viewPortLeft_  = sf::FloatRect(0.0f, 0.0f, 0.5f, 0.5f);
     sf::FloatRect viewPortRight_ = sf::FloatRect(0.5f, 0.0f, 0.5f, 0.5f);

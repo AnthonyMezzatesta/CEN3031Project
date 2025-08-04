@@ -108,7 +108,10 @@ int main() {
     TaskDetailsPrompt* taskDetailsPrompt = dynamic_cast<TaskDetailsPrompt*>(
         board.windowPromptManager_->GetPrompt(WindowPrompt::Type::TaskDetailsPrompt));
 
-    Task* selectedTask = nullptr; // Add this variable at the top of main()
+    taskDetailsPrompt->SetTaskManager(&taskManager);
+    taskDetailsPrompt->SetBoard(&board);
+
+    Task* selectedTask = nullptr;
 
     // Add this immediately after creating the board (for testing)
     board.Update(); // Make sure prompts are updated once before first draw
@@ -139,12 +142,21 @@ int main() {
                         if (!bounds.contains(mousePos)) {
                             // Click outside - close prompt
                             taskDetailsPrompt->isVisible = false;
-                            taskDetailsPrompt->editMode_ = false;
+                            taskDetailsPrompt->ExitEditMode();
                             taskDetailsPrompt->isActive = false;
-                            std::cout << "Clicked outside, closing prompt" << std::endl;
                         } else {
                             // Click inside - handle normally
                             taskDetailsPrompt->HandleClick(pixelPos);
+                        }
+
+                        auto clickedTask = board.GetTaskAtPosition(pixelPos, window);
+                        if (clickedTask.has_value()) {
+                            selectedTask = new Task(clickedTask.value());
+                            taskDetailsPrompt->SetTask(clickedTask.value());
+                            taskDetailsPrompt->isVisible = true;
+                        } else {
+                            selectedTask = nullptr;
+                            board.CheckCollision(pixelPos, window);
                         }
                     } else {
                         // Try to get a task at the clicked position
@@ -153,7 +165,6 @@ int main() {
                             selectedTask = new Task(clickedTask.value()); // Store selected task
                             taskDetailsPrompt->SetTask(clickedTask.value());
                             taskDetailsPrompt->isVisible = true;
-                            std::cout << "Task selected: " << clickedTask.value().getName() << std::endl;
                         } else {
                             selectedTask = nullptr; // Clear selection
                             board.CheckCollision(pixelPos, window);
@@ -167,173 +178,29 @@ int main() {
                         selectedTask = new Task(clickedTask.value());
                         taskDetailsPrompt->SetTask(clickedTask.value());
                         taskDetailsPrompt->isVisible = true;
-                        taskDetailsPrompt->editMode_ = true;
-                        
-                        // Initialize input fields
-                        taskDetailsPrompt->nameInput_ = clickedTask.value().getName();
-                        taskDetailsPrompt->descriptionInput_ = clickedTask.value().getDescription();
-                        taskDetailsPrompt->deadlineInput_ = clickedTask.value().getDeadline();
-                        taskDetailsPrompt->priorityInput_ = clickedTask.value().getPriority();
-                        taskDetailsPrompt->deadlineInputStr_ = "";
-                        taskDetailsPrompt->currentDateSegment_ = TaskDetailsPrompt::DATE_YEAR; // Reset to year
-                        
-                        std::cout << "Right-clicked task - entering edit mode" << std::endl;
+                        taskDetailsPrompt->EnterEditMode();
                     }
                 }
             }
 
             if (event.type == sf::Event::KeyPressed) {
-                // Add detailed debug info but remove from final version
-                std::cout << "Key pressed: " << event.key.code << std::endl;
-                
-                // Enter edit mode with E key (when task details visible and not in edit mode)
-                if (taskDetailsPrompt->isVisible && !taskDetailsPrompt->editMode_ && 
+                // Enter edit mode with E key
+                if (taskDetailsPrompt->isVisible && !taskDetailsPrompt->IsEditMode() && 
                     event.key.code == sf::Keyboard::E) {
-                    std::cout << "E key pressed - entering edit mode" << std::endl;
-                    taskDetailsPrompt->editMode_ = true;
-                    taskDetailsPrompt->nameInput_ = taskDetailsPrompt->task_.getName();
-                    taskDetailsPrompt->descriptionInput_ = taskDetailsPrompt->task_.getDescription();
-                    taskDetailsPrompt->deadlineInput_ = taskDetailsPrompt->task_.getDeadline();
-                    taskDetailsPrompt->priorityInput_ = taskDetailsPrompt->task_.getPriority();
-                    taskDetailsPrompt->deadlineInputStr_ = "";
-                    taskDetailsPrompt->currentDateSegment_ = TaskDetailsPrompt::DATE_YEAR; // Reset to year
+                    taskDetailsPrompt->EnterEditMode();
                 }
-                // Save changes with Enter key (when in edit mode)
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->editMode_ && 
-                         event.key.code == sf::Keyboard::Return) {  // Use Return instead of Enter
-                    std::cout << "Enter pressed - saving changes" << std::endl;
-                    taskDetailsPrompt->SaveEdits(taskManager);
-                    taskDetailsPrompt->editMode_ = false;
-                    
-                    // Force update the board to reflect changes
-                    board.Update();
-                }
-                // Priority field arrow key handling
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->editMode_ && 
-                         taskDetailsPrompt->currentField_ == TaskDetailsPrompt::FIELD_PRIORITY) {
-                    if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Right) {
-                        // Cycle up through priorities
-                        switch (taskDetailsPrompt->priorityInput_) {
-                            case Task::Priority::None:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::Low;
-                                break;
-                            case Task::Priority::Low:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::Medium;
-                                break;
-                            case Task::Priority::Medium:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::High;
-                                break;
-                            case Task::Priority::High: // Wrap around
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::None;
-                                break;
-                        }
-                        std::cout << "Priority changed to: " << 
-                            Task::priorityToString(taskDetailsPrompt->priorityInput_) << std::endl;
-                    } 
-                    else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::Left) {
-                        // Cycle down through priorities
-                        switch (taskDetailsPrompt->priorityInput_) {
-                            case Task::Priority::None:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::High;
-                                break;
-                            case Task::Priority::Low:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::None;
-                                break;
-                            case Task::Priority::Medium:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::Low;
-                                break;
-                            case Task::Priority::High:
-                                taskDetailsPrompt->priorityInput_ = Task::Priority::Medium;
-                                break;
-                        }
-                        std::cout << "Priority changed to: " << 
-                            Task::priorityToString(taskDetailsPrompt->priorityInput_) << std::endl;
+                // Save changes with Enter key
+                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode() && 
+                         event.key.code == sf::Keyboard::Return) {
+                    bool saved = taskDetailsPrompt->SaveEdits();
+                    if (saved) {
+                        taskDetailsPrompt->ExitEditMode();
+                        board.Update();
                     }
                 }
-                // Date field arrow key handling
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->editMode_ && 
-                         taskDetailsPrompt->currentField_ == TaskDetailsPrompt::FIELD_DEADLINE) {
-                    
-                    // Use left/right arrows to select date segment
-                    if (event.key.code == sf::Keyboard::Left) {
-                        // Move to previous segment (with wrap-around)
-                        taskDetailsPrompt->currentDateSegment_ = static_cast<TaskDetailsPrompt::DateSegment>(
-                            (taskDetailsPrompt->currentDateSegment_ + TaskDetailsPrompt::DATE_SEGMENTS_COUNT - 1) 
-                            % TaskDetailsPrompt::DATE_SEGMENTS_COUNT
-                        );
-                        std::cout << "Selected date segment: " << taskDetailsPrompt->currentDateSegment_ << std::endl;
-                    }
-                    else if (event.key.code == sf::Keyboard::Right) {
-                        // Move to next segment (with wrap-around)
-                        taskDetailsPrompt->currentDateSegment_ = static_cast<TaskDetailsPrompt::DateSegment>(
-                            (taskDetailsPrompt->currentDateSegment_ + 1) % TaskDetailsPrompt::DATE_SEGMENTS_COUNT
-                        );
-                        std::cout << "Selected date segment: " << taskDetailsPrompt->currentDateSegment_ << std::endl;
-                    }
-                    
-                    // Use up/down arrows to change selected segment value
-                    else if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Down) {
-                        // Get current time point
-                        auto timePoint = taskDetailsPrompt->deadlineInput_;
-                        std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
-                        std::tm* tm = std::localtime(&time);
-                        
-                        // Determine increment direction
-                        int direction = (event.key.code == sf::Keyboard::Up) ? 1 : -1;
-                        
-                        // Modify the appropriate field
-                        switch (taskDetailsPrompt->currentDateSegment_) {
-                            case TaskDetailsPrompt::DATE_YEAR:
-                                tm->tm_year += direction; // Years since 1900
-                                break;
-                            case TaskDetailsPrompt::DATE_MONTH:
-                                tm->tm_mon = (tm->tm_mon + direction + 12) % 12; // 0-11
-                                break;
-                            case TaskDetailsPrompt::DATE_DAY:
-                                // Simple day increment, actual month length not checked
-                                tm->tm_mday = ((tm->tm_mday - 1 + direction + 31) % 31) + 1; // 1-31
-                                break;
-                            case TaskDetailsPrompt::DATE_HOUR:
-                                tm->tm_hour = (tm->tm_hour + direction + 24) % 24; // 0-23
-                                break;
-                            case TaskDetailsPrompt::DATE_MINUTE:
-                                tm->tm_min = (tm->tm_min + direction + 60) % 60; // 0-59
-                                break;
-                            case TaskDetailsPrompt::DATE_SECOND:
-                                tm->tm_sec = (tm->tm_sec + direction + 60) % 60; // 0-59
-                                break;
-                        }
-                        
-                        // Convert back to time_point
-                        std::time_t newTime = std::mktime(tm);
-                        taskDetailsPrompt->deadlineInput_ = std::chrono::system_clock::from_time_t(newTime);
-                        
-                        // Update the string representation
-                        taskDetailsPrompt->deadlineInputStr_ = Task::formatDeadline(taskDetailsPrompt->deadlineInput_);
-                        std::cout << "Updated date: " << taskDetailsPrompt->deadlineInputStr_ << std::endl;
-                    }
-                }
-                // Tab navigation between fields
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->editMode_ && event.key.code == sf::Keyboard::Tab) {
-                    // Cycle through fields
-                    switch (taskDetailsPrompt->currentField_) {
-                        case TaskDetailsPrompt::FIELD_NONE:
-                            taskDetailsPrompt->currentField_ = TaskDetailsPrompt::FIELD_NAME;
-                            break;
-                        case TaskDetailsPrompt::FIELD_NAME:
-                            taskDetailsPrompt->currentField_ = TaskDetailsPrompt::FIELD_DESCRIPTION;
-                            break;
-                        case TaskDetailsPrompt::FIELD_DESCRIPTION:
-                            taskDetailsPrompt->currentField_ = TaskDetailsPrompt::FIELD_DEADLINE;
-                            break;
-                        case TaskDetailsPrompt::FIELD_DEADLINE:
-                            taskDetailsPrompt->currentField_ = TaskDetailsPrompt::FIELD_PRIORITY;
-                            break;
-                        case TaskDetailsPrompt::FIELD_PRIORITY:
-                            taskDetailsPrompt->currentField_ = TaskDetailsPrompt::FIELD_NAME; // Back to first field
-                            break;
-                    }
-                    std::cout << "Tabbed to field: " << taskDetailsPrompt->currentField_ << std::endl;
+                // Handle other key presses in edit mode
+                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode()) {
+                    taskDetailsPrompt->HandleKeyPress(event.key.code);
                 }
                 else {
                     board.ProcessKeyEvent(event.key.code, elapsedTime.asSeconds());
@@ -341,58 +208,12 @@ int main() {
             }
 
             if (event.type == sf::Event::TextEntered) {
-                // Handle text input for task editing
-                if (taskDetailsPrompt->isVisible && taskDetailsPrompt->editMode_) {
-                    if (event.text.unicode < 128) { // ASCII characters only
+                if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode()) {
+                    if (event.text.unicode == 8) { // Backspace
+                        taskDetailsPrompt->HandleBackspace();
+                    } else if (event.text.unicode < 128) { // ASCII characters only
                         char inputChar = static_cast<char>(event.text.unicode);
-                        
-                        // Process based on which field is selected
-                        switch (taskDetailsPrompt->currentField_) {
-                            case TaskDetailsPrompt::FIELD_NAME:
-                                if (event.text.unicode == 8) { // Backspace
-                                    if (!taskDetailsPrompt->nameInput_.empty())
-                                        taskDetailsPrompt->nameInput_.pop_back();
-                                } else if (inputChar >= 32) { // Printable characters
-                                    taskDetailsPrompt->nameInput_ += inputChar;
-                                }
-                                break;
-                                
-                            case TaskDetailsPrompt::FIELD_DESCRIPTION:
-                                if (event.text.unicode == 8) { // Backspace
-                                    if (!taskDetailsPrompt->descriptionInput_.empty())
-                                        taskDetailsPrompt->descriptionInput_.pop_back();
-                                } else if (inputChar >= 32) { // Printable characters
-                                    taskDetailsPrompt->descriptionInput_ += inputChar;
-                                }
-                                break;
-                
-                            // Handle deadline field
-                            case TaskDetailsPrompt::FIELD_DEADLINE:
-                            {
-                                // Initialize deadlineStr from the current value if it's empty
-                                if (taskDetailsPrompt->deadlineInputStr_.empty()) {
-                                    taskDetailsPrompt->deadlineInputStr_ = Task::formatDeadline(taskDetailsPrompt->deadlineInput_);
-                                }
-                                
-                                if (event.text.unicode == 8) { // Backspace
-                                    if (!taskDetailsPrompt->deadlineInputStr_.empty())
-                                        taskDetailsPrompt->deadlineInputStr_.pop_back();
-                                } else if ((inputChar >= '0' && inputChar <= '9') || 
-                                          inputChar == '-' || inputChar == ' ' || inputChar == ':') {
-                                    taskDetailsPrompt->deadlineInputStr_ += inputChar;
-                                }
-                                
-                                // Try to parse back to a time_point
-                                try {
-                                    taskDetailsPrompt->deadlineInput_ = Task::parseDeadline(taskDetailsPrompt->deadlineInputStr_);
-                                } catch (...) {
-                                    // Keep the old value if parsing fails
-                                }
-                                break;
-                            }
-                
-                            // We'll handle FIELD_PRIORITY with arrow keys, not text input
-                        }
+                        taskDetailsPrompt->HandleTextInput(inputChar);
                     }
                 } else {
                     // Existing text entry logic for column names, etc.
@@ -407,18 +228,6 @@ int main() {
         // Update and draw outside the event loop
         board.Update();
 
-        // Add this outside the event loop, right before the drawing code
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::F5) && taskDetailsPrompt->isVisible) {
-            std::cout << "F5 - TOGGLE EDIT MODE" << std::endl;
-            taskDetailsPrompt->editMode_ = !taskDetailsPrompt->editMode_;
-            if (taskDetailsPrompt->editMode_) {
-                taskDetailsPrompt->nameInput_ = taskDetailsPrompt->task_.getName();
-                taskDetailsPrompt->descriptionInput_ = taskDetailsPrompt->task_.getDescription();
-                taskDetailsPrompt->deadlineInput_ = taskDetailsPrompt->task_.getDeadline();
-                taskDetailsPrompt->priorityInput_ = taskDetailsPrompt->task_.getPriority();
-            }
-        }
-
         window.clear(sf::Color::Black);
         board.DrawBoard(window);
         window.setView(window.getDefaultView());
@@ -429,3 +238,9 @@ int main() {
 
     return 0;
 }
+
+// TODO:
+// Task Metrics w/ GUI
+
+//show general statistics of tasks. E.g. task completion rate, percentage of tasks submitted on time, etc.
+//and a way to filter which tasks are shown based on given criteria

@@ -47,6 +47,8 @@ set (SFML_SOURCES
         src/ReminderManager/ReminderManager.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
+        src/Kanban/WindowPrompt/TaskEdit.cpp        
+        src/Kanban/WindowPrompt/TaskEdit.h 
 )
 
 # Executables

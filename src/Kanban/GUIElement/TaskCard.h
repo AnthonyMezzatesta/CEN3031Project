@@ -27,5 +27,9 @@ namespace Kanban
         std::optional<int> GetId() const { return task_.getId(); }
         bool ContainsPoint(const sf::Vector2f& point) const;
         Task GetTask() const { return task_; }
+        
+        void UpdateTask(const Task& updatedTask) { 
+            task_ = updatedTask; 
+        }
     };
 }

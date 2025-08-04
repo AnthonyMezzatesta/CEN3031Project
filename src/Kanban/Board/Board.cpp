@@ -246,3 +246,40 @@ void Kanban::Board::DrawBoard(sf::RenderWindow& window)
 {
     DrawColumns(window);
 }
+
+// Added to fix segmentation fault (core dumped) crash when deleting an edited task
+void Kanban::Board::RefreshTaskCards() {
+    // Get all updated tasks from database
+    auto allTasks = taskManager_->getAllTasks();
+    
+    // Update existing TaskCards with fresh data from database
+    for (auto* column : columns_) {
+        auto taskCards = column->GetTaskOptions();
+        
+        // Create a copy of the vector to iterate over, in case cards get deleted during refresh
+        std::vector<Kanban::TaskCard*> cardsCopy = taskCards;
+        
+        for (auto* taskCard : cardsCopy) {
+            if (taskCard && taskCard->GetId().has_value()) {
+                int taskId = taskCard->GetId().value();
+                bool foundInDatabase = false;
+                
+                // Find the updated task in the database
+                for (const auto& updatedTask : allTasks) {
+                    if (updatedTask.getId().has_value() && 
+                        updatedTask.getId().value() == taskId) {
+                        // Update the TaskCard's task with fresh data
+                        taskCard->UpdateTask(updatedTask);
+                        foundInDatabase = true;
+                        break;
+                    }
+                }
+                
+                // If task was deleted from database, remove the TaskCard
+                if (!foundInDatabase) {
+                    column->RemoveTaskCard(taskCard);
+                }
+            }
+        }
+    }
+}

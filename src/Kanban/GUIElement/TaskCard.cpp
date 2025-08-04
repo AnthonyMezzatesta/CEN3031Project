@@ -38,21 +38,36 @@ Kanban::TaskCard::TaskCard(Column* column, Task& task):
 }
 
 Kanban::TaskCard::~TaskCard() {
-    for (unsigned int i = 0; i < icons_.size(); i++)
-        delete icons_[i];
+    // Safely delete icons
+    for (unsigned int i = 0; i < icons_.size(); i++) {
+        if (icons_[i]) {
+            delete icons_[i];
+            icons_[i] = nullptr;
+        }
+    }
+    icons_.clear();
 }
 
 bool Kanban::TaskCard::CheckCollision(sf::Vector2f point)
 {
-    for (unsigned int i = 0; i < std::size(icons_); i++)
+    // Check delete icon FIRST, before any other processing
+    for (unsigned int i = 0; i < icons_.size(); i++)
     {
-        if (i == Icons::Delete && icons_[i]->CheckCollision(point))
+        if (i == Icons::Delete && icons_[i] && icons_[i]->CheckCollision(point))
         {
-            column_->RemoveTaskCard(this);
-            return false;
+
+            // Store column pointer before we get deleted
+            Column* col = column_;
+            
+            // Tell the column to remove this TaskCard
+            col->RemoveTaskCard(this);
+            
+            // Return true to indicate the collision was handled
+            return true;
         }
     }
 
+    // Only check bounding box if we didn't delete the object
     return rect.getGlobalBounds().contains(point);
 }
 

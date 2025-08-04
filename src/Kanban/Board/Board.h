@@ -72,5 +72,7 @@ namespace Kanban
         void Draw(sf::RenderWindow& window);
         void DrawBoard(sf::RenderWindow& window);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
+
+        void RefreshTaskCards();
     };
 }

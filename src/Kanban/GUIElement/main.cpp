@@ -14,147 +14,9 @@
 int main ()
 {
     // Create a new render-window
-    std::cout << "Hello game!" << "\n";
-
-    //UI_state current_state = user_login_STATE;
-
-    //sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
-    //window_1.setActive(false);
-    //sf::RenderWindow window_2(sf::VideoMode(1280, 720), "SFML window");
-
+    std::cout << "Hello Cycle Planner!" << "\n";
     window.setFramerateLimit(60);
 
-    if(false) {
-        //sf::RectangleShape rect_;
-        // rect_.setFillColor(sf::Color(18, 18, 20)); // (66, 84, 114)
-        // rect_.setSize(sf::Vector2f(500, 320));
-        // rect_.setOrigin(rect_.getGlobalBounds().width/2, rect_.getGlobalBounds().height/2);
-
-        //sf::RectangleShape userName_rect;
-        // userName_rect.setFillColor(sf::Color::White);
-        // userName_rect.setOutlineColor(sf::Color::Black);
-        // userName_rect.setSize(sf::Vector2f(310, 40));
-        // userName_rect.setOutlineThickness(3);
-        // userName_rect.setOrigin(userName_rect.getGlobalBounds().width/2,
-        //                         userName_rect.getGlobalBounds().height/2);
-
-        // sf::RectangleShape userPasswrd_rect;
-        // userPasswrd_rect.setFillColor(sf::Color::White);
-        // userPasswrd_rect.setOutlineColor(sf::Color::Black);
-        // userPasswrd_rect.setSize(sf::Vector2f(310, 40));
-        // userPasswrd_rect.setOutlineThickness(3);
-        // userPasswrd_rect.setOrigin(userPasswrd_rect.getGlobalBounds().width/2,
-        //                         userPasswrd_rect.getGlobalBounds().height/2);
-
-
-        // sf::Font font;
-        // font.loadFromFile("../resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf");
-
-
-        // Create a text
-        // sf::Text userName_text("Username:", font);
-        // userName_text.setCharacterSize(30);
-        // //userName_text.setStyle(sf::Text::Bold);
-        // userName_text.setFillColor(sf::Color::White);
-        // userName_text.setOrigin(userName_text.getGlobalBounds().width/2,
-        //                         userName_text.getGlobalBounds().height/2);
-
-        // sf::Text userPasswrd_text("Password:", font);
-        // userPasswrd_text.setCharacterSize(30);
-        // userPasswrd_text.setFillColor(sf::Color::White);
-        // userPasswrd_text.setOrigin(userName_text.getGlobalBounds().width/2,
-        //                            userName_text.getGlobalBounds().height/2);
-        //==================================================================================================================
-
-        // std::string Username_string = "";
-        // std::string Userpasswrd_string = "";
-
-        // sf::Text userPasswrd(Userpasswrd_string, font);
-        // userPasswrd.setCharacterSize(30);
-        // userPasswrd.setFillColor(sf::Color::Black);
-        // userPasswrd.setOrigin(userPasswrd.getGlobalBounds().width/2,
-        //                       userPasswrd.getGlobalBounds().height/2);
-
-        // sf::Text userName(Username_string, font);
-        // userName.setCharacterSize(30);
-        // userName.setFillColor(sf::Color::Black);
-        // userName.setOrigin(userName.getGlobalBounds().width/2,
-        //                    userName.getGlobalBounds().height/2);
-
-        //==================================================================================================================
-
-        // LOGIN button pressed and unpressed
-
-        // sf::Texture button_unpressed_texture;
-        // if(!button_unpressed_texture.loadFromFile("../resources/textures/b_unpressed.png")) {
-        //     std::cout << "Button Unpressed texture not loaded!" << "\n";
-        // }
-
-        // sf::Sprite button_unpressed_sprite;
-        // button_unpressed_sprite.setTexture(button_unpressed_texture);
-        // button_unpressed_sprite.setOrigin(button_unpressed_sprite.getGlobalBounds().width/2,
-        //                                   button_unpressed_sprite.getGlobalBounds().height/2);
-
-
-        // sf::Texture button_pressed_texture;
-        // if(!button_pressed_texture.loadFromFile("../resources/textures/b_pressed.png")) {
-        //     std::cout << "Button Unpressed texture not loaded!" << "\n";
-        // }
-
-        // sf::Sprite button_pressed_sprite;
-        // button_pressed_sprite.setTexture(button_pressed_texture);
-        // button_pressed_sprite.setOrigin(button_pressed_sprite.getGlobalBounds().width/2,
-        //                                   button_pressed_sprite.getGlobalBounds().height/2);
-
-        // sf::Text wrongLogin_text("The username or password is not valid! Try again.", font);
-        // wrongLogin_text.setCharacterSize(25);
-        // wrongLogin_text.setFillColor(sf::Color(255, 221, 112));
-        // wrongLogin_text.setOrigin(wrongLogin_text.getGlobalBounds().width/2,
-        //                           wrongLogin_text.getGlobalBounds().height/2);
-
-        // sf::Text validLogin_text("Valid login. Loading Table.", font);
-        // validLogin_text.setCharacterSize(25);
-        // validLogin_text.setFillColor(sf::Color(255, 221, 112));
-        // validLogin_text.setOrigin(validLogin_text.getGlobalBounds().width/2,
-        //                           validLogin_text.getGlobalBounds().height/2);
-
-        //==================================================================================================================
-
-        // SIGN UP button pressed and unpressed
-
-        // sf::Texture signup_unpressed_texture;
-        // if(!signup_unpressed_texture.loadFromFile("../resources/textures/sign_up_unpressed.png")) {
-        //     std::cout << "signup Button Unpressed texture not loaded!" << "\n";
-        // }
-
-        // sf::Sprite signup_unpressed_sprite;
-        // signup_unpressed_sprite.setTexture(signup_unpressed_texture);
-        // signup_unpressed_sprite.setOrigin(signup_unpressed_sprite.getGlobalBounds().width/2,
-        //                                   signup_unpressed_sprite.getGlobalBounds().height/2);
-
-
-        // sf::Texture signup_pressed_texture;
-        // if(!signup_pressed_texture.loadFromFile("../resources/textures/sign_up_pressed.png")) {
-        //     std::cout << "Button Unpressed texture not loaded!" << "\n";
-        // }
-
-        // sf::Sprite signup_pressed_sprite;
-        // signup_pressed_sprite.setTexture(signup_pressed_texture);
-        // signup_pressed_sprite.setOrigin(signup_pressed_sprite.getGlobalBounds().width/2,
-        //                                 signup_pressed_sprite.getGlobalBounds().height/2);
-
-        // sf::Text wrong_SignUp_text("Invalid input or username already exists! Try again.", font);
-        // wrong_SignUp_text.setCharacterSize(25);
-        // wrong_SignUp_text.setFillColor(sf::Color(255, 221, 112));
-        // wrong_SignUp_text.setOrigin(wrong_SignUp_text.getGlobalBounds().width/2,
-        //                             wrong_SignUp_text.getGlobalBounds().height/2);
-
-        // sf::Text valid_SignUp_text("Valid sign up. Loading Table.", font);
-        // valid_SignUp_text.setCharacterSize(25);
-        // valid_SignUp_text.setFillColor(sf::Color(255, 221, 112));
-        // valid_SignUp_text.setOrigin(valid_SignUp_text.getGlobalBounds().width/2,
-        //                             valid_SignUp_text.getGlobalBounds().height/2);
-    }
     //==================================================================
     UI_state current_state = user_login_STATE;
 
@@ -242,10 +104,6 @@ int main ()
                 }
 
                 if (userName_pressed) {
-                    // if (event.key.code == sf::Keyboard::BackSpace) {
-                    //     Username_string = Username_string.substr(0, Username_string.size() - 1);
-                    //     userName.setString(Username_string);
-                    // }
                     if (event.type == sf::Event::TextEntered) {
                         if (event.text.unicode == '\b') {
                             Username_string = Username_string.substr(0, Username_string.size() - 1);
@@ -269,23 +127,10 @@ int main ()
                 else if(userPasswrd_pressed) {
                     if (event.type == sf::Event::TextEntered) {
 
-                        //if (event.key.code == sf::Keyboard::Escape) {
-
-                        // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace)) {
-                        //     Userpasswrd_string = Userpasswrd_string.substr(0, Userpasswrd_string.size() - 1);
-
-                        // }
-
                         if (event.text.unicode == '\b') {
                             Userpasswrd_string = Userpasswrd_string.substr(0, Userpasswrd_string.size() - 1);
                             userPasswrd.setString(Userpasswrd_string);
                         }
-
-                        // else if (event.key.code == sf::Keyboard::Enter || event.key.code == sf::Keyboard::Tab) {
-                        //     //userPasswrd.setString(Userpasswrd_string);
-                        //     //userName_pressed = false;
-                        //     userPasswrd_pressed = false;
-                        // }
 
                         else if (event.text.unicode == '\r') {
                             //userPasswrd.setString(Userpasswrd_string);
@@ -333,9 +178,6 @@ int main ()
                     //valid_SignUp_text.setPosition(event.size.width/2, event.size.height/2 + 125);
                     //rect_.setSize(sf::Vector2f(event.size.width, event.size.height));
                 }
-
-                //if (event.mouseButton.button == sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-
 
                 if(userPasswrd_pressed) {
                     userPasswrd_rect.setOutlineColor(sf::Color(0, 153, 255));
@@ -439,7 +281,7 @@ int main ()
                             new_username_string = new_username_string.substr(0, new_username_string.size() - 1);
                             new_userName.setString(new_username_string);
                         }
-                        //else if (event.key.code == sf::Keyboard::Enter || event.key.code == sf::Keyboard::Tab) {
+                        //else if (Enter or Tab)
                         else if (event.text.unicode == '\r' || event.text.unicode == '\t') {
                             //userName.setString(Username_string);
                             userName_pressed = false;
@@ -458,30 +300,16 @@ int main ()
                 else if(userPasswrd_pressed) {
                     if (event.type == sf::Event::TextEntered) {
 
-                        //if (event.key.code == sf::Keyboard::Escape) {
-
-                        // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace)) {
-                        //     Userpasswrd_string = Userpasswrd_string.substr(0, Userpasswrd_string.size() - 1);
-
-                        // }
-
                         if (event.text.unicode == '\b') {
                             new_userPasswrd_string = new_userPasswrd_string.substr(0, new_userPasswrd_string.size() - 1);
                             new_userPasswrd.setString(new_userPasswrd_string);
                         }
-
-                        // else if (event.key.code == sf::Keyboard::Enter || event.key.code == sf::Keyboard::Tab) {
-                        //     //userPasswrd.setString(Userpasswrd_string);
-                        //     //userName_pressed = false;
-                        //     userPasswrd_pressed = false;
-                        // }
 
                         else if (event.text.unicode == '\r') {
                             //userPasswrd.setString(Userpasswrd_string);
                             userName_pressed = false;
                             userPasswrd_pressed = false;
                             userEmail_pressed = true;
-                            // MAYBE try to login as if the actual button was clicked
                         }
 
                         else if( event.text.unicode != '\t' && event.text.unicode < 128) {
@@ -502,7 +330,6 @@ int main ()
                             userName_pressed = false;
                             userPasswrd_pressed = false;
                             userEmail_pressed = true;
-                            // MAYBE try to login as if the actual login_button was clicked
                         }
 
                         else if( event.text.unicode != '\t' && event.text.unicode < 128) {
@@ -566,10 +393,6 @@ int main ()
             }
         }
 
-        // Clear the whole texture with red color
-        //rect_.clear(sf::Color::Red);
-        // mouse_pos = sf::Vector2f(sf::Mouse::getPosition(window));
-        //texture.display();
 
         window.clear(sf::Color::Green);
 
@@ -633,7 +456,6 @@ int main ()
             }
             if(valid_login) {
                 window.draw(validLogin_text);
-                // IMPORTANT CHECK_login();...
             }
         }
 
@@ -680,7 +502,6 @@ int main ()
             }
 
             if(cancelButton_pressed == false) {
-                //SIGN_UP_cancelButton_pressed_texture
                 window.draw(SIGN_UP_cancelButton_unpressed_sprite);
             }
             else {
@@ -720,7 +541,6 @@ int main ()
             //window.draw(SIGN_UP_cancelButton);
             //window.draw(SIGN_UP_confirmButton);
         }
-
 
         window.display();
     }

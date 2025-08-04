@@ -23,6 +23,8 @@ set(SOURCES
         src/TaskManager/TaskManager.cpp
         src/TaskManager/User.cpp
         src/TaskManager/UserManager.cpp
+        src/TaskManager/Team.cpp
+        src/TaskManager/TeamManager.cpp
 )
 
 set (SFML_SOURCES
@@ -60,6 +62,8 @@ set(TEST_SOURCES
     tests/test_user.cpp
     tests/test_task_manager.cpp
     tests/test_user_manager.cpp
+    tests/test_team_manager.cpp
+    tests/test_team_tasks.cpp
     tests/main.cpp
 )
 

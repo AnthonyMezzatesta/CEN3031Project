@@ -51,7 +51,7 @@ public:
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board);
         prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsPrompt(target);
-        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, taskManager, board);
+        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, taskManager);
         prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(target, reminderManager);
 
         UpdatePrompts();

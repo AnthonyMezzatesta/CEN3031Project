@@ -6,8 +6,8 @@
 #include "TaskEdit.h"
 using namespace std;
 
-TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager, Kanban::Board& board)
-    : taskManager_(&taskManager), board_(&board)
+TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager)
+    : taskManager_(&taskManager)
 {
     type_ = WindowPrompt::Type::TaskDetailsPrompt;
     view_ = target.getDefaultView();
@@ -29,11 +29,6 @@ bool TaskDetailsPrompt::SaveEdits() {
         task_.setDescription(taskEditor_.GetDescriptionInput());
         task_.setDeadline(taskEditor_.GetDeadlineInput());
         task_.setPriority(taskEditor_.GetPriorityInput());
-        
-        // Refresh all TaskCards to prevent segfaults
-        if (board_) {
-            board_->RefreshTaskCards();
-        }
     }
     return result;
 }
@@ -406,10 +401,7 @@ void TaskDetailsPrompt::ProcessKeyEvent(const sf::Keyboard::Key key)
     if (key == sf::Keyboard::Return)
     {
         if (SaveEdits())
-        {
             ExitEditMode();
-            // board update ?
-        }
     }
 
     // Handle other key presses in edit mode

@@ -113,6 +113,8 @@ void Kanban::Board::Update()
             taskIds_[task.getId().value()] = Available;
     }
 
+    RefreshTaskCards();
+
     windowPromptManager_->UpdatePrompts();
 }
 

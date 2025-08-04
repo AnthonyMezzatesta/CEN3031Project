@@ -259,7 +259,7 @@ bool TaskEdit::SaveChanges(TaskManager& taskManager) {
     task_->setDescription(descriptionInput_);
     task_->setDeadline(deadlineInput_);
     task_->setPriority(priorityInput_);
-    
+
     // Create a copy for updating the database
     Task updatedTask = *task_;
 
@@ -272,7 +272,7 @@ bool TaskEdit::SaveChanges(TaskManager& taskManager) {
 
 void TaskEdit::InitializeInputFields() {
     if (!task_) return;
-    
+
     nameInput_ = task_->getName();
     descriptionInput_ = task_->getDescription();
     deadlineInput_ = task_->getDeadline();

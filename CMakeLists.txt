@@ -92,7 +92,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # Print build information

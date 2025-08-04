@@ -20,7 +20,7 @@ namespace Kanban
 {
     using namespace EventSystem;
 
-    class Column final : private EventSystem::TaskSubject
+    class Column final
     {
         string name_;
         TaskCard* selectedCard_;
@@ -45,10 +45,15 @@ namespace Kanban
             void OnNotify(Observer::EventEnum event, Task& tasks) override;
             TaskObserver(Column* column) : column_(column) {}
         };
+        struct TSubject : public TaskSubject
+        {
+            friend Column;
+        };
         friend ActionObserver;
         friend TaskObserver;
         ActionObserver actionObserver_;
         TaskObserver taskObserver_;
+        TSubject taskSubject_;
     public:
         Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board);
         ~Column();

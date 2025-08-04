@@ -23,10 +23,17 @@ class WindowPrompt
 public:
     enum Type { Default, AddTaskPrompt, SettingsPrompt, TaskDetailsPrompt, ReminderPrompt };
 
+    WindowPrompt()
+    {
+        font_.loadFromFile(Utilities::fontPath);
+        text_.setFont(font_);
+    }
     virtual ~WindowPrompt() {}
 
     virtual void Update() = 0;
     virtual void Draw(sf::RenderTarget& target) = 0;
+    virtual void ReadUserInput(char c) {}
+    virtual void ProcessKeyEvent(const sf::Keyboard::Key key) {}
     virtual bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) = 0;
 
     bool isActive = false;
@@ -36,7 +43,8 @@ public:
     bool IsActive() const { return isActive; }
     virtual void SetActive(bool value) { isActive = value; }
 protected:
-    // sf::Text text_;
+    sf::Font font_;
+    sf::Text text_;
     Type type_ = Default;
     Kanban::Board* board_ = nullptr;
     sf::View view_;

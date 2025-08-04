@@ -6,7 +6,6 @@
 #include "TaskManager.h"
 #include "Task.h"
 #include "Board/Board.h"
-#include "WindowPrompt/WindowPromptManager.h"
 #include "../ReminderManager/ReminderManager.h"
 
 using namespace std;
@@ -103,22 +102,9 @@ int main() {
     board.AddColumn("wip");
     board.AddColumn("done");
 
-    // TaskDetailsPrompt taskDetailsPrompt(window);
-
-    TaskDetailsPrompt* taskDetailsPrompt = dynamic_cast<TaskDetailsPrompt*>(
-        board.windowPromptManager_->GetPrompt(WindowPrompt::Type::TaskDetailsPrompt));
-
-    taskDetailsPrompt->SetTaskManager(&taskManager);
-    taskDetailsPrompt->SetBoard(&board);
-
-    Task* selectedTask = nullptr;
-
-    // Add this immediately after creating the board (for testing)
-    board.Update(); // Make sure prompts are updated once before first draw
-
     while (window.isOpen()) {
         sf::Event event{};
-        sf::Time elapsedTime = clock.restart(); // Move this outside event polling
+        sf::Time elapsedTime = clock.restart();
 
         // Process all pending events
         while (window.pollEvent(event)) {
@@ -128,99 +114,23 @@ int main() {
             if (event.type == sf::Event::MouseButtonPressed) {
                 sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
 
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-
-                    if (taskDetailsPrompt->isVisible) {
-                        // Check if click is inside the prompt
-                        sf::Vector2f mousePos = sf::Vector2f(static_cast<float>(pixelPos.x), 
-                                                            static_cast<float>(pixelPos.y));
-                        
-                        // Convert bounds to screen coordinates for proper check
-                        sf::FloatRect bounds = taskDetailsPrompt->bg_.getGlobalBounds();
-                        
-                        if (!bounds.contains(mousePos)) {
-                            // Click outside - close prompt
-                            taskDetailsPrompt->isVisible = false;
-                            taskDetailsPrompt->ExitEditMode();
-                            taskDetailsPrompt->isActive = false;
-                        } else {
-                            // Click inside - handle normally
-                            taskDetailsPrompt->HandleClick(pixelPos);
-                        }
-
-                        auto clickedTask = board.GetTaskAtPosition(pixelPos, window);
-                        if (clickedTask.has_value()) {
-                            selectedTask = new Task(clickedTask.value());
-                            taskDetailsPrompt->SetTask(clickedTask.value());
-                            taskDetailsPrompt->isVisible = true;
-                        } else {
-                            selectedTask = nullptr;
-                            board.CheckCollision(pixelPos, window);
-                        }
-                    } else {
-                        // Try to get a task at the clicked position
-                        auto clickedTask = board.GetTaskAtPosition(pixelPos, window);
-                        if (clickedTask.has_value()) {
-                            selectedTask = new Task(clickedTask.value()); // Store selected task
-                            taskDetailsPrompt->SetTask(clickedTask.value());
-                            taskDetailsPrompt->isVisible = true;
-                        } else {
-                            selectedTask = nullptr; // Clear selection
-                            board.CheckCollision(pixelPos, window);
-                        }
-                    }
-                }
-
-                if (event.mouseButton.button == sf::Mouse::Right) {
-                    auto clickedTask = board.GetTaskAtPosition(pixelPos, window);
-                    if (clickedTask.has_value()) {
-                        selectedTask = new Task(clickedTask.value());
-                        taskDetailsPrompt->SetTask(clickedTask.value());
-                        taskDetailsPrompt->isVisible = true;
-                        taskDetailsPrompt->EnterEditMode();
-                    }
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    board.CheckCollision(pixelPos, window);
                 }
             }
 
-            if (event.type == sf::Event::KeyPressed) {
-                // Enter edit mode with E key
-                if (taskDetailsPrompt->isVisible && !taskDetailsPrompt->IsEditMode() && 
-                    event.key.code == sf::Keyboard::E) {
-                    taskDetailsPrompt->EnterEditMode();
-                }
-                // Save changes with Enter key
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode() && 
-                         event.key.code == sf::Keyboard::Return) {
-                    bool saved = taskDetailsPrompt->SaveEdits();
-                    if (saved) {
-                        taskDetailsPrompt->ExitEditMode();
-                        board.Update();
-                    }
-                }
-                // Handle other key presses in edit mode
-                else if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode()) {
-                    taskDetailsPrompt->HandleKeyPress(event.key.code);
-                }
-                else {
-                    board.ProcessKeyEvent(event.key.code, elapsedTime.asSeconds());
-                }
+            if (event.type == sf::Event::KeyPressed)
+            {
+                board.ProcessKeyEvent(event.key.code);
             }
 
-            if (event.type == sf::Event::TextEntered) {
-                if (taskDetailsPrompt->isVisible && taskDetailsPrompt->IsEditMode()) {
-                    if (event.text.unicode == 8) { // Backspace
-                        taskDetailsPrompt->HandleBackspace();
-                    } else if (event.text.unicode < 128) { // ASCII characters only
-                        char inputChar = static_cast<char>(event.text.unicode);
-                        taskDetailsPrompt->HandleTextInput(inputChar);
-                    }
-                } else {
-                    // Existing text entry logic for column names, etc.
-                    if (event.text.unicode < 127) {
-                        char c = static_cast<char>(event.text.unicode);
-                        board.ReadUserInput(c);
-                    }
+            if (event.type == sf::Event::TextEntered)
+            {
+                if (event.text.unicode < 127)
+                {
+                    char c = static_cast<char>(event.text.unicode);
+                    board.ReadUserInput(c);
                 }
             }
         }
@@ -229,10 +139,9 @@ int main() {
         board.Update();
 
         window.clear(sf::Color::Black);
-        board.DrawBoard(window);
-        window.setView(window.getDefaultView());
-        board.windowPromptManager_->Draw(window);
-        taskDetailsPrompt->Draw(window);
+
+        board.Draw(window);
+
         window.display();
     }
 

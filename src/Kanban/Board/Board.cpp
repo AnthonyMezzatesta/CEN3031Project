@@ -65,7 +65,7 @@ void Kanban::Board::MoveView(sf::Keyboard::Key key, const float deltaTime) {
 Kanban::Board::Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager) :
     userInputMode(UserInputMode::Default), boardView(target.getDefaultView()), activeColumn(nullptr)
 {
-    windowPromptManager_ = new WindowPromptManager(target, *this, reminderManager);
+    windowPromptManager_ = new WindowPromptManager(target, taskManager, *this, reminderManager);
     taskManager_ = &taskManager;
     // boardView.setViewport(sf::FloatRect(0.1f, 0.15f, 0.75f, 0.75f));
 }
@@ -149,19 +149,15 @@ vector<Task> Kanban::Board::GetAvailableTasks() const
     return tasks;
 }
 
-void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key, const float deltaTime)
+void Kanban::Board::ProcessKeyEvent(const sf::Keyboard::Key key)
 {
-    if (key == sf::Keyboard::F)
-    {
-        windowPromptManager_->ShowReminderPrompt();
-        return;
-    }
-
-    MoveView(key, deltaTime);
+    windowPromptManager_->ProcessKeyEvent(key);
 }
 
 void Kanban::Board::ReadUserInput(char c)
 {
+    windowPromptManager_->ReadUserInput(c);
+
     if (userInputMode == UserInputMode::Default)
         return;
 
@@ -192,7 +188,7 @@ void Kanban::Board::ReadUserInput(char c)
 void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
-    //windowPromptManager_->Draw(window);
+    windowPromptManager_->Draw(window);
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
@@ -226,47 +222,42 @@ bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
     return false;
 }
 
-std::optional<Task> Kanban::Board::GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window) {
-    // Convert pixel position to board view coordinates
-    sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos, boardView);
-
-    // Loop through all columns and their task cards
-    for (auto* column : columns_) {
-        auto taskCards = column->GetTaskOptions();
-        for (auto* taskCard : taskCards) {
-            if (taskCard && taskCard->ContainsPoint(worldPos)) {
-                return taskCard->GetTask();
-            }
-        }
-    }
-    return std::nullopt;
-}
-
-void Kanban::Board::DrawBoard(sf::RenderWindow& window)
-{
-    DrawColumns(window);
-}
+// std::optional<Task> Kanban::Board::GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window) {
+//     // Convert pixel position to board view coordinates
+//     sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos, boardView);
+//
+//     // Loop through all columns and their task cards
+//     for (auto* column : columns_) {
+//         auto taskCards = column->GetTaskOptions();
+//         for (auto* taskCard : taskCards) {
+//             if (taskCard && taskCard->ContainsPoint(worldPos)) {
+//                 return taskCard->GetTask();
+//             }
+//         }
+//     }
+//     return std::nullopt;
+// }
 
 // Added to fix segmentation fault (core dumped) crash when deleting an edited task
 void Kanban::Board::RefreshTaskCards() {
     // Get all updated tasks from database
     auto allTasks = taskManager_->getAllTasks();
-    
+
     // Update existing TaskCards with fresh data from database
     for (auto* column : columns_) {
         auto taskCards = column->GetTaskOptions();
-        
+
         // Create a copy of the vector to iterate over, in case cards get deleted during refresh
         std::vector<Kanban::TaskCard*> cardsCopy = taskCards;
-        
+
         for (auto* taskCard : cardsCopy) {
             if (taskCard && taskCard->GetId().has_value()) {
                 int taskId = taskCard->GetId().value();
                 bool foundInDatabase = false;
-                
+
                 // Find the updated task in the database
                 for (const auto& updatedTask : allTasks) {
-                    if (updatedTask.getId().has_value() && 
+                    if (updatedTask.getId().has_value() &&
                         updatedTask.getId().value() == taskId) {
                         // Update the TaskCard's task with fresh data
                         taskCard->UpdateTask(updatedTask);
@@ -274,7 +265,7 @@ void Kanban::Board::RefreshTaskCards() {
                         break;
                     }
                 }
-                
+
                 // If task was deleted from database, remove the TaskCard
                 if (!foundInDatabase) {
                     column->RemoveTaskCard(taskCard);

@@ -50,7 +50,7 @@ Kanban::Column::Column(const string& name, WindowPromptManager& windowPromptMana
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
     board_ = &board;
-    TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
+    taskSubject_.AddObserver(windowPromptManager_->taskObserver_);
     selectedCard_ = nullptr;
 }
 
@@ -152,7 +152,7 @@ void Kanban::Column::SelectTaskCard(Kanban::TaskCard* card) {
 
     selectedCard_ = card;
     card->Select();
-    TaskSubject::Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
+    taskSubject_.Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
 }
 
 // Updated to fix crash when deleting tasks

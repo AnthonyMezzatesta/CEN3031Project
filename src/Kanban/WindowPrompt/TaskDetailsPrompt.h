@@ -15,7 +15,7 @@ class TaskDetailsPrompt final : public WindowPrompt, public EventSystem::TaskSub
 
 
 public:
-    TaskDetailsPrompt(const sf::RenderWindow& target);
+    TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager, Kanban::Board& board);
     ~TaskDetailsPrompt() {}
 
     void SetTask(const Task& task);
@@ -26,7 +26,7 @@ public:
 
 
     sf::RectangleShape bg_;
-    void HandleClick(sf::Vector2i mousePos);
+    void HandleClick(sf::Vector2f mousePos);
 
     // Expose TaskEdit functionality
     void EnterEditMode();
@@ -49,4 +49,6 @@ public:
 
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
     void Draw(sf::RenderTarget& target) override;
+    void ReadUserInput(char c) override;
+    void ProcessKeyEvent(const sf::Keyboard::Key key) override;
 };

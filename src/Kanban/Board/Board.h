@@ -60,17 +60,16 @@ namespace Kanban
         void AddColumn(const string& name);
         void RemoveColumn(Column& column);
         void SetActiveColumn(Column* column);
-        std::optional<Task> GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window);
+        // std::optional<Task> GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window);
 
         void Update();
         void SetTaskAsTaken(Task& task); // for use by columns
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessKeyEvent(sf::Keyboard::Key key, const float deltaTime);
+        void ProcessKeyEvent(sf::Keyboard::Key key);
         void ReadUserInput(char c);
         void Draw(sf::RenderWindow& window);
-        void DrawBoard(sf::RenderWindow& window);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
 
         void RefreshTaskCards();

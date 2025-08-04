@@ -57,9 +57,9 @@ void Kanban::Board::DrawColumns(sf::RenderWindow& window) {
     renderTexture.clear(sf::Color::Transparent);
 
     // draw background
-    sf::RectangleShape r(sf::Vector2f(renderTexture.getSize().x, renderTexture.getSize().y));
-    r.setFillColor(Utilities::fill0);
-    renderTexture.draw(r);
+    // sf::RectangleShape r(sf::Vector2f(renderTexture.getSize().x, renderTexture.getSize().y));
+    // r.setFillColor(Utilities::fill0);
+    // renderTexture.draw(r);
 
     // draw columns
     for (int i = 0; i < colCount; i++)

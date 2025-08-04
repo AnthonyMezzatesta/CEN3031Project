@@ -31,7 +31,7 @@ void AddTaskPrompt::UpdateScrollTexture(const float deltaTime)
     float maxDistY = (taskPaddingY_ + taskHeight_) * extraTaskCount;
     float maxStartY = defaultStartY + maxDistY;
 
-    bool enableScrollBar = taskElements_.size() > tasksPerScreen_;
+    bool enableScrollBar = extraTaskCount > 0;
     float textureHeight = defaultTextureHeight_ + maxDistY;
     float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight;
     sf::Vector2u textureSize(size.x, textureHeight);

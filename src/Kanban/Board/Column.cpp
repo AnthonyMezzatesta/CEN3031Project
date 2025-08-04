@@ -67,16 +67,16 @@ void Kanban::Column::UpdateScrollTexture(const float columnWidth, const float de
 {
     int taskCount = tasks_.size();
     float defaultStartY = 0;
-    float extraTaskCount = std::max(taskCount - tasksPerColummn_, 0);
+    float extraTaskCount = std::max(0, taskCount - tasksPerColummn_);
     float maxDistY = (taskPaddingY_ + taskHeight_) * extraTaskCount;
     float maxStartY = defaultStartY + maxDistY;
 
-    bool enableScrollBar = tasks_.size() > tasksPerColummn_;
+    bool enableScrollBar = extraTaskCount > 0;
     float textureHeight_ = defaultTextureHeight_ + maxDistY;
-    float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight_;
+    float barWidthRatio = defaultTextureHeight_ / textureHeight_;
     sf::Vector2u textureSize(columnWidth, textureHeight_);
 
-    scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio,
+    scrollTexture_.Update(enableScrollBar, barWidthRatio,
         textureSize, {}, defaultStartY, maxStartY, deltaTime);
 }
 
@@ -268,7 +268,7 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point)
     // transform point from global space to local space
     auto staticPoint = transformStatic_.getInverse().transformPoint(point);
     auto dynamicPoint = transformDynamic_.getInverse().transformPoint(point);
-    dynamicPoint += sf::Vector2f(0, scrollTexture_.GetScrollDelta()); // adjust by amount scrolled
+    dynamicPoint.y += scrollTexture_.GetScrollDelta(); // adjust by amount scrolled
 
     ClearSelectedTask();
 

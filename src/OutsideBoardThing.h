@@ -1,6 +1,9 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include "Utilities.h"
+#include "GUIStateMachine/GUIStateMachine.h"
 #include "Kanban/GUIElement/Icon.h"
 #include "Kanban/WindowPrompt/WindowPromptManager.h"
 #include "ReminderManager/ReminderManager.h"
@@ -8,9 +11,10 @@ using std::vector;
 
 class OutsideBoardThing
 {
+    GUIStateMachine* guiStateMachine_;
     WindowPromptManager* windowPromptManager_;
     vector<Icon*> icons_;
-    Icon::Type iconArray[2] { Icon::Type::bell, Icon::Type::dots };
+    Icon::Type iconArray[3] { Icon::Type::plus, Icon::Type::bell, Icon::Type::dots };
 
     void DrawIcons(sf::RenderWindow& window)
     {
@@ -29,8 +33,9 @@ class OutsideBoardThing
         }
     }
 public:
-    OutsideBoardThing(ReminderManager& reminderManager, WindowPromptManager& windowPromptManager)
+    OutsideBoardThing(ReminderManager& reminderManager, GUIStateMachine& guiStateMachine, WindowPromptManager& windowPromptManager)
     {
+        guiStateMachine_ = &guiStateMachine;
         windowPromptManager_ = &windowPromptManager;
 
         for (unsigned int i = 0; i < std::size(iconArray); i++)
@@ -60,9 +65,11 @@ public:
         {
             if (icons_[i]->CheckCollision(static_cast<sf::Vector2f>(point)))
             {
-                if (icons_[i]->GetType() == Icon::bell)
+                if (icons_[i]->GetType() == Icon::Type::plus)
+                    guiStateMachine_->SwitchState(GUIState::TaskCreation);
+                else if (icons_[i]->GetType() == Icon::Type::bell)
                     windowPromptManager_->ShowPrompt(WindowPrompt::Type::ReminderPrompt);
-                else if (icons_[i]->GetType() == Icon::dots)
+                else if (icons_[i]->GetType() == Icon::Type::dots)
                     windowPromptManager_->ShowPrompt(WindowPrompt::Type::WindowResizePrompt);
 
                 return true;

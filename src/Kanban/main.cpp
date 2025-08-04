@@ -7,6 +7,7 @@
 #include "Task.h"
 #include "WindowResizeHandler.h"
 #include "../OutsideBoardThing.h"
+#include "../TaskCreationScreen.h"
 #include "../GUIStateMachine/GUIStateMachine.h"
 #include "../ReminderManager/ReminderManager.h"
 #include "Board/Board.h"
@@ -139,11 +140,15 @@ int main()
     WindowResizeHandler windowResizeHandler;
     ReminderManager reminderManager(taskManager);
     WindowPromptManager windowPromptManager(window, reminderManager, windowResizeHandler);
-    OutsideBoardThing outsideBoardThing(reminderManager, windowPromptManager);
-    Board board(window, taskManager, windowResizeHandler, windowPromptManager);
 
     GUIStateMachine guiStateMachine;
+
+    TaskCreationScreen taskCreationScreen(taskManager);
+    OutsideBoardThing outsideBoardThing(reminderManager, guiStateMachine, windowPromptManager);
+    Board board(window, taskManager, windowResizeHandler, windowPromptManager);
+
     guiStateMachine.AddState(&board);
+    guiStateMachine.AddState(&taskCreationScreen);
     guiStateMachine.SwitchState(board.GetStateType());
 
     while (window.isOpen())
@@ -193,7 +198,7 @@ int main()
             }
         }
 
-        window.clear(sf::Color::Black);
+        window.clear(Utilities::fill0);
 
         // update systems
         reminderManager.Update();

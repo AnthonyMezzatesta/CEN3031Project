@@ -110,7 +110,7 @@ class WindowResizePrompt final : public WindowPrompt
         float maxDistY = (optionPaddingY_ + optionHeight_) * extraOptionCount;
         float maxStartY = defaultStartY + maxDistY;
 
-        bool enableScrollBar = options_.size() > optionsPerScreen_;
+        bool enableScrollBar = extraOptionCount > 0;
         float textureHeight = defaultTextureHeight_ + maxDistY;
         float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight;
         sf::Vector2u textureSize(size.x, textureHeight);

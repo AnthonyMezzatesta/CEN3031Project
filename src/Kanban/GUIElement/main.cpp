@@ -360,12 +360,12 @@ int main ()
                     SIGN_UP_userName_rect.setPosition(event.size.width/2 + 70, event.size.height/2 - 90);
                     new_userName.setPosition(event.size.width/2 - 85, event.size.height/2 - 120); // --------------
 
-                    SIGN_UP_userPasswrd_text.setPosition(event.size.width/ 2 - 160, event.size.width/ 2 - 25);
-                    SIGN_UP_userPasswrd_rect.setPosition(event.size.width/ 2 + 70, event.size.width/ 2 - 15);
+                    SIGN_UP_userPasswrd_text.setPosition(event.size.width/ 2 - 160, event.size.height/ 2 - 25);
+                    SIGN_UP_userPasswrd_rect.setPosition(event.size.width/ 2 + 70, event.size.height/ 2 - 15);
                     new_userPasswrd.setPosition(event.size.width/2 - 85, event.size.height/2 - 40);
 
-                    SIGN_UP_userEmail_text.setPosition(event.size.width/ 2 - 160, event.size.width/ 2 + 55);
-                    SIGN_UP_userEmail_rect.setPosition(event.size.width/ 2 + 70, event.size.width/ 2 + 65);
+                    SIGN_UP_userEmail_text.setPosition(event.size.width/ 2 - 160, event.size.height/ 2 + 55);
+                    SIGN_UP_userEmail_rect.setPosition(event.size.width/ 2 + 70, event.size.height/ 2 + 65);
                     new_userEmail.setPosition(event.size.width/2 - 85, event.size.height/2 + 45);
 
                     SIGN_UP_cancelButton_unpressed_sprite.setPosition(event.size.width/2 - 100, event.size.height/2 + 140);

@@ -13,6 +13,17 @@ class TaskDetailsPrompt final : public WindowPrompt, public EventSystem::TaskSub
     TaskManager* taskManager_; // Add TaskManager reference
     Kanban::Board* board_; // Add board reference
 
+    sf::RectangleShape bg_;
+    sf::Transform transform_;
+
+    sf::RectangleShape nameBox;
+    sf::RectangleShape descBox;
+    sf::RectangleShape deadlineBox;
+    sf::RectangleShape priorityBox;
+
+    sf::RectangleShape saveButton;
+    sf::RectangleShape cancelButton;
+    sf::RectangleShape editButton;
 
 public:
     TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager, Kanban::Board& board);
@@ -24,9 +35,7 @@ public:
     void SetTaskManager(TaskManager* taskManager) { taskManager_ = taskManager; } // Add setter
     void SetBoard(Kanban::Board* board) { board_ = board; }
 
-
-    sf::RectangleShape bg_;
-    void HandleClick(sf::Vector2f mousePos);
+    void HandleClick(sf::Vector2f localPos);
 
     // Expose TaskEdit functionality
     void EnterEditMode();

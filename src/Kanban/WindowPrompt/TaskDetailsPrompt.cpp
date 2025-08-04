@@ -11,8 +11,9 @@ TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager
 {
     type_ = WindowPrompt::Type::TaskDetailsPrompt;
     view_ = target.getDefaultView();
-    // view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
     bg_.setFillColor(bgColor_);
+
+    // view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
 }
 
 // Added new SaveEdits method
@@ -66,9 +67,10 @@ void TaskDetailsPrompt::Deactivate()
 bool TaskDetailsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point)
 {
     auto mousePos = target.mapPixelToCoords(point, view_);
+    auto localPos = transform_.getInverse().transformPoint(mousePos);
 
     // exit early if not visible
-    if (!isVisible || !bg_.getGlobalBounds().contains(mousePos))
+    if (!isVisible || !bg_.getGlobalBounds().contains(localPos))
     {
         // if point was outside of bounds...
         if (isActive && isVisible)
@@ -77,19 +79,19 @@ bool TaskDetailsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i po
         return false;
     }
 
-    HandleClick(mousePos);
+    HandleClick(localPos);
 
     return true;
 }
 
-void TaskDetailsPrompt::HandleClick(sf::Vector2f mousePos)
+void TaskDetailsPrompt::HandleClick(sf::Vector2f localPos)
 {
-    const float CLICK_TOLERANCE = 10.0f;
+    // const float CLICK_TOLERANCE = 10.0f;
     
     if (IsEditMode()) {
         // Save button
-        if (mousePos.x >= 100-CLICK_TOLERANCE && mousePos.x <= 180+CLICK_TOLERANCE &&
-            mousePos.y >= 300-CLICK_TOLERANCE && mousePos.y <= 330+CLICK_TOLERANCE) {
+        if (saveButton.getGlobalBounds().contains(localPos))
+        {
             bool saved = SaveEdits();
             if (saved) {
                 taskEditor_.ExitEditMode();
@@ -98,206 +100,277 @@ void TaskDetailsPrompt::HandleClick(sf::Vector2f mousePos)
         }
         
         // Cancel button
-        if (mousePos.x >= 200-CLICK_TOLERANCE && mousePos.x <= 280+CLICK_TOLERANCE &&
-            mousePos.y >= 300-CLICK_TOLERANCE && mousePos.y <= 330+CLICK_TOLERANCE) {
-            isVisible = false;
-            taskEditor_.ExitEditMode();
+        if (cancelButton.getGlobalBounds().contains(localPos))
+        {
+            Deactivate();
             return;
         }
 
         // Field selection
-        sf::FloatRect nameBox(100, 100, 300, 30);
-        if (nameBox.contains(mousePos)) {
+        if (nameBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_NAME);
             return;
         }
         
-        sf::FloatRect descBox(100, 140, 300, 60);
-        if (descBox.contains(mousePos)) {
+        if (descBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_DESCRIPTION);
             return;
         }
-        
-        sf::FloatRect deadlineBox(100, 210, 200, 30);
-        if (deadlineBox.contains(mousePos)) {
+
+        if (deadlineBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_DEADLINE);
             return;
         }
         
-        sf::FloatRect priorityBox(100, 250, 150, 30);
-        if (priorityBox.contains(mousePos)) {
+        if (priorityBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_PRIORITY);
             return;
         }
     } 
     else {
         // Edit button
-        if (mousePos.x >= 100-CLICK_TOLERANCE && mousePos.x <= 180+CLICK_TOLERANCE &&
-            mousePos.y >= 300-CLICK_TOLERANCE && mousePos.y <= 330+CLICK_TOLERANCE) {
+        if (editButton.getGlobalBounds().contains(localPos))
             EnterEditMode();
         }
-    }
 }
 
 void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
     if (!isVisible)
         return;
 
-    // Set to default view for UI elements
-    target.setView(view_);
+    const auto size = static_cast<sf::Vector2f>(target.getSize());
 
     // Draw semi-transparent background overlay for modal effect
-    sf::RectangleShape overlay(sf::Vector2f(target.getSize().x, target.getSize().y));
+    sf::RectangleShape overlay(size);
     overlay.setFillColor(sf::Color(0, 0, 0, 128));
     target.draw(overlay);
 
+    // Set to default view for UI elements
+    target.setView(view_);
+
+    sf::Vector2f bgSize(size.x * 0.6f, size.y * 0.9f);
+
+    transform_ = sf::Transform::Identity; // reset
+    transform_.translate((size.x - bgSize.x)/2.f, (size.y - bgSize.y)/2.f);
+
     // Draw main background
-    bg_.setSize(sf::Vector2f(400, 400));
-    bg_.setPosition(100, 50);
+    bg_.setSize(bgSize);
     bg_.setFillColor(sf::Color(220, 220, 220));
-    target.draw(bg_);
+    target.draw(bg_, transform_);
+
+    // ========= remapping old values to new output range so that they scale with new window resolutions =========
+
+    // original settings
+    // size: 400 x 400
+    // pos offset: (100, 50)
+
+    sf::Text text24("", font_, bgSize.y / 24);
+    sf::Text text20("", font_, bgSize.y / 32);
 
     if (IsEditMode()) {
         // Draw editable fields using TaskEdit data
-        
-        // Name field
-        sf::RectangleShape nameBox(sf::Vector2f(300, 30));
-        nameBox.setPosition(100, 100);
-        nameBox.setFillColor(sf::Color(200, 200, 200));
-        target.draw(nameBox);
 
-        sf::Text nameInputText(GetNameInput(), font_, 24);
-        nameInputText.setPosition(105, 105);
-        nameInputText.setFillColor(sf::Color::Black);
-        target.draw(nameInputText);
+        // Name field
+        nameBox.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 300),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30))
+        );
+        nameBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 100-50));
+        nameBox.setFillColor(sf::Color(200, 200, 200));
+        target.draw(nameBox, transform_);
+
+        text24.setString(GetNameInput());
+        text24.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 105-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 105-50)
+        );
+        target.draw(text24, transform_);
 
         // Description field
-        sf::RectangleShape descBox(sf::Vector2f(300, 60));
-        descBox.setPosition(100, 140);
+        descBox.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 300),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 60))
+        );
+        descBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 140-50));
         descBox.setFillColor(sf::Color(200, 200, 200));
-        target.draw(descBox);
+        target.draw(descBox, transform_);
 
-        sf::Text descInputText(GetDescriptionInput(), font_, 24);
-        descInputText.setPosition(105, 145);
-        descInputText.setFillColor(sf::Color::Black);
-        target.draw(descInputText);
+        text24.setString(GetDescriptionInput());
+        text24.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 105-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 145-50)
+        );
+        target.draw(text24, transform_);
 
         // Deadline field
-        sf::RectangleShape deadlineBox(sf::Vector2f(200, 30));
-        deadlineBox.setPosition(100, 210);
+        deadlineBox.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 200),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30)
+        ));
+        deadlineBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 210-50));
         deadlineBox.setFillColor(sf::Color(200, 200, 200));
-        target.draw(deadlineBox);
+        target.draw(deadlineBox, transform_);
 
         std::string deadlineStr = Task::formatDeadline(GetDeadlineInput());
-        sf::Text deadlineInputText(deadlineStr, font_, 24);
-        deadlineInputText.setPosition(105, 215);
-        deadlineInputText.setFillColor(sf::Color::Black);
-        target.draw(deadlineInputText);
+        text24.setString(deadlineStr);
+        text24.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 105-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 215-50)
+        );
+        target.draw(text24, transform_);
 
         // Priority field
-        sf::RectangleShape priorityBox(sf::Vector2f(150, 30));
-        priorityBox.setPosition(100, 250);
+        priorityBox.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 150),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30))
+        );
+        priorityBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 250-50));
         priorityBox.setFillColor(sf::Color(200, 200, 200));
-        target.draw(priorityBox);
+        target.draw(priorityBox, transform_);
 
         std::string priorityStr = Task::priorityToString(GetPriorityInput());
-        sf::Text priorityInputText(priorityStr, font_, 24);
-        priorityInputText.setPosition(105, 255);
-        priorityInputText.setFillColor(sf::Color::Black);
-        target.draw(priorityInputText);
+        text24.setString(priorityStr);
+        text24.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 105-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 255-50)
+        );
+        target.draw(text24, transform_);
 
         // Save button
-        sf::RectangleShape saveButton(sf::Vector2f(80, 30));
-        saveButton.setPosition(100, 300);
+        saveButton.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 80),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30)
+        ));
+        saveButton.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 300-50));
         saveButton.setFillColor(sf::Color(100, 200, 100));
-        target.draw(saveButton);
+        target.draw(saveButton, transform_);
 
-        sf::Text saveText("Save", font_, 20);
-        saveText.setPosition(110, 305);
-        saveText.setFillColor(sf::Color::Black);
-        target.draw(saveText);
+        text20.setString("Save");
+        text20.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 110-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 305-50)
+        );
+        target.draw(text20, transform_);
 
         // Cancel button
-        sf::RectangleShape cancelButton(sf::Vector2f(80, 30));
-        cancelButton.setPosition(200, 300);
+        cancelButton.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 80),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30)
+        ));
+        cancelButton.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 200-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 300-50)
+        );
         cancelButton.setFillColor(sf::Color(200, 100, 100));
-        target.draw(cancelButton);
+        target.draw(cancelButton, transform_);
 
-        sf::Text cancelText("Cancel", font_, 20);
-        cancelText.setPosition(210, 305);
-        cancelText.setFillColor(sf::Color::Black);
-        target.draw(cancelText);
+        text20.setString("Cancel");
+        text20.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 210-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 305-50)
+        );
+        target.draw(text20, transform_);
 
         // Highlight currently selected field
         sf::RectangleShape highlight;
         highlight.setFillColor(sf::Color::Transparent);
         highlight.setOutlineColor(sf::Color::Blue);
-        highlight.setOutlineThickness(2.0f);
 
         switch (GetCurrentField()) {
             case TaskEdit::FIELD_NAME:
-                highlight.setSize(sf::Vector2f(305, 35));
-                highlight.setPosition(98, 98);
-                target.draw(highlight);
+                highlight.setSize(sf::Vector2f(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 305),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 35))
+                );
+                highlight.setPosition(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 98-100),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 98-50)
+                );
+                highlight.setOutlineThickness(nameBox.getSize().y / 16);
                 break;
             case TaskEdit::FIELD_DESCRIPTION:
-                highlight.setSize(sf::Vector2f(305, 65));
-                highlight.setPosition(98, 138);
-                target.draw(highlight);
+                highlight.setSize(sf::Vector2f(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 305),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 65))
+                );
+                highlight.setPosition(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 98-100),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 138-50)
+                );
+                highlight.setOutlineThickness(descBox.getSize().y / 16);
                 break;
             case TaskEdit::FIELD_DEADLINE:
-                highlight.setSize(sf::Vector2f(205, 35));
-                highlight.setPosition(98, 208);
-                target.draw(highlight);
+                highlight.setSize(sf::Vector2f(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 205),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 35))
+                );
+                highlight.setPosition(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 98-100),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 208-50)
+                );
+                highlight.setOutlineThickness(deadlineBox.getSize().y / 16);
                 break;
             case TaskEdit::FIELD_PRIORITY:
-                highlight.setSize(sf::Vector2f(155, 35));
-                highlight.setPosition(98, 248);
-                target.draw(highlight);
+                highlight.setSize(sf::Vector2f(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 155),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 35))
+                );
+                highlight.setPosition(
+                    Utilities::RemapClamped(0, 400, 0, bgSize.x, 98-100),
+                    Utilities::RemapClamped(0, 400, 0, bgSize.y, 248-50)
+                );
+                highlight.setOutlineThickness(priorityBox.getSize().y / 16);
                 break;
             case TaskEdit::FIELD_NONE:
                 break;
         }
+        target.draw(highlight, transform_);
 
     } else {
         // Draw static fields
         
-        sf::Text nameStaticText(task_.getName(), font_, 24);
-        nameStaticText.setPosition(100, 100);
-        target.draw(nameStaticText);
+        text24.setString(task_.getName());
+        text24.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 100-50));
+        target.draw(text24, transform_);
 
-        sf::Text descStaticText(task_.getDescription(), font_, 24);
-        descStaticText.setPosition(100, 140);
-        target.draw(descStaticText);
+        text24.setString(task_.getDescription());
+        text24.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 140-50));
+        target.draw(text24, transform_);
 
-        sf::Text deadlineStaticText(Task::formatDeadline(task_.getDeadline()), font_, 24);
-        deadlineStaticText.setPosition(100, 210);
-        target.draw(deadlineStaticText);
+        text24.setString(task_.getDeadlineString());
+        text24.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 210-50));
+        target.draw(text24, transform_);
 
-        sf::Text priorityStaticText(Task::priorityToString(task_.getPriority()), font_, 24);
-        priorityStaticText.setPosition(100, 250);
-        target.draw(priorityStaticText);
+        text24.setString(Task::priorityToString(task_.getPriority()));
+        text24.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 250-50));
+        target.draw(text24, transform_);
 
         // Edit button
-        sf::RectangleShape editButton(sf::Vector2f(80, 30));
-        editButton.setPosition(100, 300);
+        editButton.setSize(sf::Vector2f(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 80),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 30))
+        );
+        editButton.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 300-50));
         editButton.setFillColor(sf::Color(100, 100, 200));
-        target.draw(editButton);
+        target.draw(editButton, transform_);
 
-        sf::Text editText("Edit", font_, 20);
-        editText.setPosition(110, 305);
-        editText.setFillColor(sf::Color::Black);
-        target.draw(editText);
+        text20.setString("Edit");
+        text20.setPosition(
+            Utilities::RemapClamped(0, 400, 0, bgSize.x, 110-100),
+            Utilities::RemapClamped(0, 400, 0, bgSize.y, 305-50)
+        );
+        target.draw(text20, transform_);
     }
 
     // Status text
-    sf::Text statusText;
-    statusText.setFont(font_);
-    statusText.setCharacterSize(16);
-    statusText.setPosition(105, 55);
+    sf::Text statusText("", font_, bgSize.y / 48);
+    statusText.setPosition(
+        Utilities::RemapClamped(0, 400, 0, bgSize.x, 105-100),
+        Utilities::RemapClamped(0, 400, 0, bgSize.y, 55-50)
+    );
     statusText.setString(IsEditMode() ? "EDIT MODE" : "VIEW MODE");
     statusText.setFillColor(sf::Color::Red);
-    target.draw(statusText);
+    target.draw(statusText, transform_);
     
     // Restore original view
     target.setView(target.getDefaultView());

@@ -254,6 +254,8 @@ void Kanban::Board::Update(const sf::RenderWindow& window, const float deltaTime
         if (task.getId().has_value() && taskIds_.find(task.getId().value()) == taskIds_.end())
             taskIds_[task.getId().value()] = Available;
     }
+
+    RefreshTaskCards();
 }
 
 bool Kanban::Board::CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
@@ -291,4 +293,56 @@ void Kanban::Board::Draw(sf::RenderWindow& window)
 {
     DrawColumns(window);
     DrawScrollBar(window);
+}
+// std::optional<Task> Kanban::Board::GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window) {
+//     // Convert pixel position to board view coordinates
+//     sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos, boardView);
+//
+//     // Loop through all columns and their task cards
+//     for (auto* column : columns_) {
+//         auto taskCards = column->GetTaskOptions();
+//         for (auto* taskCard : taskCards) {
+//             if (taskCard && taskCard->ContainsPoint(worldPos)) {
+//                 return taskCard->GetTask();
+//             }
+//         }
+//     }
+//     return std::nullopt;
+// }
+
+// Added to fix segmentation fault (core dumped) crash when deleting an edited task
+void Kanban::Board::RefreshTaskCards() {
+    // Get all updated tasks from database
+    auto allTasks = taskManager_->getAllTasks();
+
+    // Update existing TaskCards with fresh data from database
+    for (auto* column : columns_) {
+        auto& taskCards = column->GetTaskOptions();
+
+        // Create a copy of the vector to iterate over, in case cards get deleted during refresh
+        std::vector<Kanban::TaskCard*> cardsCopy = taskCards;
+
+        for (auto* taskCard : cardsCopy) {
+            if (taskCard && taskCard->GetId().has_value()) {
+                int taskId = taskCard->GetId().value();
+                bool foundInDatabase = false;
+
+                // Find the updated task in the database
+                for (const auto& updatedTask : allTasks) {
+                    if (updatedTask.getId().has_value() &&
+                        updatedTask.getId().value() == taskId) {
+                        // Update the TaskCard's task with fresh data
+                        taskCard->UpdateTask(updatedTask);
+                        foundInDatabase = true;
+                        break;
+                    }
+                }
+
+                // If task was deleted from database, remove the TaskCard
+                if (!foundInDatabase) {
+                    column->RemoveTaskCard(taskCard);
+                }
+            }
+        }
+    }
 }

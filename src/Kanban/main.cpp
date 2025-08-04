@@ -99,7 +99,7 @@ void CreateTasks(TaskManager& taskManager)
 
 User SetupUser(TaskManager& taskManager, UserManager& userManager)
 {
-    string usr = "SFML_Test_User";
+    string usr = "Test_User";
     string pass = "password";
 
     // Authenticate user
@@ -112,6 +112,7 @@ User SetupUser(TaskManager& taskManager, UserManager& userManager)
         throw runtime_error("Failed to login user");
 
     taskManager.setCurrentUser(userManager.getCurrentUserId());
+    // taskManager.clearUserTasks(userManager.getCurrentUserId());
 
     // create tasks for current user
     if (newRegister)
@@ -139,7 +140,7 @@ int main()
 
     WindowResizeHandler windowResizeHandler;
     ReminderManager reminderManager(taskManager);
-    WindowPromptManager windowPromptManager(window, reminderManager, windowResizeHandler);
+    WindowPromptManager windowPromptManager(window, reminderManager, taskManager, windowResizeHandler);
 
     GUIStateMachine guiStateMachine;
 
@@ -187,12 +188,17 @@ int main()
                 windowPromptManager.ProcessMouseMove(mousePos, window);
                 guiStateMachine.GetCurrentState()->ProcessMouseMove(mousePos, window);
             }
+            if (event.type == sf::Event::KeyPressed)
+            {
+                windowPromptManager.ProcessKeyEvent(event.key.code);
+            }
             if (event.type == sf::Event::TextEntered)
             {
                 // 0-126 so that we skip DEL char
                 if (event.text.unicode < 127)
                 {
                     char c = static_cast<char>(event.text.unicode);
+                    windowPromptManager.ReadUserInput(c);
                     guiStateMachine.GetCurrentState()->ReadUserInput(c);
                 }
             }

@@ -92,5 +92,6 @@ namespace Kanban
 
         string GetName() { return name_; }
         void SetName(string name) { name_ = std::move(name); }
+        std::vector<TaskCard*>& GetTaskOptions() { return tasks_; }
     };
 }

@@ -4,6 +4,7 @@
 #include "Icon.h"
 #include "../Board/Column.h"
 #include "TaskCard.h"
+#include <optional>
 using namespace std;
 
 void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) {
@@ -52,4 +53,8 @@ bool Kanban::TaskCard::CheckCollision(sf::Vector2f point)
     }
 
     return rect.getGlobalBounds().contains(point);
+}
+
+bool Kanban::TaskCard::ContainsPoint(const sf::Vector2f& point) const {
+    return boundingBox_.getGlobalBounds().contains(point);
 }

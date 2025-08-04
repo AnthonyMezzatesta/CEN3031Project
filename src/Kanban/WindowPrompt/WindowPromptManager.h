@@ -28,7 +28,7 @@ public:
     TaskObserver taskObserver_;
 
     WindowPromptManager(const sf::RenderWindow& window, ReminderManager& reminderManager,
-        WindowResizeHandler& windowResizeHandler);
+        TaskManager& taskManager, WindowResizeHandler& windowResizeHandler);
 
     ~WindowPromptManager();
 
@@ -39,6 +39,8 @@ public:
     WindowPrompt* GetPrompt(const WindowPrompt::Type type);
 
     void UpdatePrompts(const float deltaTime);
+    void ProcessKeyEvent(const sf::Keyboard::Key key);
+    void ReadUserInput(char c);
     void ProcessLeftClickReleased();
     void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target);
     bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
@@ -100,4 +102,4 @@ void WindowPromptManager::ShowPrompt(Observer::EventEnum event, Observer::Prompt
             prompt->Activate();
         }
     }
-}
+};

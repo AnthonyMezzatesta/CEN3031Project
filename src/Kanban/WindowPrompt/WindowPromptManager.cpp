@@ -25,19 +25,20 @@ void WindowPromptManager::TaskObserver::OnNotify(EventEnum event, const Task& ta
         return;
     }
 
+    windowPromptManager_->activeWindow = prompt->GetType();
     prompt->SetTask(task);
     prompt->Activate();
 }
 
 WindowPromptManager::TaskObserver::TaskObserver(WindowPromptManager* windowPromptManager): windowPromptManager_(windowPromptManager) {}
 
-WindowPromptManager::WindowPromptManager(const sf::RenderWindow& window, ReminderManager& reminderManager,
+WindowPromptManager::WindowPromptManager(const sf::RenderWindow& window, ReminderManager& reminderManager, TaskManager& taskManager,
     WindowResizeHandler& windowResizeHandler): taskObserver_(this) {
     activeWindow = WindowPrompt::Default;
     prompts_[WindowPrompt::Type::Default] = new DummyPrompt(windowResizeHandler);
     prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(window, windowResizeHandler);
     prompts_[WindowPrompt::Type::SettingsPrompt] = new ColumnSettingsPrompt(window, windowResizeHandler);
-    prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(window, windowResizeHandler);
+    prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(window, taskManager, windowResizeHandler);
     prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(window, reminderManager, windowResizeHandler);
     prompts_[WindowPrompt::Type::WindowResizePrompt] = new WindowResizePrompt(window, windowResizeHandler);
 
@@ -68,7 +69,14 @@ void WindowPromptManager::UpdatePrompts(const float deltaTime) {
     for (auto& kvp: prompts_)
         kvp.second->Update(deltaTime);
 }
-
+void WindowPromptManager::ProcessKeyEvent(const sf::Keyboard::Key key)
+{
+    prompts_[activeWindow]->ProcessKeyEvent(key);
+}
+void WindowPromptManager::ReadUserInput(char c)
+{
+    prompts_[activeWindow]->ReadUserInput(c);
+}
 void WindowPromptManager::ProcessLeftClickReleased() {
     prompts_[activeWindow]->ProcessLeftClickReleased();
 }

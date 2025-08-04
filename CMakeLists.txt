@@ -42,6 +42,8 @@ set (SFML_SOURCES
         src/Kanban/GUIElement/TaskCard.h
         src/Kanban/GUIElement/TaskOption.h
         src/Kanban/GUIElement/TaskCard.cpp
+        src/Kanban/WindowPrompt/TaskEdit.cpp
+        src/Kanban/WindowPrompt/TaskEdit.h
         src/Kanban/WindowPrompt/WindowPrompt.h
         src/Kanban/WindowPrompt/WindowPromptManager.h
         src/Kanban/WindowPrompt/WindowPromptManager.cpp

@@ -13,6 +13,8 @@ public:
 
     WindowPrompt(WindowResizeHandler& windowResizeHandler) : windowResizeObserver_(view_) {
         windowResizeHandler.AddObserver(windowResizeObserver_);
+        font_.loadFromFile(Utilities::fontPath);
+        text_.setFont(font_);
     }
     virtual ~WindowPrompt() {}
 
@@ -20,6 +22,8 @@ public:
     virtual void Draw(sf::RenderTarget& target) = 0;
     virtual void ProcessLeftClickReleased() {}
     virtual void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) {}
+    virtual void ReadUserInput(char c) {}
+    virtual void ProcessKeyEvent(const sf::Keyboard::Key key) {}
     virtual bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) = 0;
 
     Type GetType() const { return type_; }
@@ -31,6 +35,8 @@ public:
     }
     virtual void Activate() { isActive = true; }
 protected:
+    sf::Font font_;
+    sf::Text text_;
     Type type_ = Default;
     bool isVisible = false;
     bool isActive = false;

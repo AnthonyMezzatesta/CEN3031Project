@@ -81,6 +81,7 @@ namespace Kanban
         void Update(const sf::RenderWindow& window, const float deltaTime) override;
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target) override;
         void Draw(sf::RenderWindow& window) override;
+        void RefreshTaskCards();
     private:
         UserInputMode userInputMode;
         string userInputStr;

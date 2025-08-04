@@ -50,7 +50,7 @@ Kanban::Column::Column(const string& name, WindowPromptManager& windowPromptMana
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
     board_ = &board;
-    TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
+    taskSubject_.AddObserver(windowPromptManager_->taskObserver_);
     selectedCard_ = nullptr;
 }
 
@@ -64,15 +64,36 @@ Kanban::Column::~Column() {
     }
 }
 
+
 void Kanban::Column::RemoveTaskCard(Kanban::TaskCard* card)
 {
+    if (!card) {
+        return;
+    }
+    
+    // Clear selection first if this card is selected
+    if (selectedCard_ == card) {
+        selectedCard_->Deselect();
+        selectedCard_ = nullptr;
+    }
+    
+    // Find and remove the card
     for (auto iter = tasks_.begin(); iter != tasks_.end(); ++iter)
     {
-        if ((*iter)->GetId() == card->GetId())
+        if ((*iter) == card)
         {
+            // Return the task to the available pool
             board_->ReturnTask(card->GetId());
-            delete *iter;
+            
+            // Remove from vector first (this changes the size)
             tasks_.erase(iter);
+            
+            // Delete the TaskCard object after removing from vector
+            delete card;
+            
+            // Always clear selection when vector changes
+            selectedCard_ = nullptr;
+            
             return;
         }
     }
@@ -105,22 +126,22 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
         case Icon::Type::plus:
-            cout << "plus icon selected" << endl;
+            std::cout << "Plus icon clicked - showing AddTaskPrompt" << std::endl;
             windowPromptManager_->OnNotify(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
                 taskObserver_
             );
+            std::cout << "AddTaskPrompt should now be visible" << std::endl;
             break;
         case Icon::Type::dots:
-            cout << "dots icon selected" << endl;
+            std::cout << "Dots icon clicked - showing SettingsPrompt" << std::endl;
             windowPromptManager_->OnNotify(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::Settings,
                 actionObserver_
             );
-            break;
-        default:
+            std::cout << "SettingsPrompt should now be visible" << std::endl;
             break;
     }
 }
@@ -131,12 +152,14 @@ void Kanban::Column::SelectTaskCard(Kanban::TaskCard* card) {
 
     selectedCard_ = card;
     card->Select();
-    TaskSubject::Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
+    taskSubject_.Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
 }
 
+// Updated to fix crash when deleting tasks
 bool Kanban::Column::CheckCollision(sf::Vector2f point) {
     if (rect_.getGlobalBounds().contains(point))
     {
+        // Check icons first
         for (unsigned int i = 0; i < icons_.size(); i++)
         {
             if (icons_[i]->CheckCollision(point))
@@ -145,14 +168,34 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point) {
                 return true;
             }
         }
-        for (unsigned int i = 0; i < tasks_.size(); i++)
+        
+        // Use reverse iteration with proper deletion handling
+        for (int i = static_cast<int>(tasks_.size()) - 1; i >= 0; --i)
         {
-            if (tasks_[i]->CheckCollision(point))
+            if (tasks_[i] && tasks_[i]->CheckCollision(point))
             {
-                SelectTaskCard(tasks_[i]);
-                return true;
+                // Store the original size BEFORE calling CheckCollision
+                size_t originalSize = tasks_.size();
+                
+                // The collision was already handled by TaskCard::CheckCollision()
+                // Just check if deletion occurred
+                if (tasks_.size() < originalSize) {
+                    // Task was deleted - clear selection and return immediately
+                    selectedCard_ = nullptr;
+                    return true; // Return true to indicate we handled the collision
+                } else {
+                    // Task wasn't deleted, so select it normally
+                    if (i < static_cast<int>(tasks_.size()) && tasks_[i]) {
+                        SelectTaskCard(tasks_[i]);
+                    } else {
+                        selectedCard_ = nullptr;
+                    }
+                    return true;
+                }
             }
         }
+        
+        // Clear selection if clicking empty space in column
         if (selectedCard_)
         {
             selectedCard_->Deselect();
@@ -160,6 +203,8 @@ bool Kanban::Column::CheckCollision(sf::Vector2f point) {
         }
         return true;
     }
+    
+    // Clear selection if clicking outside column
     if (selectedCard_)
     {
         selectedCard_->Deselect();

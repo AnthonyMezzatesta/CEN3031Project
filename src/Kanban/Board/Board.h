@@ -43,7 +43,6 @@ namespace Kanban
 
         sf::View boardView;
 
-        WindowPromptManager* windowPromptManager_;
         TaskManager* taskManager_;
         Column* activeColumn;
         vector<Kanban::Column*> columns_;
@@ -54,20 +53,25 @@ namespace Kanban
         void DrawColumns(sf::RenderWindow& window);
         void MoveView(sf::Keyboard::Key key, const float deltaTime);
     public:
+        WindowPromptManager* windowPromptManager_;
+
         Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager);
         ~Board();
         void AddColumn(const string& name);
         void RemoveColumn(Column& column);
         void SetActiveColumn(Column* column);
+        // std::optional<Task> GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window);
 
         void Update();
         void SetTaskAsTaken(Task& task); // for use by columns
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessKeyEvent(sf::Keyboard::Key key, const float deltaTime);
+        void ProcessKeyEvent(sf::Keyboard::Key key);
         void ReadUserInput(char c);
         void Draw(sf::RenderWindow& window);
         bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
+
+        void RefreshTaskCards();
     };
 }

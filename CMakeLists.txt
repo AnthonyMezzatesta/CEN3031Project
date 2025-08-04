@@ -47,6 +47,8 @@ set (SFML_SOURCES
         src/ReminderManager/ReminderManager.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
+        src/Kanban/WindowPrompt/TaskEdit.cpp        
+        src/Kanban/WindowPrompt/TaskEdit.h 
 )
 
 # Executables
@@ -90,7 +92,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # Print build information

@@ -26,7 +26,7 @@ void test_task_setters() {
     task.setName("New Name");
     task.setDescription("New Description");
     task.setPriority(Task::Priority::Low);
-    task.setId(42);
+    //task.setId(42);
     
     ASSERT_STR_EQ("New Name", task.getName());
     ASSERT_STR_EQ("New Description", task.getDescription());

@@ -32,6 +32,7 @@ class WindowPromptManager
                 return;
             }
 
+            windowPromptManager_->activeWindow = WindowPrompt::Type::TaskDetailsPrompt;
             prompt->SetTask(task);
             prompt->SetActive(true);
         }
@@ -44,13 +45,13 @@ class WindowPromptManager
 public:
     TaskObserver taskObserver_;
 
-    WindowPromptManager(const sf::RenderWindow& target, Kanban::Board& board, ReminderManager& reminderManager) : taskObserver_(this)
+    WindowPromptManager(const sf::RenderWindow& target, TaskManager& taskManager, Kanban::Board& board, ReminderManager& reminderManager) : taskObserver_(this)
     {
         activeWindow = WindowPrompt::Default;
         prompts_[WindowPrompt::Type::Default] = new DummyPrompt;
         prompts_[WindowPrompt::Type::AddTaskPrompt] = new AddTaskPrompt(target, board);
         prompts_[WindowPrompt::Type::SettingsPrompt] = new SettingsPrompt(target);
-        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target);
+        prompts_[WindowPrompt::Type::TaskDetailsPrompt] = new TaskDetailsPrompt(target, taskManager);
         prompts_[WindowPrompt::Type::ReminderPrompt] = new ReminderPrompt(target, reminderManager);
 
         UpdatePrompts();
@@ -139,7 +140,14 @@ public:
         for (auto& kvp: prompts_)
             kvp.second->Update();
     }
-
+    void ReadUserInput(char c)
+    {
+        prompts_[activeWindow]->ReadUserInput(c);
+    }
+    void ProcessKeyEvent(const sf::Keyboard::Key key)
+    {
+        prompts_[activeWindow]->ProcessKeyEvent(key);
+    }
     bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target)
     {
         for (auto& kvp: prompts_)
@@ -153,6 +161,10 @@ public:
     void Draw(sf::RenderWindow& target)
     {
         for (auto& kvp: prompts_)
-            kvp.second->Draw(target);
+        {
+            if (kvp.second && kvp.second->isVisible) {
+                kvp.second->Draw(target);
+            }
+        }
     }
 };

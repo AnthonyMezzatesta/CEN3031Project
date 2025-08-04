@@ -6,7 +6,6 @@
 #include "TaskManager.h"
 #include "Task.h"
 #include "Board/Board.h"
-#include "WindowPrompt/WindowPromptManager.h"
 #include "../ReminderManager/ReminderManager.h"
 
 using namespace std;
@@ -81,8 +80,7 @@ User SetupUser(TaskManager& taskManager, UserManager& userManager)
     return currentUser.value();
 }
 
-int main()
-{
+int main() {
     UserManager userManager("sfml_users.db");
     if (!userManager.initialize())
         throw runtime_error("Failed to initialize UserManager!");
@@ -104,29 +102,31 @@ int main()
     board.AddColumn("wip");
     board.AddColumn("done");
 
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         sf::Event event{};
-        while (window.pollEvent(event)) {
-            sf::Time elapsedTime = clock.restart();
+        sf::Time elapsedTime = clock.restart();
 
+        // Process all pending events
+        while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
+
+            if (event.type == sf::Event::MouseButtonPressed) {
+                sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
                     board.CheckCollision(pixelPos, window);
                 }
             }
+
             if (event.type == sf::Event::KeyPressed)
             {
-                board.ProcessKeyEvent(event.key.code, elapsedTime.asSeconds());
+                board.ProcessKeyEvent(event.key.code);
             }
+
             if (event.type == sf::Event::TextEntered)
             {
-                // 0-126 so that we skip DEL char
                 if (event.text.unicode < 127)
                 {
                     char c = static_cast<char>(event.text.unicode);
@@ -135,15 +135,11 @@ int main()
             }
         }
 
-        window.clear(sf::Color::Black);
-
-        // update systems
-        reminderManager.Update();
-
-        // update UI/GUI
+        // Update and draw outside the event loop
         board.Update();
 
-        // draw
+        window.clear(sf::Color::Black);
+
         board.Draw(window);
 
         window.display();
@@ -151,3 +147,9 @@ int main()
 
     return 0;
 }
+
+// TODO:
+// Task Metrics w/ GUI
+
+//show general statistics of tasks. E.g. task completion rate, percentage of tasks submitted on time, etc.
+//and a way to filter which tasks are shown based on given criteria

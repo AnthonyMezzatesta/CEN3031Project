@@ -29,7 +29,7 @@ private:
     sf::Sprite layer1_;
     sf::Sprite layer2_;
     sf::Texture texture_;
-    std::string iconsPath = "../../resources/Icons.png";
+    std::string iconsPath = "resources/Icons.png";
 
     void SetScale(float factor);
     void ToggleSecondLayer(bool value) { drawSecondLayer_ = value; }

@@ -91,11 +91,11 @@ void SET_userPasswrd() {
 }
 
 void SET_font() {
-    font.loadFromFile("../resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf"); //("../resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf");
+    font.loadFromFile("resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf"); //("resources/aovel-sans-rounded-font/AovelSansRounded-rdDL.ttf");
 } // /home/jepeto/login_sfml/build
 
 void SET_login_button_unpressed_texture() {
-    if(!login_button_unpressed_texture.loadFromFile("../resources/textures/login_unpressed.png")) {
+    if(!login_button_unpressed_texture.loadFromFile("resources/textures/login_unpressed.png")) {
         std::cout << "Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -108,7 +108,7 @@ void SET_login_button_unpressed_sprite() {
 }
 
 void SET_login_button_pressed_texture() {
-    if(!login_button_pressed_texture.loadFromFile("../resources/textures/login_pressed.png")) { //("../resources/textures/b_pressed.png")) {
+    if(!login_button_pressed_texture.loadFromFile("resources/textures/login_pressed.png")) { //("resources/textures/b_pressed.png")) {
         std::cout << "Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -121,7 +121,7 @@ void SET_login_button_pressed_sprite() {
 }
 
 void SET_signup_pressed_texture() {
-    if(!signup_pressed_texture.loadFromFile("../resources/textures/signup_pressed.png")) {
+    if(!signup_pressed_texture.loadFromFile("resources/textures/signup_pressed.png")) {
         std::cout << "Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -134,7 +134,7 @@ void SET_signup_pressed_sprite() {
 }
 
 void SET_signup_unpressed_texture() {
-    if(!signup_unpressed_texture.loadFromFile("../resources/textures/signup_unpressed.png")) {
+    if(!signup_unpressed_texture.loadFromFile("resources/textures/signup_unpressed.png")) {
         std::cout << "signup Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -352,7 +352,7 @@ void SET_new_userEmail() {
 }
 
 void SET_SIGN_UP_confirmButton_unpressed_texture() {
-    if(!SIGN_UP_confirmButton_unpressed_texture.loadFromFile("../resources/textures/confirm_unpressed.png")) {
+    if(!SIGN_UP_confirmButton_unpressed_texture.loadFromFile("resources/textures/confirm_unpressed.png")) {
         std::cout << "signup Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -365,7 +365,7 @@ void SET_SIGN_UP_confirmButton_unpressed_sprite() {
 }
 
 void SET_SIGN_UP_confirmButton_pressed_texture() {
-    if(!SIGN_UP_confirmButton_pressed_texture.loadFromFile("../resources/textures/confirm_pressed.png")) {
+    if(!SIGN_UP_confirmButton_pressed_texture.loadFromFile("resources/textures/confirm_pressed.png")) {
         std::cout << "signup Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -379,7 +379,7 @@ void SET_SIGN_UP_confirmButton_pressed_sprite() {
 
 
 void SET_SIGN_UP_cancelButton_pressed_texture() {
-    if(!SIGN_UP_cancelButton_pressed_texture.loadFromFile("../resources/textures/cancel_pressed.png")) {
+    if(!SIGN_UP_cancelButton_pressed_texture.loadFromFile("resources/textures/cancel_pressed.png")) {
         std::cout << "signup Button Unpressed texture not loaded!" << "\n";
     }
 }
@@ -392,7 +392,7 @@ void SET_SIGN_UP_cancelButton_pressed_sprite() {
 }
 
 void SET_SIGN_UP_cancelButton_unpressed_texture() {
-    if(!SIGN_UP_cancelButton_unpressed_texture.loadFromFile("../resources/textures/cancel_unpressed.png")) {
+    if(!SIGN_UP_cancelButton_unpressed_texture.loadFromFile("resources/textures/cancel_unpressed.png")) {
         std::cout << "signup Button Unpressed texture not loaded!" << "\n";
     }
 }

@@ -11,6 +11,7 @@
 #include "../GUIStateMachine/GUIStateMachine.h"
 #include "../ReminderManager/ReminderManager.h"
 #include "Board/Board.h"
+#include "GUIElement/AuthenticationManager.h"
 
 using namespace std;
 using namespace Kanban;
@@ -97,28 +98,13 @@ void CreateTasks(TaskManager& taskManager)
     }
 }
 
-User SetupUser(TaskManager& taskManager, UserManager& userManager)
+void SetupUserTasks(TaskManager& taskManager, UserManager& userManager, bool isNewUser)
 {
-    string usr = "Test_User";
-    string pass = "password";
-
-    // Authenticate user
-    bool newRegister = userManager.registerUser(usr, pass);
-
-    userManager.loginUser(usr, pass);
-
-    auto currentUser = userManager.getCurrentUser();
-    if (!currentUser.has_value())
-        throw runtime_error("Failed to login user");
-
     taskManager.setCurrentUser(userManager.getCurrentUserId());
-    // taskManager.clearUserTasks(userManager.getCurrentUserId());
-
-    // create tasks for current user
-    if (newRegister)
+    
+    // create tasks for new users
+    if (isNewUser)
         CreateTasks(taskManager);
-
-    return currentUser.value();
 }
 
 int main()
@@ -131,26 +117,27 @@ int main()
     if (!taskManager.initialize())
         throw runtime_error("Failed to initialize TaskManager!");
 
-    User currentUser = SetupUser(taskManager, userManager);
-
     sf::Clock clock;
     auto defaultWindowSize = Utilities::defaultWindowSize;
     sf::RenderWindow window(sf::VideoMode(defaultWindowSize.x, defaultWindowSize.y), Utilities::windowTitle, Utilities::windowStyle);
     window.setFramerateLimit(60);
 
-    WindowResizeHandler windowResizeHandler;
-    ReminderManager reminderManager(taskManager);
-    WindowPromptManager windowPromptManager(window, reminderManager, taskManager, windowResizeHandler);
+    // Create authentication manager
+    AuthenticationManager authManager(window, userManager);
+    if (!authManager.initialize()) {
+        throw runtime_error("Failed to initialize AuthenticationManager!");
+    }
 
-    GUIStateMachine guiStateMachine;
-
-    TaskCreationScreen taskCreationScreen(taskManager);
-    OutsideBoardThing outsideBoardThing(reminderManager, guiStateMachine, windowPromptManager);
-    Board board(window, taskManager, windowResizeHandler, windowPromptManager);
-
-    guiStateMachine.AddState(&board);
-    guiStateMachine.AddState(&taskCreationScreen);
-    guiStateMachine.SwitchState(board.GetStateType());
+    // Initialize UI components (created only after authentication)
+    std::unique_ptr<WindowResizeHandler> windowResizeHandler;
+    std::unique_ptr<ReminderManager> reminderManager;
+    std::unique_ptr<WindowPromptManager> windowPromptManager;
+    std::unique_ptr<GUIStateMachine> guiStateMachine;
+    std::unique_ptr<TaskCreationScreen> taskCreationScreen;
+    std::unique_ptr<OutsideBoardThing> outsideBoardThing;
+    std::unique_ptr<Board> board;
+    
+    bool uiInitialized = false;
 
     while (window.isOpen())
     {
@@ -158,65 +145,107 @@ int main()
         sf::Time elapsedTime = clock.restart();
 
         while (window.pollEvent(event)) {
-
             if (event.type == sf::Event::Closed)
                 window.close();
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
-                if (event.mouseButton.button == sf::Mouse::Left)
-                {
-                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
 
-                    if (outsideBoardThing.CheckCollision(pixelPos, window))
-                        continue;
-                    if (windowPromptManager.CheckCollision(pixelPos, window))
-                        continue;
-                    guiStateMachine.GetCurrentState()->CheckCollision(pixelPos, window);
+            if (!authManager.isAuthenticated()) {
+                // Handle authentication events
+                authManager.handleEvent(event);
+            } else {
+                // Initialize UI components after successful authentication
+                if (!uiInitialized) {
+                    auto currentUser = userManager.getCurrentUser();
+                    if (currentUser.has_value()) {
+                        // Check if this is a new user by seeing if they have any tasks
+                        bool isNewUser = taskManager.getAllTasks().empty();
+                        SetupUserTasks(taskManager, userManager, isNewUser);
+                        
+                        windowResizeHandler = std::make_unique<WindowResizeHandler>();
+                        reminderManager = std::make_unique<ReminderManager>(taskManager);
+                        windowPromptManager = std::make_unique<WindowPromptManager>(window, *reminderManager, taskManager, *windowResizeHandler);
+                        guiStateMachine = std::make_unique<GUIStateMachine>();
+                        taskCreationScreen = std::make_unique<TaskCreationScreen>(taskManager);
+                        outsideBoardThing = std::make_unique<OutsideBoardThing>(*reminderManager, *guiStateMachine, *windowPromptManager);
+                        board = std::make_unique<Board>(window, taskManager, *windowResizeHandler, *windowPromptManager);
+                        
+                        guiStateMachine->AddState(board.get());
+                        guiStateMachine->AddState(taskCreationScreen.get());
+                        guiStateMachine->SwitchState(board->GetStateType());
+                        
+                        uiInitialized = true;
+                    }
                 }
-            }
-            if (event.type == sf::Event::MouseButtonReleased)
-            {
-                if (event.mouseButton.button == sf::Mouse::Left)
+                
+                // Handle main application events
+                if (event.type == sf::Event::MouseButtonPressed)
                 {
-                    windowPromptManager.ProcessLeftClickReleased();
-                    guiStateMachine.GetCurrentState()->ProcessLeftClickReleased();
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+                        sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+
+                        if (outsideBoardThing && outsideBoardThing->CheckCollision(pixelPos, window))
+                            continue;
+                        if (windowPromptManager && windowPromptManager->CheckCollision(pixelPos, window))
+                            continue;
+                        if (guiStateMachine && guiStateMachine->GetCurrentState())
+                            guiStateMachine->GetCurrentState()->CheckCollision(pixelPos, window);
+                    }
                 }
-            }
-            if (event.type == sf::Event::MouseMoved)
-            {
-                sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
-                windowPromptManager.ProcessMouseMove(mousePos, window);
-                guiStateMachine.GetCurrentState()->ProcessMouseMove(mousePos, window);
-            }
-            if (event.type == sf::Event::KeyPressed)
-            {
-                windowPromptManager.ProcessKeyEvent(event.key.code);
-            }
-            if (event.type == sf::Event::TextEntered)
-            {
-                // 0-126 so that we skip DEL char
-                if (event.text.unicode < 127)
+                if (event.type == sf::Event::MouseButtonReleased)
                 {
-                    char c = static_cast<char>(event.text.unicode);
-                    windowPromptManager.ReadUserInput(c);
-                    guiStateMachine.GetCurrentState()->ReadUserInput(c);
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+                        if (windowPromptManager) windowPromptManager->ProcessLeftClickReleased();
+                        if (guiStateMachine && guiStateMachine->GetCurrentState())
+                            guiStateMachine->GetCurrentState()->ProcessLeftClickReleased();
+                    }
+                }
+                if (event.type == sf::Event::MouseMoved)
+                {
+                    sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
+                    if (windowPromptManager) windowPromptManager->ProcessMouseMove(mousePos, window);
+                    if (guiStateMachine && guiStateMachine->GetCurrentState())
+                        guiStateMachine->GetCurrentState()->ProcessMouseMove(mousePos, window);
+                }
+                if (event.type == sf::Event::KeyPressed)
+                {
+                    if (windowPromptManager) windowPromptManager->ProcessKeyEvent(event.key.code);
+                }
+                if (event.type == sf::Event::TextEntered)
+                {
+                    // 0-126 so that we skip DEL char
+                    if (event.text.unicode < 127)
+                    {
+                        char c = static_cast<char>(event.text.unicode);
+                        if (windowPromptManager) windowPromptManager->ReadUserInput(c);
+                        if (guiStateMachine && guiStateMachine->GetCurrentState())
+                            guiStateMachine->GetCurrentState()->ReadUserInput(c);
+                    }
                 }
             }
         }
 
         window.clear(Utilities::fill0);
 
-        // update systems
-        reminderManager.Update();
+        if (!authManager.isAuthenticated()) {
+            // Show authentication screen
+            authManager.update();
+            authManager.draw();
+        } else if (uiInitialized) {
+            // update systems
+            if (reminderManager) reminderManager->Update();
 
-        // update UI/GUI
-        guiStateMachine.GetCurrentState()->Update(window, elapsedTime.asSeconds());
-        windowPromptManager.UpdatePrompts(elapsedTime.asSeconds());
+            // update UI/GUI
+            if (guiStateMachine && guiStateMachine->GetCurrentState())
+                guiStateMachine->GetCurrentState()->Update(window, elapsedTime.asSeconds());
+            if (windowPromptManager) windowPromptManager->UpdatePrompts(elapsedTime.asSeconds());
 
-        // draw
-        guiStateMachine.GetCurrentState()->Draw(window);
-        outsideBoardThing.Draw(window);
-        windowPromptManager.Draw(window);
+            // draw
+            if (guiStateMachine && guiStateMachine->GetCurrentState())
+                guiStateMachine->GetCurrentState()->Draw(window);
+            if (outsideBoardThing) outsideBoardThing->Draw(window);
+            if (windowPromptManager) windowPromptManager->Draw(window);
+        }
 
         window.display();
     }

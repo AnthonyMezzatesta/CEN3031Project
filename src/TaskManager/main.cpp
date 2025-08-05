@@ -1,7 +1,9 @@
 #include "TaskManager.h"
 #include "UserManager.h"
+#include "TeamManager.h"
 #include "Task.h"
 #include "User.h"
+#include "Team.h"
 #include <iostream>
 #include <chrono>
 #include <vector>
@@ -29,6 +31,194 @@ void printTasks(const std::vector<Task>& tasks, const std::string& title) {
 void clearInputBuffer() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+void printTeams(const std::vector<Team>& teams, const std::string& title) {
+    std::cout << "\n" << title << ":" << std::endl;
+    printSeparator();
+    
+    if (teams.empty()) {
+        std::cout << "No teams found." << std::endl;
+    } else {
+        for (const auto& team : teams) {
+            std::cout << team.toString() << std::endl;
+        }
+    }
+    printSeparator();
+}
+
+bool manageTeams(UserManager& userManager, TaskManager& taskManager) {
+    TeamManager teamManager("teams.db");
+    if (!teamManager.initialize()) {
+        std::cerr << "Failed to initialize TeamManager!" << std::endl;
+        return false;
+    }
+    
+    int userId = userManager.getCurrentUserId();
+    
+    while (true) {
+        std::cout << "\n=== Team Management ===" << std::endl;
+        std::cout << "1. View my teams" << std::endl;
+        std::cout << "2. Create new team" << std::endl;
+        std::cout << "3. Join existing team" << std::endl;
+        std::cout << "4. View all teams" << std::endl;
+        std::cout << "5. View team tasks" << std::endl;
+        std::cout << "6. Add task to team" << std::endl;
+        std::cout << "7. View all my tasks (personal + team)" << std::endl;
+        std::cout << "8. Back to main menu" << std::endl;
+        std::cout << "Enter choice (1-8): ";
+        
+        int choice;
+        if (!(std::cin >> choice)) {
+            std::cout << "Invalid input. Please enter a number." << std::endl;
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
+        
+        switch (choice) {
+            case 1: { // View my teams
+                auto myTeams = teamManager.getTeamsForUser(userId);
+                printTeams(myTeams, "My Teams");
+                break;
+            }
+            
+            case 2: { // Create new team
+                std::string name, description;
+                std::cout << "Enter team name: ";
+                std::getline(std::cin, name);
+                std::cout << "Enter team description: ";
+                std::getline(std::cin, description);
+                
+                if (teamManager.createTeam(name, description, userId)) {
+                    std::cout << "✓ Team '" << name << "' created successfully!" << std::endl;
+                } else {
+                    std::cout << "✗ Failed to create team. Name might already exist." << std::endl;
+                }
+                break;
+            }
+            
+            case 3: { // Join existing team
+                auto allTeams = teamManager.getAllTeams();
+                printTeams(allTeams, "Available Teams");
+                
+                if (!allTeams.empty()) {
+                    std::cout << "Enter team ID to join: ";
+                    int teamId;
+                    if (std::cin >> teamId) {
+                        clearInputBuffer();
+                        if (teamManager.addUserToTeam(userId, teamId)) {
+                            std::cout << "✓ Successfully joined team!" << std::endl;
+                        } else {
+                            std::cout << "✗ Failed to join team. You might already be a member." << std::endl;
+                        }
+                    } else {
+                        std::cout << "Invalid team ID." << std::endl;
+                        clearInputBuffer();
+                    }
+                }
+                break;
+            }
+            
+            case 4: { // View all teams
+                auto allTeams = teamManager.getAllTeams();
+                printTeams(allTeams, "All Teams");
+                break;
+            }
+            
+            case 5: { // View team tasks
+                auto myTeams = teamManager.getTeamsForUser(userId);
+                if (myTeams.empty()) {
+                    std::cout << "You're not a member of any teams." << std::endl;
+                    break;
+                }
+                
+                printTeams(myTeams, "Select a team to view tasks");
+                std::cout << "Enter team ID: ";
+                int teamId;
+                if (std::cin >> teamId) {
+                    clearInputBuffer();
+                    if (taskManager.isUserAuthorizedForTeamTask(userId, teamId)) {
+                        auto teamTasks = taskManager.getAllTeamTasks(teamId);
+                        auto team = teamManager.getTeamById(teamId);
+                        std::string title = team.has_value() ? 
+                            "Tasks for team: " + team.value().getName() : 
+                            "Team Tasks";
+                        printTasks(teamTasks, title);
+                    } else {
+                        std::cout << "✗ You don't have access to this team's tasks." << std::endl;
+                    }
+                } else {
+                    std::cout << "Invalid team ID." << std::endl;
+                    clearInputBuffer();
+                }
+                break;
+            }
+            
+            case 6: { // Add task to team
+                auto myTeams = teamManager.getTeamsForUser(userId);
+                if (myTeams.empty()) {
+                    std::cout << "You're not a member of any teams." << std::endl;
+                    break;
+                }
+                
+                printTeams(myTeams, "Select a team to add task to");
+                std::cout << "Enter team ID: ";
+                int teamId;
+                if (!(std::cin >> teamId)) {
+                    std::cout << "Invalid team ID." << std::endl;
+                    clearInputBuffer();
+                    break;
+                }
+                clearInputBuffer();
+                
+                if (!taskManager.isUserAuthorizedForTeamTask(userId, teamId)) {
+                    std::cout << "✗ You don't have access to add tasks to this team." << std::endl;
+                    break;
+                }
+                
+                std::string name, description, deadlineStr;
+                int priority;
+                
+                std::cout << "Enter task name: ";
+                std::getline(std::cin, name);
+                std::cout << "Enter task description: ";
+                std::getline(std::cin, description);
+                std::cout << "Enter deadline (YYYY-MM-DD HH:MM:SS or YYYY-MM-DD): ";
+                std::getline(std::cin, deadlineStr);
+                std::cout << "Enter priority (0=Low, 1=Medium, 2=High): ";
+                
+                if (!(std::cin >> priority) || priority < 0 || priority > 2) {
+                    std::cout << "Invalid priority. Using Medium as default." << std::endl;
+                    priority = 1;
+                }
+                clearInputBuffer();
+                
+                auto deadline = Task::parseDeadline(deadlineStr);
+                Task task(name, description, deadline, static_cast<Task::Priority>(priority));
+                
+                if (taskManager.addTeamTask(task, teamId)) {
+                    std::cout << "✓ Task added to team successfully!" << std::endl;
+                } else {
+                    std::cout << "✗ Failed to add task to team." << std::endl;
+                }
+                break;
+            }
+            
+            case 7: { // View all my tasks (personal + team)
+                auto allTasks = taskManager.getAllUserAndTeamTasks(userId);
+                printTasks(allTasks, "All My Tasks (Personal + Team)");
+                break;
+            }
+            
+            case 8: // Back to main menu
+                return true;
+                
+            default:
+                std::cout << "Invalid choice. Please enter 1-8." << std::endl;
+                break;
+        }
+    }
 }
 
 bool authenticateUser(UserManager& userManager) {
@@ -123,6 +313,45 @@ int main() {
     std::cout << "\n=== Welcome to your personal task manager, " 
               << currentUser.value().getEmail() << "! ===" << std::endl;
     
+    // Main menu
+    while (true) {
+        std::cout << "\n=== Main Menu ===" << std::endl;
+        std::cout << "1. Manage Teams" << std::endl;
+        std::cout << "2. Personal Task Manager (Demo)" << std::endl;
+        std::cout << "3. Logout" << std::endl;
+        std::cout << "Enter choice (1-3): ";
+        
+        int mainChoice;
+        if (!(std::cin >> mainChoice)) {
+            std::cout << "Invalid input. Please enter a number." << std::endl;
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
+        
+        switch (mainChoice) {
+            case 1:
+                if (!manageTeams(userManager, taskManager)) {
+                    std::cout << "Error accessing team management." << std::endl;
+                }
+                break;
+                
+            case 2:
+                // Continue with existing personal task demo
+                goto personal_tasks_demo;
+                
+            case 3:
+                userManager.logoutUser();
+                std::cout << "\n=== Session Complete ===" << std::endl;
+                return 0;
+                
+            default:
+                std::cout << "Invalid choice. Please enter 1-3." << std::endl;
+                break;
+        }
+    }
+    
+    personal_tasks_demo:
     // Check if user has existing tasks
     int existingTaskCount = taskManager.getTaskCount();
     if (existingTaskCount > 0) {
@@ -276,8 +505,6 @@ int main() {
             break;
     }
     
-    userManager.logoutUser();
-    std::cout << "\n=== Session Complete ===" << std::endl;
-    
+    // This should not be reached due to the main menu loop
     return 0;
 } 

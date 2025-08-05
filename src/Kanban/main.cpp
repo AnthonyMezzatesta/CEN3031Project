@@ -144,7 +144,7 @@ int main()
 
     GUIStateMachine guiStateMachine;
 
-    TaskCreationScreen taskCreationScreen(taskManager);
+    TaskCreationScreen taskCreationScreen(taskManager, windowPromptManager);
     OutsideBoardThing outsideBoardThing(reminderManager, guiStateMachine, windowPromptManager);
     Board board(window, taskManager, windowResizeHandler, windowPromptManager);
 

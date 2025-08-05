@@ -23,5 +23,8 @@ namespace Kanban
         Task& GetTask() { return task; }
         std::optional<int> getId() { return task.getId(); }
 
+        void UpdateTask(const Task& updatedTask) {
+            task = updatedTask;
+        }
     };
 }

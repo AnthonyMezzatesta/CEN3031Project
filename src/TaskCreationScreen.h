@@ -1,16 +1,40 @@
 #pragma once
 #include <iostream>
+#include <string>
+#include <chrono>
+#include <vector>
 #include <SFML/Graphics.hpp>
+#include "Subject.h"
 #include "GUIStateMachine/GUIState.h"
 using std::cout;
 using std::endl;
+using std::string;
+using std::vector;
 
-class TaskCreationScreen final : public GUIState
+class TaskCreationScreen final : public GUIState, private EventSystem::TaskSubject
 {
+    enum ButtonEnum { createTask, deleteTask, viewTask };
+    struct Button : public Kanban::GUIElement
+    {
+        ButtonEnum type_;
+        string name_;
+        Button(ButtonEnum type, const string& name) : GUIElement(Utilities::fill2), type_(type), name_(name) {}
+
+    protected:
+        void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
+        {
+            Utilities::DrawText(target, textObj, size, basePos, name_, size.y / 4, Utilities::textColor);
+        }
+    };
+    vector<Button*> buttons_;
+    ButtonEnum buttonTypes[3] = {createTask, deleteTask, viewTask};
+    string buttonNames[3] = {"Create", "Delete", "View Details" };
+
     sf::Font font_;
     sf::Text text_;
     TaskManager* taskManager_;
-    vector<Task> tasks_;
+    WindowPromptManager* windowPromptManager_;
+    // vector<Task> tasks_;
 
     sf::Transform staticTransform_;
     sf::Transform textureTransform_;
@@ -52,7 +76,7 @@ class TaskCreationScreen final : public GUIState
     }
     void UpdateScrollTexture(const float deltaTime)
     {
-        int taskCount = tasks_.size();
+        int taskCount = tasksOptions_.size();
         float minTarget = 0;
         float extraTaskCount = std::max(0, taskCount - tasksPerTexture_);
         float maxDistY = (taskHeight_ + taskPaddingY_) * extraTaskCount;
@@ -64,22 +88,127 @@ class TaskCreationScreen final : public GUIState
 
         scrollTexture_.Update(enableScrollBar, barWidthRatio, textureSize, {}, minTarget, maxDistY, deltaTime);
     }
+
+    void UpdateTasks()
+    {
+        // Get all updated tasks from database
+        auto allTasks = taskManager_->getAllTasks();
+
+        // Update existing TaskCards with fresh data from database
+        for (auto iter = tasksOptions_.begin(); iter != tasksOptions_.end(); ++iter)
+        {
+            Kanban::TaskOption* option = *iter;
+
+            if (option && option->getId().has_value())
+            {
+                int taskId = option->getId().value();
+                bool foundInDatabase = false;
+
+                // Find the updated task in the database
+                for (const auto& updatedTask : allTasks)
+                {
+                    if (updatedTask.getId().has_value() && updatedTask.getId().value() == taskId)
+                    {
+                        // Update the TaskCard's task with fresh data
+                        option->UpdateTask(updatedTask);
+                        foundInDatabase = true;
+                        break;
+                    }
+                }
+
+                // If task was deleted from database, remove the TaskCard
+                if (!foundInDatabase)
+                {
+                    delete *iter;
+                    iter = tasksOptions_.erase(iter);
+                }
+            }
+        }
+    }
+
+    void PerformButtonOperation(Button* button)
+    {
+        if (button->type_ == createTask)
+        {
+            auto now = std::chrono::system_clock::now();
+            Task task("unnamed", "description", now, {});
+            taskManager_->addTask(task);
+            tasksOptions_.push_back(new Kanban::TaskOption(task));
+        }
+
+        if (!activeTask_)
+            return;
+
+        if (button->type_ == deleteTask)
+        {
+            for (auto iter = tasksOptions_.begin(); iter != tasksOptions_.end(); ++iter)
+            {
+                if (*iter == activeTask_)
+                {
+                    activeTask_->Deselect();
+                    taskManager_->removeTask(activeTask_->getId().value());
+                    delete activeTask_;
+                    activeTask_ = nullptr;
+                    tasksOptions_.erase(iter);
+                    return;
+                }
+            }
+        }
+        else if (button->type_ == viewTask)
+        {
+            Notify(Observer::ShowPrompt, activeTask_->GetTask());
+        }
+
+    }
+    void DrawTaskSettings(sf::RenderWindow& window)
+    {
+        const unsigned int buttonCount = buttons_.size();
+        float buttonHeight = spaceHeight_ * 0.3f / (buttonCount + 1);
+        float buttonPaddingY = buttonHeight / (buttonCount + 1);
+
+        sf::Vector2f buttonSize(spaceWidth_ * 0.3f, buttonHeight);
+        float x = spaceWidth_ - buttonSize.x * 0.75f;
+        float startY = spaceHeight_ * 0.65f;
+        auto pos = staticTransform_.transformPoint(sf::Vector2f(x, startY));
+
+        buttons_[ButtonEnum::createTask]->Draw(pos, buttonSize, {}, window);
+
+        if (!activeTask_)
+            return;
+
+
+        for (unsigned int i = 1; i < buttonCount; i++)
+        {
+            float y = startY + (buttonHeight + buttonPaddingY) * i;
+            pos = staticTransform_.transformPoint(sf::Vector2f(x, y));
+            buttons_[i]->Draw(pos, buttonSize, {}, window);
+        }
+
+    }
+
 public:
-    TaskCreationScreen(TaskManager& taskManager) : GUIState(StateEnum::TaskCreation), taskManager_(&taskManager), activeTask_(nullptr)
+    TaskCreationScreen(TaskManager& taskManager, WindowPromptManager& windowPromptManager) :
+        GUIState(StateEnum::TaskCreation), taskManager_(&taskManager), windowPromptManager_(&windowPromptManager), activeTask_(nullptr)
     {
         if (!font_.loadFromFile(Utilities::fontPath))
             std::cerr << "could not load font: " << Utilities::fontPath << endl;
         text_.setFont(font_);
 
-        tasks_ = taskManager.getAllTasks();
+        TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
+        auto tasks_ = taskManager.getAllTasks();
         tasksOptions_.resize(tasks_.size());
         for (unsigned int i = 0; i < tasks_.size(); i++)
             tasksOptions_[i] = new Kanban::TaskOption(tasks_[i]);
+
+        for (unsigned int i = 0; i < std::size(buttonNames); i++)
+            buttons_.push_back(new Button(buttonTypes[i], buttonNames[i]));
     }
     ~TaskCreationScreen()
     {
         for (unsigned int i = 0; i < tasksOptions_.size(); i++)
             delete tasksOptions_[i];
+        for (unsigned int i = 0; i < buttons_.size(); i++)
+            delete buttons_[i];
     }
 
     void ProcessLeftClickReleased() override
@@ -100,15 +229,21 @@ public:
         auto windowSize = window.getSize();
         UpdateValues(windowSize.x, windowSize.y);
         UpdateScrollTexture(deltaTime);
+
+        UpdateTasks(); // not ideal, but a temp fix
     }
 
-    void SelectTask(Kanban::TaskOption* task)
+    void ClearSelectedTask()
     {
         if (activeTask_)
         {
             activeTask_->Deselect();
             activeTask_ = nullptr;
         }
+    }
+    void SelectTask(Kanban::TaskOption* task)
+    {
+        if (activeTask_) activeTask_->Deselect();
 
         activeTask_ = task;
         activeTask_->Select();
@@ -118,6 +253,18 @@ public:
         auto staticPoint = static_cast<sf::Vector2f>(pixelPos);
         auto dynamicTexturePoint = textureTransform_.getInverse().transformPoint(staticPoint);
         dynamicTexturePoint.y += scrollTexture_.GetScrollDelta(); // adjust by amount scrolled
+
+        for (unsigned int i = 0; i < buttons_.size(); i++)
+        {
+            if (buttons_[i]->CheckCollision(staticPoint))
+            {
+                PerformButtonOperation(buttons_[i]);
+                ClearSelectedTask();
+                return true;
+            }
+        }
+
+        ClearSelectedTask();
 
         if (scrollTexture_.CheckScrollBarCollision(staticPoint))
             return true;
@@ -155,7 +302,7 @@ public:
         auto& dynamicTexture = scrollTexture_.GetTexture();
         dynamicTexture.clear(sf::Color::Transparent);
 
-        for (int i = 0; i < tasks_.size(); i++)
+        for (int i = 0; i < tasksOptions_.size(); i++)
         {
             float y = taskPaddingY_ + (taskHeight_ + taskPaddingY_) * i;
             tasksOptions_[i]->Draw(sf::Vector2f(taskPaddingX_, y),
@@ -188,5 +335,6 @@ public:
         sf::IntRect scrollRect(0, scrollTexture_.GetScrollDelta(), textureWidth_, defaultTextureHeight_);
         scrollTexture_.DrawTexture(window, scrollRect, textureTransform_);
 
+        DrawTaskSettings(window);
     }
 };

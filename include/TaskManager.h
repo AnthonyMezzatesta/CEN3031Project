@@ -29,7 +29,7 @@ public:
     int getCurrentUser() const { return current_user_id_; }
     bool hasCurrentUser() const { return current_user_id_ > 0; }
 
-    // Task operations (user-specific)
+    // Task operations (now user-specific)
     bool addTask(const Task& task);
     bool removeTask(int task_id);
     bool updateTask(const Task& task);
@@ -39,19 +39,6 @@ public:
     std::vector<Task> getOverdueTasks();
     std::vector<Task> getUpcomingTasks(int days = 7);
     std::vector<Task> getTasksByPriority(Task::Priority priority);
-    
-    // Team-based task operations
-    bool addTeamTask(const Task& task, int team_id);
-    bool removeTeamTask(int task_id, int team_id);
-    bool updateTeamTask(const Task& task, int team_id);
-    std::optional<Task> getTeamTask(int task_id, int team_id);
-    std::vector<Task> getAllTeamTasks(int team_id);
-    std::vector<Task> getTeamTasksByName(const std::string& name, int team_id);
-    std::vector<Task> getTeamOverdueTasks(int team_id);
-    std::vector<Task> getTeamUpcomingTasks(int team_id, int days = 7);
-    std::vector<Task> getTeamTasksByPriority(Task::Priority priority, int team_id);
-    std::vector<Task> getAllUserAndTeamTasks(int user_id);
-    bool isUserAuthorizedForTeamTask(int user_id, int team_id);
 
     bool isConnected() const { return db_ != nullptr; }
     int getTaskCount();

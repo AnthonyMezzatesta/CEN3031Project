@@ -5,8 +5,6 @@ void run_task_tests();
 void run_user_tests();
 void run_task_manager_tests();
 void run_user_manager_tests();
-void run_team_manager_tests();
-void run_team_task_tests();
 
 int main() {
     std::cout << "=== TaskManager Test Suite ===" << std::endl;
@@ -17,8 +15,6 @@ int main() {
     run_user_tests();
     run_task_manager_tests();
     run_user_manager_tests();
-    run_team_manager_tests();
-    run_team_task_tests();
     
     // Print final results
     TestRunner::print_results();

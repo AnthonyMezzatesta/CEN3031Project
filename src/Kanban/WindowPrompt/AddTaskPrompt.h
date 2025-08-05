@@ -3,23 +3,44 @@
 #include <unordered_map>
 #include "Subject.h"
 #include "WindowPrompt.h"
+#include "WindowResizeHandler.h"
 #include "../GUIElement/TaskOption.h"
-#include "../Board/Board.h"
+#include "../GUIElement/ScrollableTexture.h"
 
 class AddTaskPrompt final : public WindowPrompt, public EventSystem::TaskSubject
 {
+    sf::Font font_;
+    sf::Text text_;
     sf::RectangleShape bg;
-    sf::Color bgColor = sf::Color(128, 128, 128, 255);
     std::unordered_map<int, Kanban::TaskOption*> taskElements_;
+
+    int headerHeight_;
+    float taskWidth_;
+    float xOffset_;
+    float taskHeight_;
+    float taskPaddingY_;
+    float defaultTextureHeight_;
+
+    const static int tasksPerScreen_ = 5;
+    ScrollableTexture scrollTexture_;
+    sf::Transform transformDynamic_;
+
+    void UpdateValues();
+    void UpdateScrollTexture(const float deltaTime);
+    void DrawStaticElements(sf::RenderTarget& target);
+    void DrawDynamicElements(sf::RenderTarget& target);
 public:
-    AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board);
+    AddTaskPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler);
     ~AddTaskPrompt();
 
+    void UpdateTaskElements(const vector<Task>& tasks);
     void ClearTaskElements();
 
-    void Update() override;
-    void Deactivate();
+    void Update(const float deltaTime) override;
+    void Deactivate() override;
 
+    void ProcessLeftClickReleased() override;
+    void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) override;
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
     void Draw(sf::RenderTarget& target) override;
 };

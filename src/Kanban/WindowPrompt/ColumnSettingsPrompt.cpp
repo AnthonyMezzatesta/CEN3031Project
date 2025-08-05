@@ -1,9 +1,11 @@
+#include <string>
 #include <SFML/Graphics.hpp>
 #include "Utilities.h"
-#include "../Board/Board.h"
-#include "SettingsPrompt.h"
+#include "../Kanban/GUIElement/GUIElement.h"
+#include "ColumnSettingsPrompt.h"
+using std::string;
 
-const char* SettingsPrompt::OptionEnumToString(OptionEnum value) {
+const char* ColumnSettingsPrompt::OptionEnumToString(OptionEnum value) {
     switch (value)
     {
         case Rename:
@@ -15,51 +17,42 @@ const char* SettingsPrompt::OptionEnumToString(OptionEnum value) {
     }
 }
 
-void SettingsPrompt::SettingsOption::DrawDetails(sf::RenderTarget& target, sf::Vector2f size,
+void ColumnSettingsPrompt::SettingsOption::DrawDetails(sf::RenderTarget& target, sf::Vector2f size,
     sf::Vector2f basePos) {
     // draw name
-    Utilities::DrawText(target, textObj, size, basePos, name_, 24/*size.y * 0.15*/);
+    Utilities::DrawText(target, textObj, size, basePos, name_, size.y / 4, Utilities::textColor);
 }
 
-SettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(sf::Color(190, 190, 190, 255)), type_(type), name_(OptionEnumToString(type_)) {
-    if (!font.loadFromFile(Utilities::fontPath))
-        throw std::runtime_error("could not load font");
-    textObj.setFont(font);
-}
+ColumnSettingsPrompt::SettingsOption::SettingsOption(OptionEnum type): GUIElement(Utilities::fill1), type_(type), name_(OptionEnumToString(type_)) {}
 
-SettingsPrompt::OptionEnum SettingsPrompt::SettingsOption::GetType() { return type_; }
+ColumnSettingsPrompt::OptionEnum ColumnSettingsPrompt::SettingsOption::GetType() { return type_; }
 
-SettingsPrompt::SettingsPrompt(const sf::RenderWindow& target) {
+ColumnSettingsPrompt::ColumnSettingsPrompt(const sf::RenderWindow& target,
+    WindowResizeHandler& windowResizeHandler) : WindowPrompt(windowResizeHandler) {
     type_ = WindowPrompt::Type::SettingsPrompt;
     view_ = target.getDefaultView();
-    view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
-    bg.setFillColor(bgColor);
-
-    // sf::Font font;
-    // if (!font.loadFromFile(Utilities::fontPath))
-    //     throw std::runtime_error("could not load font");
-    // text_.setFont(font);
+    view_.setViewport(viewPortLeft_);
+    bg.setFillColor(Utilities::fill2);
 
     options_[0] = new SettingsOption(Rename);
     options_[1] = new SettingsOption(Delete);
 }
 
-SettingsPrompt::~SettingsPrompt() {
+ColumnSettingsPrompt::~ColumnSettingsPrompt() {
     for (auto* o : options_)
         delete o;
 }
 
-void SettingsPrompt::Update() {
+void ColumnSettingsPrompt::Update(const float deltaTime) {
     if (isActive) isVisible = true;
 }
 
-void SettingsPrompt::Deactivate() {
-    isActive = false;
-    isVisible = false;
+void ColumnSettingsPrompt::Deactivate() {
+    WindowPrompt::Deactivate();
     RemoveAllObservers();
 }
 
-bool SettingsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point) {
+bool ColumnSettingsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point) {
     auto mousePos = target.mapPixelToCoords(point, view_);
 
     // exit early if not visible
@@ -92,16 +85,16 @@ bool SettingsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point
     return true;
 }
 
-void SettingsPrompt::Draw(sf::RenderTarget& target) {
+void ColumnSettingsPrompt::Draw(sf::RenderTarget& target) {
     if (!isVisible)
         return;
 
     target.setView(view_);
+    auto size = target.getSize();
 
-    bg.setSize(sf::Vector2f(target.getSize().x, target.getSize().y));
+    bg.setSize(sf::Vector2f(size.x, size.y));
     target.draw(bg);
 
-    auto size = target.getSize();
     int optionCount = std::size(options_);
     float optionWidth = size.x * 0.75f;
     float xOffset = size.x / 8.0f;
@@ -109,7 +102,7 @@ void SettingsPrompt::Draw(sf::RenderTarget& target) {
     float yPadding = optionHeight / (optionCount + 1.0f);
     for (int i = 0; i < optionCount; i++)
     {
-        float yOffset = (i+1) * yPadding + optionHeight * i;
+        float yOffset = yPadding * (i+1) + optionHeight * i;
         options_[i]->Draw(sf::Vector2f(xOffset, yOffset),
                           sf::Vector2f(optionWidth, optionHeight), {}, target);
     }

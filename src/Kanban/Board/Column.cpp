@@ -2,27 +2,29 @@
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
-#include "TaskManager.h"
 #include "Task.h"
-#include "Column.h"
 #include "Board.h"
 #include "../GUIElement/GUIElement.h"
 #include "../GUIElement/Icon.h"
 #include "../GUIElement/TaskCard.h"
 #include "../WindowPrompt/WindowPromptManager.h"
-#include "../Utilities/EventSystem/Subject.h"
+#include "Utilities.h"
+#include "Subject.h"
+#include "Column.h"
 
 using namespace std;
 using namespace EventSystem;
 
-void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observer::ActionEnum& action)
+// ===================================== Private Functions =====================================
+
+void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, const Observer::ActionEnum& action)
 {
     if (event == Observer::EventEnum::Action)
     {
         if (action == Observer::ActionEnum::Rename)
         {
             cout << "renaming column" << endl;
-            column_->board_->SetActiveColumn(column_);
+            column_->board_->SetActiveColumn(column_, Board::UserInputMode::ColumnName);
         }
         if (action == Observer::ActionEnum::Delete)
         {
@@ -32,7 +34,7 @@ void Kanban::Column::ActionObserver::OnNotify(Observer::EventEnum event, Observe
     }
 }
 
-void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& task)
+void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, const Task& task)
 {
     if (event == Observer::EventEnum::TransferTask)
     {
@@ -41,7 +43,110 @@ void Kanban::Column::TaskObserver::OnNotify(Observer::EventEnum event, Task& tas
     }
 }
 
-Kanban::Column::Column(const string& name, WindowPromptManager& windowPromptManager, Kanban::Board& board) :
+void Kanban::Column::UpdateValues(float width, float height)
+{
+    columnHeight_ = height;
+    taskWidth_ = width * 0.75f;
+    taskOffsetX_ = width / 8.0f;
+    headerHeight_ = icons_[0]->GetWidth() * 1.5f;
+    taskHeight_ = (columnHeight_ - headerHeight_) / (tasksPerColummn_ + 1.0f);
+    taskPaddingY_ = taskHeight_ / (tasksPerColummn_ + 1.0f);
+    defaultTextureHeight_ = columnHeight_ - (taskPaddingY_ + headerHeight_);
+}
+
+void Kanban::Column::UpdateRenderTexture(const float width)
+{
+    if (textureStatic_.getSize().x != width || textureStatic_.getSize().y != columnHeight_)
+    {
+        if (!textureStatic_.create(width, columnHeight_))
+            std::cerr << "could not create static render texture in Column.Render()" << endl;
+    }
+}
+
+void Kanban::Column::UpdateScrollTexture(const float columnWidth, const float deltaTime)
+{
+    int taskCount = tasks_.size();
+    float defaultStartY = 0;
+    float extraTaskCount = std::max(0, taskCount - tasksPerColummn_);
+    float maxDistY = (taskPaddingY_ + taskHeight_) * extraTaskCount;
+    float maxStartY = defaultStartY + maxDistY;
+
+    bool enableScrollBar = extraTaskCount > 0;
+    float textureHeight_ = defaultTextureHeight_ + maxDistY;
+    float barWidthRatio = defaultTextureHeight_ / textureHeight_;
+    sf::Vector2u textureSize(columnWidth, textureHeight_);
+
+    scrollTexture_.Update(enableScrollBar, barWidthRatio,
+        textureSize, {}, defaultStartY, maxStartY, deltaTime);
+}
+
+void Kanban::Column::RenderStaticDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target)
+{
+    textureStatic_.clear(sf::Color::Transparent);
+
+    // draw background
+    bgRect_.setFillColor(Utilities::fill1);
+    bgRect_.setSize(sf::Vector2f(size.x, columnHeight_));
+    textureStatic_.draw(bgRect_);
+
+    // draw column title
+    int titleWidth = size.x;
+    int titleHeight = headerHeight_;
+    sf::Vector2f textSize(titleWidth, titleHeight);
+    Utilities::DrawText(textureStatic_, text_, textSize, {}, name_, titleHeight / 2, Utilities::textColor);
+
+    RenderIcons(textureStatic_, {}, size.x);
+
+    // draw scroll bar
+    int taskStartY = headerHeight_ + taskPaddingY_;
+    sf::Vector2f barPos(size.x, taskStartY);
+    sf::Vector2f barSize(defaultTextureHeight_ - taskPaddingY_, (size.x - taskWidth_)/4.f);
+    scrollTexture_.DrawScrollBar(textureStatic_, barPos, barSize, 90);
+
+    transformStatic_ = sf::Transform::Identity;
+    transformStatic_.translate(position);
+
+    textureStatic_.display();
+    target.draw(sf::Sprite(textureStatic_.getTexture()), transformStatic_);
+}
+
+void Kanban::Column::RenderDynamicDetails(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target)
+{
+    auto& textureDynamic = scrollTexture_.GetTexture();
+    textureDynamic.clear(sf::Color::Transparent);
+
+    if (!tasks_.empty())
+    {
+        float borderPaddingY = taskPaddingY_;
+        for (unsigned int i = 0; i < tasks_.size(); i++)
+        {
+            float yOffset = borderPaddingY + (taskPaddingY_ + taskHeight_) * i;
+            tasks_[i]->Draw(sf::Vector2f(taskOffsetX_, yOffset),
+                            sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
+        }
+    }
+
+    transformDynamic_ = sf::Transform::Identity; // reset
+    transformDynamic_.translate(position.x, position.y + headerHeight_);
+
+    // draw column texture
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight_);
+    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
+}
+
+void Kanban::Column::ClearSelectedTask()
+{
+    if (selectedCard_)
+    {
+        selectedCard_->Deselect();
+        selectedCard_ = nullptr;
+    }
+}
+
+// ====================================== Public Functions ======================================
+
+Kanban::Column::Column(const string& name,
+    WindowPromptManager& windowPromptManager, Kanban::Board* board) :
     name_(name), actionObserver_(this), taskObserver_(this)
 {
     font_.loadFromFile(Utilities::fontPath);
@@ -49,8 +154,8 @@ Kanban::Column::Column(const string& name, WindowPromptManager& windowPromptMana
     icons_.push_back(new Icon(Icon::Type::plus));
     icons_.push_back(new Icon(Icon::Type::dots));
     windowPromptManager_ = &windowPromptManager;
-    board_ = &board;
-    taskSubject_.AddObserver(windowPromptManager_->taskObserver_);
+    board_ = board;
+    TaskSubject::AddObserver(windowPromptManager_->taskObserver_);
     selectedCard_ = nullptr;
 }
 
@@ -64,36 +169,15 @@ Kanban::Column::~Column() {
     }
 }
 
-
 void Kanban::Column::RemoveTaskCard(Kanban::TaskCard* card)
 {
-    if (!card) {
-        return;
-    }
-    
-    // Clear selection first if this card is selected
-    if (selectedCard_ == card) {
-        selectedCard_->Deselect();
-        selectedCard_ = nullptr;
-    }
-    
-    // Find and remove the card
     for (auto iter = tasks_.begin(); iter != tasks_.end(); ++iter)
     {
-        if ((*iter) == card)
+        if ((*iter)->GetId() == card->GetId())
         {
-            // Return the task to the available pool
             board_->ReturnTask(card->GetId());
-            
-            // Remove from vector first (this changes the size)
+            delete *iter;
             tasks_.erase(iter);
-            
-            // Delete the TaskCard object after removing from vector
-            delete card;
-            
-            // Always clear selection when vector changes
-            selectedCard_ = nullptr;
-            
             return;
         }
     }
@@ -126,91 +210,95 @@ void Kanban::Column::SelectIcon(Icon::Type type) {
     switch (type)
     {
         case Icon::Type::plus:
-            std::cout << "Plus icon clicked - showing AddTaskPrompt" << std::endl;
-            windowPromptManager_->OnNotify(
+            windowPromptManager_->ShowPrompt(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::AddTask,
-                taskObserver_
+                taskObserver_,
+                board_->GetAvailableTasks()
             );
-            std::cout << "AddTaskPrompt should now be visible" << std::endl;
             break;
         case Icon::Type::dots:
-            std::cout << "Dots icon clicked - showing SettingsPrompt" << std::endl;
-            windowPromptManager_->OnNotify(
+            windowPromptManager_->ShowPrompt(
                 Observer::EventEnum::ShowPrompt,
                 Observer::PromptEnum::Settings,
                 actionObserver_
             );
-            std::cout << "SettingsPrompt should now be visible" << std::endl;
+            break;
+        default:
             break;
     }
 }
 
 void Kanban::Column::SelectTaskCard(Kanban::TaskCard* card) {
-    if (selectedCard_)
-        selectedCard_->Deselect();
+    if (selectedCard_) selectedCard_->Deselect();
 
     selectedCard_ = card;
     card->Select();
-    taskSubject_.Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
+    TaskSubject::Notify(Observer::EventEnum::ShowPrompt, card->GetTask());
 }
 
-// Updated to fix crash when deleting tasks
-bool Kanban::Column::CheckCollision(sf::Vector2f point) {
-    if (rect_.getGlobalBounds().contains(point))
+void Kanban::Column::ProcessLeftClickReleased()
+{
+    scrollTexture_.ProcessLeftClickReleased();
+
+    // move task stuff here
+}
+
+void Kanban::Column::ProcessMouseMove(sf::Vector2f mousePosGlobal)
+{
+    sf::Vector2f localPoint = transformStatic_.getInverse().transformPoint(mousePosGlobal);
+    scrollTexture_.ProcessMouseMove(localPoint);
+}
+
+void Kanban::Column::Update(const float screenWidth, const float columnWidth, const float columnHeight, const float deltaTime)
+{
+    for (auto* icon : icons_)
+        icon->Update(screenWidth);
+
+    for (auto* card : tasks_)
+        card->UpdateIcons(screenWidth);
+
+    UpdateValues(columnWidth, columnHeight);
+    UpdateRenderTexture(columnWidth);
+    UpdateScrollTexture(columnWidth, deltaTime);
+}
+
+bool Kanban::Column::CheckCollision(sf::Vector2f point)
+{
+    // transform point from global space to local space
+    auto staticPoint = transformStatic_.getInverse().transformPoint(point);
+    auto dynamicPoint = transformDynamic_.getInverse().transformPoint(point);
+    dynamicPoint.y += scrollTexture_.GetScrollDelta(); // adjust by amount scrolled
+
+    ClearSelectedTask();
+
+    if (!bgRect_.getGlobalBounds().contains(staticPoint))
+        return false;
+
+    if (scrollTexture_.CheckScrollBarCollision(staticPoint))
     {
-        // Check icons first
-        for (unsigned int i = 0; i < icons_.size(); i++)
-        {
-            if (icons_[i]->CheckCollision(point))
-            {
-                SelectIcon(icons_[i]->GetType());
-                return true;
-            }
-        }
-        
-        // Use reverse iteration with proper deletion handling
-        for (int i = static_cast<int>(tasks_.size()) - 1; i >= 0; --i)
-        {
-            if (tasks_[i] && tasks_[i]->CheckCollision(point))
-            {
-                // Store the original size BEFORE calling CheckCollision
-                size_t originalSize = tasks_.size();
-                
-                // The collision was already handled by TaskCard::CheckCollision()
-                // Just check if deletion occurred
-                if (tasks_.size() < originalSize) {
-                    // Task was deleted - clear selection and return immediately
-                    selectedCard_ = nullptr;
-                    return true; // Return true to indicate we handled the collision
-                } else {
-                    // Task wasn't deleted, so select it normally
-                    if (i < static_cast<int>(tasks_.size()) && tasks_[i]) {
-                        SelectTaskCard(tasks_[i]);
-                    } else {
-                        selectedCard_ = nullptr;
-                    }
-                    return true;
-                }
-            }
-        }
-        
-        // Clear selection if clicking empty space in column
-        if (selectedCard_)
-        {
-            selectedCard_->Deselect();
-            selectedCard_ = nullptr;
-        }
+        board_->SetActiveColumn(this, Board::UserInputMode::ScrollBar);
         return true;
     }
-    
-    // Clear selection if clicking outside column
-    if (selectedCard_)
+
+    for (unsigned int i = 0; i < icons_.size(); i++)
     {
-        selectedCard_->Deselect();
-        selectedCard_ = nullptr;
+        if (icons_[i]->CheckCollision(staticPoint))
+        {
+            SelectIcon(icons_[i]->GetType());
+            return true;
+        }
     }
-    return false;
+    for (unsigned int i = 0; i < tasks_.size(); i++)
+    {
+        if (tasks_[i]->CheckCollision(dynamicPoint))
+        {
+            SelectTaskCard(tasks_[i]);
+            return true;
+        }
+    }
+
+    return true;
 }
 
 void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos, int colWidth)
@@ -219,49 +307,24 @@ void Kanban::Column::RenderIcons(sf::RenderTarget& target, sf::Vector2f basePos,
     for (int i = 0; i < iconCount; i++)
     {
         const int iconWidth = icons_[i]->GetWidth();
-        int bgXPadding = iconWidth / 2;
-        int iconXPadding = iconWidth;
+        int iconPadding = iconWidth / 4;
 
-        int totalIconWidth = (bgXPadding * iconCount) + (iconXPadding * iconCount) + (iconWidth * iconCount);
+        int totalIconWidth = (iconPadding + iconWidth) * iconCount;
         int x = basePos.x + colWidth - totalIconWidth;
-        int y = basePos.y + iconWidth;
+        int y = basePos.y + iconPadding;
 
-        int xOffset = (bgXPadding * (i+1)) + (iconXPadding * i) + (iconWidth * i);
+        int xOffset = (iconPadding + iconWidth) * i;
         icons_[i]->Draw(x + xOffset, y, target);
     }
 }
 
-void Kanban::Column::Render(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target, const int tasksPerColumn) {
+void Kanban::Column::Render(sf::Vector2f position, sf::Vector2f size, sf::RenderTarget& target) {
 
-    // draw background
-    rect_.setSize(size);
-    rect_.setPosition(position);
-    target.draw(rect_);
+    // we keep collisions and drawing in local space
+    // and translate what we draw to global space
+    // then when doing collision detection, we convert from global space to local
 
-    int iconHeight = Icon::GetDefaultWidth() * 2;
-    int yHeader = iconHeight + iconHeight / 2.f;
-    if (!tasks_.empty())
-    {
-        int taskCount = tasksPerColumn;
-        float taskWidth = size.x * 0.75f;
-        float xOffset = size.x / 8.0f;
 
-        float taskHeight = (size.y - yHeader) / (taskCount + 1.0f);
-        float yPadding = taskHeight / (taskCount);
-
-        for (unsigned int i = 0; i < tasks_.size(); i++)
-        {
-            float yOffset = (yPadding * i) + (taskHeight * i) + yHeader;
-            tasks_[i]->Draw(sf::Vector2f(position.x + xOffset, position.y + yOffset),
-                                sf::Vector2f(taskWidth, taskHeight), {}, target);
-        }
-    }
-
-    RenderIcons(target, position, size.x);
-
-    // draw column title
-    int titleWidth = size.x;
-    int titleHeight = yHeader;
-    sf::Vector2f textSize(titleWidth, titleHeight);
-    Utilities::DrawText(target, text_, textSize, position, name_, titleHeight / 2);
+    RenderStaticDetails(position, size, target);
+    RenderDynamicDetails(position, size, target);
 }

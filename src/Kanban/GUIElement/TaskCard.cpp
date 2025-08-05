@@ -3,71 +3,55 @@
 #include "Utilities.h"
 #include "Icon.h"
 #include "../Board/Column.h"
-#include "GUIElement.h"
-#include "../Board/Column.h"
 #include "TaskCard.h"
 #include <optional>
 using namespace std;
 
 void Kanban::TaskCard::DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) {
     // draw task name
-    Utilities::DrawText(target, textObj, size, basePos, task_.getName(), size.y / 4);
+    Utilities::DrawText(target, textObj, size, basePos, task_.getName(), size.y / 4, Utilities::textColor);
 
-    int x = basePos.x + size.x - icons_[Delete]->GetWidth();
-    int y = basePos.y;
-    icons_[Delete]->Draw(x, y,target);
+    Icon* deleteIcon = icons_[Delete];
+    float x = basePos.x + size.x - deleteIcon->GetWidth() * 0.625f;
+    float y = basePos.y - deleteIcon->GetWidth() * 0.325f;
+    deleteIcon->Draw(x, y,target);
 
     if (task_.isOverdue())
     {
-        x = basePos.x - icons_[Overdue]->GetWidth() / 4;
+        x = basePos.x;
         y = basePos.y + size.y - icons_[Overdue]->GetWidth();
         icons_[Overdue]->Draw(x, y, target);
     }
 }
 
-
-Kanban::TaskCard::TaskCard(Column* column, Task& task):
-    GUIElement(sf::Color(190, 190, 190, 255)), task_(task), icons_(2) {
-    if (!font.loadFromFile(Utilities::fontPath))
-        throw std::runtime_error("could not load font");
-    textObj.setFont(font);
-
+Kanban::TaskCard::TaskCard(Column* column, const Task& task, sf::Color fillColor):
+    GUIElement(fillColor), task_(task), icons_(2) {
     column_ = column;
-    icons_[Overdue] = new Icon(Icon::Type::overdue, sf::Color::Red, 0.5f);
-    icons_[Delete] = new Icon(Icon::Type::minus, sf::Color(96,96,96,255), 0.5f);
+    icons_[Overdue] = new Icon(Icon::Type::overdue, 0.5f, Utilities::priorityHigh);
+    icons_[Delete] = new Icon(Icon::Type::minus, 0.5f, Utilities::icon1);
 }
 
 Kanban::TaskCard::~TaskCard() {
-    // Safely delete icons
-    for (unsigned int i = 0; i < icons_.size(); i++) {
-        if (icons_[i]) {
-            delete icons_[i];
-            icons_[i] = nullptr;
-        }
-    }
-    icons_.clear();
+    for (unsigned int i = 0; i < icons_.size(); i++)
+        delete icons_[i];
+}
+
+void Kanban::TaskCard::UpdateIcons(int screenWidth) {
+    for (auto* icon : icons_)
+        icon->Update(screenWidth);
 }
 
 bool Kanban::TaskCard::CheckCollision(sf::Vector2f point)
 {
-    // Check delete icon FIRST, before any other processing
-    for (unsigned int i = 0; i < icons_.size(); i++)
+    for (unsigned int i = 0; i < std::size(icons_); i++)
     {
-        if (i == Icons::Delete && icons_[i] && icons_[i]->CheckCollision(point))
+        if (i == Icons::Delete && icons_[i]->CheckCollision(point))
         {
-
-            // Store column pointer before we get deleted
-            Column* col = column_;
-            
-            // Tell the column to remove this TaskCard
-            col->RemoveTaskCard(this);
-            
-            // Return true to indicate the collision was handled
-            return true;
+            column_->RemoveTaskCard(this);
+            return false;
         }
     }
 
-    // Only check bounding box if we didn't delete the object
     return rect.getGlobalBounds().contains(point);
 }
 

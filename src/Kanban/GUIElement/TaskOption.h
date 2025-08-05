@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Utilities.h"
 #include "TaskManager.h"
+#include "Utilities.h"
 #include "Task.h"
 #include "GUIElement.h"
 
@@ -14,18 +15,16 @@ namespace Kanban
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
         {
             // draw task name
-            Utilities::DrawText(target, textObj, size, basePos, task.getName(), size.y / 4);
+            Utilities::DrawText(target, textObj, size, basePos, task.getName(), size.y / 4, Utilities::textColor);
         }
     public:
-        TaskOption(Task& task) : GUIElement(sf::Color(190, 190, 190, 255)), task(task)
-        {
-            if (!font.loadFromFile(Utilities::fontPath))
-                throw std::runtime_error("could not load font");
-            textObj.setFont(font);
-        }
+        TaskOption(const Task& task) : GUIElement(Utilities::fill1), task(task) {}
 
         Task& GetTask() { return task; }
         std::optional<int> getId() { return task.getId(); }
 
+        void UpdateTask(const Task& updatedTask) {
+            task = updatedTask;
+        }
     };
 }

@@ -1,24 +1,36 @@
 #pragma once
 #include <string>
+#include <Utilities.h>
 #include <SFML/Graphics.hpp>
+#include "Observer.h"
+#include "WindowResizeHandler.h"
 
-class Icon
+struct Icon final : public EventSystem::BasicObserver
 {
-public:
-    enum Type { plus, overdue, dots, minus };
-    Icon(Type type, sf::Color color = sf::Color(128, 128, 128, 255), float scaleFactor = 1);
+    enum Type { plus, overdue, dots, minus, bell, bellDot };
+    Icon(Type type, float scaleFactor = 1, sf::Color color = Utilities::icon1, sf::Color accent = Utilities::priorityHigh);
+
+    void OnNotify(EventEnum event) override;
+    void Update(int screenWidth);
 
     void Draw(int x, int y, sf::RenderTarget& target);
     bool CheckCollision(sf::Vector2f point) const;
 
-    static int GetDefaultWidth() { return defaultSideLenPixel; }
-    int GetWidth() const { return sideLenPixel; }
+    // static int GetDefaultWidth() { return defaultSideLenPixel; }
+    // int GetWidth() const { return sideLenPixel; }
+    int GetWidth() const { return sideLenPixel * 2; } // accounting for border
     Type GetType() const { return type; }
 private:
     const static int defaultSideLenPixel = 16;
     int sideLenPixel;
+    float defaultScaleRatio;
+    bool drawSecondLayer_ = false;
     Type type;
-    sf::Sprite sprite_;
+    sf::Sprite layer1_;
+    sf::Sprite layer2_;
     sf::Texture texture_;
     std::string iconsPath = "../../resources/Icons.png";
+
+    void SetScale(float factor);
+    void ToggleSecondLayer(bool value) { drawSecondLayer_ = value; }
 };

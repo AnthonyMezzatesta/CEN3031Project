@@ -1,19 +1,22 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include "Utilities.h"
-#include "../Board/Board.h"
 #include "TaskDetailsPrompt.h"
 #include "TaskEdit.h"
 using namespace std;
 
-TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager)
-    : taskManager_(&taskManager)
+TaskDetailsPrompt::TaskDetailsPrompt(const sf::RenderWindow& target, TaskManager& taskManager, WindowResizeHandler& windowResizeHandler) :
+    WindowPrompt(windowResizeHandler), taskManager_(&taskManager)
 {
     type_ = WindowPrompt::Type::TaskDetailsPrompt;
     view_ = target.getDefaultView();
-    bg_.setFillColor(bgColor_);
+    // view_.setViewport(viewPortLeft_);
+    bg_.setFillColor(Utilities::fill0);
 
-    // view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
+    nameBox.setFillColor(Utilities::fill1);
+    descBox.setFillColor(Utilities::fill1);
+    deadlineBox.setFillColor(Utilities::fill1);
+    priorityBox.setFillColor(Utilities::fill1);
 }
 
 // Added new SaveEdits method
@@ -21,7 +24,7 @@ bool TaskDetailsPrompt::SaveEdits() {
     if (!taskManager_) {
         return false;
     }
-    
+
     bool result = taskEditor_.SaveChanges(*taskManager_);
     if (result) {
         // Update our local copy with the saved values
@@ -46,15 +49,14 @@ void TaskDetailsPrompt::ExitEditMode() {
     taskEditor_.ExitEditMode();
 }
 
-void TaskDetailsPrompt::Update()
+void TaskDetailsPrompt::Update(const float deltaTime)
 {
     if (isActive) isVisible = true;
 }
 
 void TaskDetailsPrompt::Deactivate()
 {
-    isActive = false;
-    isVisible = false;
+    WindowPrompt::Deactivate();
     taskEditor_.ExitEditMode();
     RemoveAllObservers();
 }
@@ -82,7 +84,7 @@ bool TaskDetailsPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i po
 void TaskDetailsPrompt::HandleClick(sf::Vector2f localPos)
 {
     // const float CLICK_TOLERANCE = 10.0f;
-    
+
     if (IsEditMode()) {
         // Save button
         if (saveButton.getGlobalBounds().contains(localPos))
@@ -93,7 +95,7 @@ void TaskDetailsPrompt::HandleClick(sf::Vector2f localPos)
             }
             return;
         }
-        
+
         // Cancel button
         if (cancelButton.getGlobalBounds().contains(localPos))
         {
@@ -106,7 +108,7 @@ void TaskDetailsPrompt::HandleClick(sf::Vector2f localPos)
             taskEditor_.SetCurrentField(TaskEdit::FIELD_NAME);
             return;
         }
-        
+
         if (descBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_DESCRIPTION);
             return;
@@ -116,17 +118,54 @@ void TaskDetailsPrompt::HandleClick(sf::Vector2f localPos)
             taskEditor_.SetCurrentField(TaskEdit::FIELD_DEADLINE);
             return;
         }
-        
+
         if (priorityBox.getGlobalBounds().contains(localPos)) {
             taskEditor_.SetCurrentField(TaskEdit::FIELD_PRIORITY);
             return;
         }
-    } 
+    }
     else {
         // Edit button
         if (editButton.getGlobalBounds().contains(localPos))
             EnterEditMode();
         }
+}
+
+void TaskDetailsPrompt::ReadUserInput(char c)
+{
+    if (!isVisible || !IsEditMode())
+        return;
+
+    if (c == '\b')
+        HandleBackspace();
+    else
+        HandleTextInput(c);
+}
+
+void TaskDetailsPrompt::ProcessKeyEvent(const sf::Keyboard::Key key)
+{
+    if (!isVisible)
+        return;
+
+    // Enter edit mode with E key
+    if (key == sf::Keyboard::E && !IsEditMode())
+    {
+        EnterEditMode();
+        return;
+    }
+
+    if (!IsEditMode())
+        return;
+
+    // Save changes with Enter key
+    if (key == sf::Keyboard::Return)
+    {
+        if (SaveEdits())
+            ExitEditMode();
+    }
+
+    // Handle other key presses in edit mode
+    HandleKeyPress(key);
 }
 
 void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
@@ -150,7 +189,6 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
 
     // Draw main background
     bg_.setSize(bgSize);
-    bg_.setFillColor(sf::Color(220, 220, 220));
     target.draw(bg_, transform_);
 
     // ========= remapping old values to new output range so that they scale with new window resolutions =========
@@ -171,7 +209,6 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
             Utilities::RemapClamped(0, 400, 0, bgSize.y, 30))
         );
         nameBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 100-50));
-        nameBox.setFillColor(sf::Color(200, 200, 200));
         target.draw(nameBox, transform_);
 
         text24.setString(GetNameInput());
@@ -187,7 +224,6 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
             Utilities::RemapClamped(0, 400, 0, bgSize.y, 60))
         );
         descBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 140-50));
-        descBox.setFillColor(sf::Color(200, 200, 200));
         target.draw(descBox, transform_);
 
         text24.setString(GetDescriptionInput());
@@ -203,7 +239,6 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
             Utilities::RemapClamped(0, 400, 0, bgSize.y, 30)
         ));
         deadlineBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 210-50));
-        deadlineBox.setFillColor(sf::Color(200, 200, 200));
         target.draw(deadlineBox, transform_);
 
         std::string deadlineStr = Task::formatDeadline(GetDeadlineInput());
@@ -220,7 +255,6 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
             Utilities::RemapClamped(0, 400, 0, bgSize.y, 30))
         );
         priorityBox.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 250-50));
-        priorityBox.setFillColor(sf::Color(200, 200, 200));
         target.draw(priorityBox, transform_);
 
         std::string priorityStr = Task::priorityToString(GetPriorityInput());
@@ -323,7 +357,7 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
 
     } else {
         // Draw static fields
-        
+
         text24.setString(task_.getName());
         text24.setPosition(0, Utilities::RemapClamped(0, 400, 0, bgSize.y, 100-50));
         target.draw(text24, transform_);
@@ -366,44 +400,7 @@ void TaskDetailsPrompt::Draw(sf::RenderTarget& target) {
     statusText.setString(IsEditMode() ? "EDIT MODE" : "VIEW MODE");
     statusText.setFillColor(sf::Color::Red);
     target.draw(statusText, transform_);
-    
+
     // Restore original view
     target.setView(target.getDefaultView());
-}
-
-void TaskDetailsPrompt::ReadUserInput(char c)
-{
-    if (!isVisible || !IsEditMode())
-        return;
-
-    if (c == '\b')
-        HandleBackspace();
-    else
-        HandleTextInput(c);
-}
-
-void TaskDetailsPrompt::ProcessKeyEvent(const sf::Keyboard::Key key)
-{
-    if (!isVisible)
-        return;
-
-    // Enter edit mode with E key
-    if (key == sf::Keyboard::E && !IsEditMode())
-    {
-        EnterEditMode();
-        return;
-    }
-
-    if (!IsEditMode())
-        return;
-
-    // Save changes with Enter key
-    if (key == sf::Keyboard::Return)
-    {
-        if (SaveEdits())
-            ExitEditMode();
-    }
-
-    // Handle other key presses in edit mode
-    HandleKeyPress(key);
 }

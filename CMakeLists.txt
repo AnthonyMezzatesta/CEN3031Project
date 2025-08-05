@@ -23,14 +23,18 @@ set(SOURCES
         src/TaskManager/TaskManager.cpp
         src/TaskManager/User.cpp
         src/TaskManager/UserManager.cpp
-        src/TaskManager/Team.cpp
-        src/TaskManager/TeamManager.cpp
 )
 
 set (SFML_SOURCES
         src/Utilities/Utilities.cpp
         src/Utilities/EventSystem/Subject.h
         src/Utilities/EventSystem/Observer.h
+        src/Utilities/WindowResizeHandler.h
+        src/ReminderManager/ReminderManager.h
+        src/GUIStateMachine/GUIStateMachine.h
+        src/GUIStateMachine/GUIState.h
+        src/TaskCreationScreen.h
+        src/OutsideBoardThing.h
         src/Kanban/Board/Board.cpp
         src/Kanban/Board/Column.cpp
         src/Kanban/GUIElement/GUIElement.cpp
@@ -38,19 +42,20 @@ set (SFML_SOURCES
         src/Kanban/GUIElement/TaskCard.h
         src/Kanban/GUIElement/TaskOption.h
         src/Kanban/GUIElement/TaskCard.cpp
+        src/Kanban/WindowPrompt/TaskEdit.cpp
+        src/Kanban/WindowPrompt/TaskEdit.h
         src/Kanban/WindowPrompt/WindowPrompt.h
         src/Kanban/WindowPrompt/WindowPromptManager.h
+        src/Kanban/WindowPrompt/WindowPromptManager.cpp
         src/Kanban/WindowPrompt/AddTaskPrompt.cpp
-        src/Kanban/WindowPrompt/AddTaskPrompt.h
-        src/Kanban/WindowPrompt/SettingsPrompt.cpp
-        src/Kanban/WindowPrompt/SettingsPrompt.h
+        src/Kanban/WindowPrompt/ColumnSettingsPrompt.cpp
         src/Kanban/WindowPrompt/TaskDetailsPrompt.cpp
-        src/Kanban/WindowPrompt/TaskDetailsPrompt.h
-        src/ReminderManager/ReminderManager.h
         src/Kanban/WindowPrompt/DummyPrompt.h
         src/Kanban/WindowPrompt/ReminderPrompt.h
-        src/Kanban/WindowPrompt/TaskEdit.cpp        
-        src/Kanban/WindowPrompt/TaskEdit.h 
+        src/Kanban/WindowPrompt/WindowResizePrompt.h
+        src/Kanban/GUIElement/NamedButton.h
+        src/Kanban/GUIElement/ScrollableTexture.cpp
+        src/Kanban/GUIElement/ScrollBar.cpp
 )
 
 # Executables
@@ -64,8 +69,6 @@ set(TEST_SOURCES
     tests/test_user.cpp
     tests/test_task_manager.cpp
     tests/test_user_manager.cpp
-    tests/test_team_manager.cpp
-    tests/test_team_tasks.cpp
     tests/main.cpp
 )
 

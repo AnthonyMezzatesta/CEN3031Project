@@ -4,25 +4,118 @@
 #include "Task.h"
 #include "Utilities.h"
 #include "Subject.h"
+#include "WindowResizeHandler.h"
 #include "../GUIElement/TaskOption.h"
-#include "../Board/Board.h"
 #include "AddTaskPrompt.h"
 
-AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, Kanban::Board& board) {
-    type_ = WindowPrompt::Type::AddTaskPrompt;
-    board_ = &board;
-    view_ = target.getDefaultView();
-    view_.setViewport(sf::FloatRect(0.5f, 0.f, 0.5f, 0.5f));
-    bg.setFillColor(bgColor);
+void AddTaskPrompt::UpdateValues()
+{
+    auto size = view_.getSize();
 
-    // sf::Font font;
-    // if (!font.loadFromFile(Utilities::fontPath))
-    //     throw std::runtime_error("could not load font");
-    // text_.setFont(font);
+    headerHeight_ = size.y * 0.15f;
+    taskWidth_ = size.x * 0.75f;
+    xOffset_ = size.x / 8.0f;
+    taskHeight_ = (size.y - headerHeight_) / (tasksPerScreen_ + 1.0f);
+    taskPaddingY_ = taskHeight_ / (tasksPerScreen_ + 1.0f);
+    defaultTextureHeight_ = size.y - (taskPaddingY_ * 2 + headerHeight_);
+}
+
+void AddTaskPrompt::UpdateScrollTexture(const float deltaTime)
+{
+    auto size = view_.getSize();
+
+    int taskCount = taskElements_.size();
+    float extraTaskCount = std::max(taskCount - tasksPerScreen_, 0);
+
+    float defaultStartY = 0;
+    float maxDistY = (taskPaddingY_ + taskHeight_) * extraTaskCount;
+    float maxStartY = defaultStartY + maxDistY;
+
+    bool enableScrollBar = extraTaskCount > 0;
+    float textureHeight = defaultTextureHeight_ + maxDistY;
+    float scrollBarWidthRatio = defaultTextureHeight_ / textureHeight;
+    sf::Vector2u textureSize(size.x, textureHeight);
+
+    scrollTexture_.Update(enableScrollBar, scrollBarWidthRatio,
+        textureSize, {}, defaultStartY, maxStartY, deltaTime);
+}
+
+void AddTaskPrompt::DrawStaticElements(sf::RenderTarget& target)
+{
+    auto size = target.getSize();
+
+    bg.setSize(sf::Vector2f(size.x, size.y));
+    target.draw(bg);
+
+    // draw title text
+    string titleStr = "Available Tasks";
+    Utilities::DrawText(target, text_, sf::Vector2f(size.x, headerHeight_),
+        sf::Vector2f(0, headerHeight_ / 8.f), titleStr, headerHeight_/2, Utilities::textColor);
+
+    // draw horizontal line
+    sf::RectangleShape line(sf::Vector2f(size.x * 0.5f, headerHeight_ * 0.05f));
+    line.setPosition(sf::Vector2f(size.x * 0.25f, headerHeight_ * 0.95f));
+    line.setFillColor(Utilities::fill1);
+    target.draw(line);
+}
+
+void AddTaskPrompt::DrawDynamicElements(sf::RenderTarget& target)
+{
+    if (taskElements_.empty())
+        return;
+
+    auto size = target.getSize();
+
+    auto& textureDynamic = scrollTexture_.GetTexture();
+    textureDynamic.clear(sf::Color::Transparent);
+
+    transformDynamic_ = sf::Transform::Identity; // reset
+    transformDynamic_.translate(0, headerHeight_ + taskPaddingY_);
+
+    int i = 0;
+    for (auto& kvp : taskElements_)
+    {
+        float yOffset = (taskPaddingY_ + taskHeight_) * i;
+        kvp.second->Draw(sf::Vector2f(xOffset_, yOffset),
+                         sf::Vector2f(taskWidth_, taskHeight_), {}, textureDynamic);
+        i++;
+    }
+
+    // draw scrollable texture
+    sf::IntRect rect(0, scrollTexture_.GetScrollDelta(), textureDynamic.getSize().x, defaultTextureHeight_);
+    scrollTexture_.DrawTexture(target, rect, transformDynamic_);
+
+    // draw scroll bar
+    int taskStartY = headerHeight_ + taskPaddingY_;
+    sf::Vector2f barSize(defaultTextureHeight_, (size.x - taskWidth_)/8.0f);
+    sf::Vector2f barPos(size.x - xOffset_ + barSize.y + taskPaddingY_, taskStartY);
+    scrollTexture_.DrawScrollBar(target, barPos, barSize, 90);
+}
+
+AddTaskPrompt::AddTaskPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler) :
+    WindowPrompt(windowResizeHandler) {
+    if (!font_.loadFromFile(Utilities::fontPath))
+        throw std::runtime_error("could not load font");
+    text_.setFont(font_);
+
+    type_ = WindowPrompt::Type::AddTaskPrompt;
+    view_ = target.getDefaultView();
+    view_.setViewport(viewPortLeft_);
+    bg.setFillColor(Utilities::fill2);
 }
 
 AddTaskPrompt::~AddTaskPrompt() {
     ClearTaskElements();
+}
+
+void AddTaskPrompt::UpdateTaskElements(const vector<Task>& tasks) {
+    // update window prompt with currently available tasks
+    ClearTaskElements();
+    for (const Task& task : tasks)
+    {
+        if (task.getId().has_value())
+            taskElements_[task.getId().value()] = new Kanban::TaskOption(task);
+    }
 }
 
 void AddTaskPrompt::ClearTaskElements() {
@@ -32,30 +125,44 @@ void AddTaskPrompt::ClearTaskElements() {
 }
 
 // todo: add option to get tasks by filter
-void AddTaskPrompt::Update() {
+void AddTaskPrompt::Update(const float deltaTime) {
     if (isActive) isVisible = true;
 
-    // update window prompt with currently available tasks
-    if (!isActive)
-    {
-        ClearTaskElements();
-        auto allTasks = board_->GetAvailableTasks();
-        for (Task& task : allTasks)
-        {
-            if (task.getId().has_value())
-                taskElements_[task.getId().value()] = new Kanban::TaskOption(task);
-        }
-    }
+    UpdateValues();
+    UpdateScrollTexture(deltaTime);
 }
 
 void AddTaskPrompt::Deactivate() {
-    isActive = false;
-    isVisible = false;
+    WindowPrompt::Deactivate();
     RemoveAllObservers();
 }
 
+void AddTaskPrompt::ProcessLeftClickReleased()
+{
+    if (!isVisible)
+        return;
+
+    scrollTexture_.ProcessLeftClickReleased();
+}
+
+void AddTaskPrompt::ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target)
+{
+    if (!isVisible)
+        return;
+
+    auto mousePos = target.mapPixelToCoords(pixelPos, view_);
+    scrollTexture_.ProcessMouseMove(mousePos);
+}
+
 bool AddTaskPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point) {
+    // transform point from global space to local view space
     auto mousePos = target.mapPixelToCoords(point, view_);
+
+    // // place view on screen based on position of mouse in target's space
+    // if (point.x > target.getSize().x / 2)
+    //     view_.setViewport(viewPortLeft_);
+    // else
+    //     view_.setViewport(viewPortRight_);
 
     // exit early if not visible
     if (!isVisible || !bg.getGlobalBounds().contains(mousePos))
@@ -67,9 +174,16 @@ bool AddTaskPrompt::CheckCollision(sf::RenderWindow& target, sf::Vector2i point)
         return false;
     }
 
+    if (scrollTexture_.CheckScrollBarCollision(mousePos))
+        return true;
+
+    // transform point from view space to local texture space
+    auto dynamicPoint = transformDynamic_.getInverse().transformPoint(mousePos);
+    dynamicPoint.y += scrollTexture_.GetScrollDelta(); // adjust by amount scrolled
+
     for (auto iter = taskElements_.begin(); iter != taskElements_.end(); ++iter)
     {
-        if (iter->second->CheckCollision(mousePos))
+        if (iter->second->CheckCollision(dynamicPoint))
         {
             // send task to observers
             Notify(EventSystem::Observer::TransferTask, iter->second->GetTask());
@@ -88,26 +202,8 @@ void AddTaskPrompt::Draw(sf::RenderTarget& target) {
 
     target.setView(view_);
 
-    bg.setSize(sf::Vector2f(target.getSize().x, target.getSize().y));
-    target.draw(bg);
-
-    if (taskElements_.empty())
-        return;
-
-    auto size = target.getSize();
-    int taskCount = taskElements_.size();
-    float taskWidth = size.x * 0.75f;
-    float xOffset = size.x / 8.0f;
-    float taskHeight = size.y / (taskCount + 1.0f);
-    float yPadding = taskHeight / (taskCount + 1.0f);
-    int i = 0;
-    for (auto iter = taskElements_.begin(); iter != taskElements_.end(); ++iter)
-    {
-        float yOffset = (i+1) * yPadding + taskHeight * i;
-        iter->second->Draw(sf::Vector2f(xOffset, yOffset),
-                           sf::Vector2f(taskWidth, taskHeight), {}, target);
-        i++;
-    }
+    DrawStaticElements(target);
+    DrawDynamicElements(target);
 
     target.setView(target.getDefaultView());
 }

@@ -2,12 +2,11 @@
 #include <SFML/Graphics.hpp>
 #include "Subject.h"
 #include "WindowPrompt.h"
-#include "../Board/Board.h"
+#include "../Kanban/GUIElement/GUIElement.h"
 
-class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
+class ColumnSettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubject
 {
     sf::RectangleShape bg;
-    sf::Color bgColor = sf::Color(128, 128, 128, 255);
     enum OptionEnum { Rename, Delete };
 
     static const char* OptionEnumToString(OptionEnum value);
@@ -23,14 +22,13 @@ class SettingsPrompt final : public WindowPrompt, public EventSystem::ActionSubj
         OptionEnum GetType();
     };
     SettingsOption* options_[2];
-
 public:
-    SettingsPrompt(const sf::RenderWindow& target);
-    ~SettingsPrompt();
+    ColumnSettingsPrompt(const sf::RenderWindow& target, WindowResizeHandler& windowResizeHandler);
+    ~ColumnSettingsPrompt();
 
     // todo: add option to get tasks by filter
-    void Update() override;
-    void Deactivate();
+    void Update(const float deltaTime) override;
+    void Deactivate() override;
 
     bool CheckCollision(sf::RenderWindow& target, sf::Vector2i point) override;
     void Draw(sf::RenderTarget& target) override;

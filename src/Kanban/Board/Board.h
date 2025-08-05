@@ -1,14 +1,18 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <SFML/Graphics.hpp>
-#include "Column.h"
-#include "../../include/Task.h"
-#include "../WindowPrompt/WindowPromptManager.h"
+#include "Task.h"
 #include "TaskManager.h"
+#include "Column.h"
+#include "../WindowPrompt/WindowPromptManager.h"
+#include "WindowResizeHandler.h"
+#include "../../GUIStateMachine/GUIState.h"
 #include "../../ReminderManager/ReminderManager.h"
+#include "../GUIElement/ScrollableTexture.h"
 
 class WindowPromptManager;
 using std::vector;
@@ -18,60 +22,68 @@ namespace Kanban
 {
     class Column;
 
-    class Board
+    class Board final : public GUIState
     {
         class AddColumnButton final : public GUIElement
         {
             Icon plusIcon;
         public:
-            AddColumnButton() : GUIElement(sf::Color(112, 112, 112, 255)), plusIcon(Icon::Type::plus) {}
+            AddColumnButton() : GUIElement(Utilities::fill2), plusIcon(Icon::Type::plus, 2.0f) {}
         protected:
             void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override
             {
-                // icon pos is based on top left of icon, excluding icon bg...
-                // float offset = size.x / 2.0f - Icon::GetDefaultWidth() / 2.0f;
-                plusIcon.Draw(basePos.x, basePos.y, target);
+                // icon pos is based on top left of icon
+                size /= 2.0f;
+                float iconCenter = plusIcon.GetWidth() / 2.0f;
+                plusIcon.Draw(basePos.x + size.x - iconCenter, basePos.y + size.y - iconCenter, target);
             }
-        };
-        AddColumnButton addColumnButton_;
-
-        const static int colPerScreen = 3;
-
-        enum UserInputMode { Default, ColumnName };
-        UserInputMode userInputMode;
-        string userInputStr;
-
-        sf::View boardView;
-
-        TaskManager* taskManager_;
-        Column* activeColumn;
-        vector<Kanban::Column*> columns_;
+        } addColumnButton_;
 
         enum TaskStatus { Taken, Available };
         std::unordered_map<int, TaskStatus> taskIds_;
 
-        void DrawColumns(sf::RenderWindow& window);
-        void MoveView(sf::Keyboard::Key key, const float deltaTime);
-    public:
-        WindowPromptManager* windowPromptManager_;
+        const static int colPerScreen = 3;
+        int colWidth_;
+        int colHeight_;
+        int colPaddingX_;
+        int colPosY_;
 
-        Board(const sf::RenderWindow& target, TaskManager& taskManager, ReminderManager& reminderManager);
+        ScrollableTexture scrollTexture_;
+        sf::View boardView;
+        EventSystem::WindowResizeObserver windowResizeObserver_;
+
+        WindowPromptManager* windowPromptManager_;
+        TaskManager* taskManager_;
+        Column* activeColumn;
+        vector<Kanban::Column*> columns_;
+
+        void UpdateColumnValues(const sf::RenderWindow& window);
+        void UpdateScrollTexture(const sf::RenderWindow& window, const float deltaTime);
+        void DrawColumns(sf::RenderWindow& window);
+        void DrawScrollBar(sf::RenderWindow& window);
+    public:
+        enum UserInputMode { Default, ColumnName, MoveTask, ScrollBar };
+
+        Board(const sf::RenderWindow& target, TaskManager& taskManager,
+            WindowResizeHandler& windowResizeHandler, WindowPromptManager& windowPromptManager);
         ~Board();
+
         void AddColumn(const string& name);
         void RemoveColumn(Column& column);
-        void SetActiveColumn(Column* column);
-        // std::optional<Task> GetTaskAtPosition(sf::Vector2i pixelPos, sf::RenderWindow& window);
-
-        void Update();
-        void SetTaskAsTaken(Task& task); // for use by columns
+        void SetActiveColumn(Column* column, UserInputMode mode = Default);
+        void SetTaskAsTaken(const Task& task);
         void ReturnTask(std::optional<int> id);
         vector<Task> GetAvailableTasks() const;
 
-        void ProcessKeyEvent(sf::Keyboard::Key key);
-        void ReadUserInput(char c);
-        void Draw(sf::RenderWindow& window);
-        bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target);
-
+        void ProcessLeftClickReleased() override;
+        void ProcessMouseMove(sf::Vector2i pixelPos, sf::RenderWindow& target) override;
+        void ReadUserInput(char c) override;
+        void Update(const sf::RenderWindow& window, const float deltaTime) override;
+        bool CheckCollision(sf::Vector2i point, sf::RenderWindow& target) override;
+        void Draw(sf::RenderWindow& window) override;
         void RefreshTaskCards();
+    private:
+        UserInputMode userInputMode;
+        string userInputStr;
     };
 }

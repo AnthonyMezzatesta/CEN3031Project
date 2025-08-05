@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Task.h"
 #include "Icon.h"
+#include "Utilities.h"
 #include "GUIElement.h"
 #include "../Board/Column.h"
 
@@ -19,11 +20,12 @@ namespace Kanban
 
         void DrawDetails(sf::RenderTarget& target, sf::Vector2f size, sf::Vector2f basePos) override;
     public:
-        TaskCard(Column* column, Task& task);
+        TaskCard(Column* column, const Task& task, sf::Color fillColor = Utilities::fill2);
         ~TaskCard();
 
-        Task& GetTask() { return task_; }
+        void UpdateIcons(int screenWidth);
         bool CheckCollision(sf::Vector2f point) override;
+        Task& GetTask() { return task_; }
         std::optional<int> GetId() const { return task_.getId(); }
         bool ContainsPoint(const sf::Vector2f& point) const;
         Task GetTask() const { return task_; }

@@ -5,8 +5,12 @@
 #include "UserManager.h"
 #include "TaskManager.h"
 #include "Task.h"
-#include "Board/Board.h"
+#include "WindowResizeHandler.h"
+#include "../OutsideBoardThing.h"
+#include "../TaskCreationScreen.h"
+#include "../GUIStateMachine/GUIStateMachine.h"
 #include "../ReminderManager/ReminderManager.h"
+#include "Board/Board.h"
 
 using namespace std;
 using namespace Kanban;
@@ -32,9 +36,25 @@ void CreateTasks(TaskManager& taskManager)
                "Submit the quarterly expense report to accounting",
                lastWeek, Task::Priority::Low);
 
-    Task task4(4, "Code review",
+    Task task4(4, "test4",
                "Review and approve pending code changes in the repository",
                fewDays, Task::Priority::Medium);
+
+    Task task5(5, "test5",
+               "Review and approve pending code changes in the repository",
+               tomorrow, Task::Priority::Medium);
+
+    Task task6(6, "test6",
+               "Review and approve pending code changes in the repository",
+               fewDays, Task::Priority::Medium);
+
+    Task task7(7, "test7",
+               "Review and approve pending code changes in the repository",
+               fewDays, Task::Priority::Low);
+
+    Task task8(8, "test8",
+               "Review and approve pending code changes in the repository",
+               tomorrow, Task::Priority::High);
 
     if (taskManager.addTask(task1)) {
         std::cout << "✓ Added: " << task1.getName() << " (Priority: "
@@ -43,23 +63,43 @@ void CreateTasks(TaskManager& taskManager)
 
     if (taskManager.addTask(task2)) {
         std::cout << "✓ Added: " << task2.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task2.getPriority()) << ")" << std::endl;
     }
 
     if (taskManager.addTask(task3)) {
         std::cout << "✓ Added: " << task3.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task3.getPriority()) << ")" << std::endl;
     }
 
     if (taskManager.addTask(task4)) {
         std::cout << "✓ Added: " << task4.getName() << " (Priority: "
-        << Task::priorityToString(task1.getPriority()) << ")" << std::endl;
+        << Task::priorityToString(task4.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task5)) {
+        std::cout << "✓ Added: " << task5.getName() << " (Priority: "
+        << Task::priorityToString(task5.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task6)) {
+        std::cout << "✓ Added: " << task6.getName() << " (Priority: "
+        << Task::priorityToString(task6.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task7)) {
+        std::cout << "✓ Added: " << task7.getName() << " (Priority: "
+        << Task::priorityToString(task7.getPriority()) << ")" << std::endl;
+    }
+
+    if (taskManager.addTask(task8)) {
+        std::cout << "✓ Added: " << task8.getName() << " (Priority: "
+        << Task::priorityToString(task8.getPriority()) << ")" << std::endl;
     }
 }
 
 User SetupUser(TaskManager& taskManager, UserManager& userManager)
 {
-    string usr = "SFML_Test_User";
+    string usr = "Test_User";
     string pass = "password";
 
     // Authenticate user
@@ -72,6 +112,7 @@ User SetupUser(TaskManager& taskManager, UserManager& userManager)
         throw runtime_error("Failed to login user");
 
     taskManager.setCurrentUser(userManager.getCurrentUserId());
+    // taskManager.clearUserTasks(userManager.getCurrentUserId());
 
     // create tasks for current user
     if (newRegister)
@@ -80,7 +121,8 @@ User SetupUser(TaskManager& taskManager, UserManager& userManager)
     return currentUser.value();
 }
 
-int main() {
+int main()
+{
     UserManager userManager("sfml_users.db");
     if (!userManager.initialize())
         throw runtime_error("Failed to initialize UserManager!");
@@ -92,64 +134,94 @@ int main() {
     User currentUser = SetupUser(taskManager, userManager);
 
     sf::Clock clock;
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML window");
+    auto defaultWindowSize = Utilities::defaultWindowSize;
+    sf::RenderWindow window(sf::VideoMode(defaultWindowSize.x, defaultWindowSize.y), Utilities::windowTitle, Utilities::windowStyle);
     window.setFramerateLimit(60);
 
+    WindowResizeHandler windowResizeHandler;
     ReminderManager reminderManager(taskManager);
-    Board board(window, taskManager, reminderManager);
+    WindowPromptManager windowPromptManager(window, reminderManager, taskManager, windowResizeHandler);
 
-    board.AddColumn("todo");
-    board.AddColumn("wip");
-    board.AddColumn("done");
+    GUIStateMachine guiStateMachine;
 
-    while (window.isOpen()) {
+    TaskCreationScreen taskCreationScreen(taskManager, windowPromptManager);
+    OutsideBoardThing outsideBoardThing(reminderManager, guiStateMachine, windowPromptManager);
+    Board board(window, taskManager, windowResizeHandler, windowPromptManager);
+
+    guiStateMachine.AddState(&board);
+    guiStateMachine.AddState(&taskCreationScreen);
+    guiStateMachine.SwitchState(board.GetStateType());
+
+    while (window.isOpen())
+    {
         sf::Event event{};
         sf::Time elapsedTime = clock.restart();
 
-        // Process all pending events
         while (window.pollEvent(event)) {
+
             if (event.type == sf::Event::Closed)
                 window.close();
-
-            if (event.type == sf::Event::MouseButtonPressed) {
-                sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    board.CheckCollision(pixelPos, window);
+                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+
+                    if (outsideBoardThing.CheckCollision(pixelPos, window))
+                        continue;
+                    if (windowPromptManager.CheckCollision(pixelPos, window))
+                        continue;
+                    guiStateMachine.GetCurrentState()->CheckCollision(pixelPos, window);
                 }
             }
-
+            if (event.type == sf::Event::MouseButtonReleased)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    windowPromptManager.ProcessLeftClickReleased();
+                    guiStateMachine.GetCurrentState()->ProcessLeftClickReleased();
+                }
+            }
+            if (event.type == sf::Event::MouseMoved)
+            {
+                sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
+                windowPromptManager.ProcessMouseMove(mousePos, window);
+                guiStateMachine.GetCurrentState()->ProcessMouseMove(mousePos, window);
+            }
             if (event.type == sf::Event::KeyPressed)
             {
-                board.ProcessKeyEvent(event.key.code);
+                windowPromptManager.ProcessKeyEvent(event.key.code);
             }
-
             if (event.type == sf::Event::TextEntered)
             {
+                // 0-126 so that we skip DEL char
                 if (event.text.unicode < 127)
                 {
                     char c = static_cast<char>(event.text.unicode);
-                    board.ReadUserInput(c);
+                    windowPromptManager.ReadUserInput(c);
+                    guiStateMachine.GetCurrentState()->ReadUserInput(c);
                 }
             }
         }
 
-        // Update and draw outside the event loop
-        board.Update();
+        window.clear(Utilities::fill0);
 
-        window.clear(sf::Color::Black);
+        // update systems
+        reminderManager.Update();
 
-        board.Draw(window);
+        // update UI/GUI
+        guiStateMachine.GetCurrentState()->Update(window, elapsedTime.asSeconds());
+        windowPromptManager.UpdatePrompts(elapsedTime.asSeconds());
+
+        // draw
+        guiStateMachine.GetCurrentState()->Draw(window);
+        outsideBoardThing.Draw(window);
+        windowPromptManager.Draw(window);
 
         window.display();
     }
 
+    userManager.clearAllUsers();
+
     return 0;
 }
-
-// TODO:
-// Task Metrics w/ GUI
-
-//show general statistics of tasks. E.g. task completion rate, percentage of tasks submitted on time, etc.
-//and a way to filter which tasks are shown based on given criteria

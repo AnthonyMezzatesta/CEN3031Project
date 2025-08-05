@@ -53,6 +53,11 @@ public:
                 tasksToRemind_.push_back(task);
             }
         }
+
+        if (tasksToRemind_.empty())
+            Notify(EventSystem::Observer::Deactivate);
+        else
+            Notify(EventSystem::Observer::Activate);
     }
 
     void Update() {
@@ -63,7 +68,5 @@ public:
 
         lastCheck_ = now;
         Reset();
-
-        Notify(EventSystem::Observer::Update);
     }
 };

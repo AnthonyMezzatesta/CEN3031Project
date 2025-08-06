@@ -221,7 +221,7 @@ int main()
         window.display();
     }
 
-    userManager.clearAllUsers();
+    // userManager.clearAllUsers();
 
     return 0;
 }

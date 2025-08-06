@@ -25,7 +25,7 @@ class OutsideBoardThing
                 case GUIState::Board:
                     return "Board";
                 case GUIState::TaskCreation:
-                    return "Task Creation";
+                    return "Task Config";
                 case GUIState::UserLogin:
                     return "User Login";
                 default:

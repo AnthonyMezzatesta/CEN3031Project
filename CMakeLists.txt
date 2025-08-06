@@ -1,15 +1,20 @@
 cmake_minimum_required(VERSION 3.15)
 project(CyclePlanner VERSION 1.0.0 LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Find required packages
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SQLITE3 REQUIRED sqlite3)
-#find_package(SQLite3 REQUIRED)
-find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
+find_package(SQLite3 REQUIRED)
+
+# fetch sfml from github repo
+include(FetchContent)
+FetchContent_Declare(SFML
+        GIT_REPOSITORY https://github.com/SFML/SFML.git
+        GIT_TAG 2.5.0
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+FetchContent_MakeAvailable(SFML)
 
 # Include directories
 include_directories(include)
@@ -60,7 +65,7 @@ set (SFML_SOURCES
 
 # Executables
 add_executable(TaskManager ${SOURCES} src/TaskManager/main.cpp)
-add_executable(Test_SFML ${SFML_SOURCES} ${SOURCES} src/Kanban/main.cpp)
+add_executable(SFML_Main ${SFML_SOURCES} ${SOURCES} src/Kanban/main.cpp)
 
 # Test files
 set(TEST_SOURCES
@@ -75,11 +80,16 @@ set(TEST_SOURCES
 add_executable(RunTests ${SOURCES} ${TEST_SOURCES})
 
 # Link libraries
+target_compile_features(TaskManager PRIVATE cxx_std_17)
 target_link_libraries(TaskManager ${SQLITE3_LIBRARIES})
 target_compile_options(TaskManager PRIVATE ${SQLITE3_CFLAGS_OTHER})
-target_link_libraries(Test_SFML ${SQLITE3_LIBRARIES})
-target_compile_options(Test_SFML PRIVATE ${SQLITE3_CFLAGS_OTHER})
-target_link_libraries(Test_SFML sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+
+target_compile_features(SFML_Main PRIVATE cxx_std_17)
+target_link_libraries(SFML_Main ${SQLITE3_LIBRARIES})
+target_compile_options(SFML_Main PRIVATE ${SQLITE3_CFLAGS_OTHER})
+target_link_libraries(SFML_Main sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+
+target_compile_features(RunTests PRIVATE cxx_std_17)
 target_link_libraries(RunTests ${SQLITE3_LIBRARIES})
 target_compile_options(RunTests PRIVATE ${SQLITE3_CFLAGS_OTHER})
 
@@ -87,7 +97,7 @@ target_compile_options(RunTests PRIVATE ${SQLITE3_CFLAGS_OTHER})
 set_target_properties(TaskManager PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
-set_target_properties(Test_SFML PROPERTIES
+set_target_properties(SFML_Main PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 set_target_properties(RunTests PROPERTIES

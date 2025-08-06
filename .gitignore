@@ -2,6 +2,7 @@
 build/
 bin/
 out/
+_deps/
 
 # Aseprite files
 *.aseprite

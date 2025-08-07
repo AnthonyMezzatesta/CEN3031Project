@@ -11,7 +11,7 @@ using std::endl;
 using std::string;
 using std::vector;
 
-class TaskCreationScreen final : public GUIState, private EventSystem::TaskSubject
+class TaskConfigScreen final : public GUIState, private EventSystem::TaskSubject
 {
     enum ButtonEnum { createTask, deleteTask, viewTask };
     struct Button : public Kanban::GUIElement
@@ -187,7 +187,7 @@ class TaskCreationScreen final : public GUIState, private EventSystem::TaskSubje
     }
 
 public:
-    TaskCreationScreen(TaskManager& taskManager, WindowPromptManager& windowPromptManager) :
+    TaskConfigScreen(TaskManager& taskManager, WindowPromptManager& windowPromptManager) :
         GUIState(StateEnum::TaskCreation), taskManager_(&taskManager), windowPromptManager_(&windowPromptManager), activeTask_(nullptr)
     {
         if (!font_.loadFromFile(Utilities::fontPath))
@@ -203,7 +203,7 @@ public:
         for (unsigned int i = 0; i < std::size(buttonNames); i++)
             buttons_.push_back(new Button(buttonTypes[i], buttonNames[i]));
     }
-    ~TaskCreationScreen()
+    ~TaskConfigScreen()
     {
         for (unsigned int i = 0; i < tasksOptions_.size(); i++)
             delete tasksOptions_[i];

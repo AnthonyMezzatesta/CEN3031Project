@@ -38,7 +38,7 @@ set (SFML_SOURCES
         src/ReminderManager/ReminderManager.h
         src/GUIStateMachine/GUIStateMachine.h
         src/GUIStateMachine/GUIState.h
-        src/TaskCreationScreen.h
+        src/TaskConfigScreen.h
         src/OutsideBoardThing.h
         src/Kanban/Board/Board.cpp
         src/Kanban/Board/Column.cpp

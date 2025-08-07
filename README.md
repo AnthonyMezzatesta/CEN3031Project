@@ -1,6 +1,5 @@
 # Installation Instructions
 
----
 - Requirements: Git, CMake, SQLite3
     - Installation Guides
         - Git: https://git-scm.com/downloads
@@ -23,8 +22,6 @@ cd build/bin/
 
 
 # CyclePlanner Controls and Navigation
-
----
 
 ### Kanban Board
 - Adding a Column
@@ -51,7 +48,7 @@ cd build/bin/
     - Click on the cancel button or click anywhere outside of the prompt to cancel any changes made.
 
 ### Window Resizing
-- Click on the icon with the three dots icon in the upper-right of the window to view the available window resolutions.
+- Click on the icon with the three dots in the upper-right of the window to view the available window resolutions.
 - Select a resolution and click the save button to change the window resolution. Toggle the 'Windowed' option to change the window mode from windowed or fullscreen.
 - Pressing the cancel button or clicking anywhere outside of the prompt will close it.
 

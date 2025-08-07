@@ -7,7 +7,7 @@
 #include "Task.h"
 #include "WindowResizeHandler.h"
 #include "../OutsideBoardThing.h"
-#include "../TaskCreationScreen.h"
+#include "../TaskConfigScreen.h"
 #include "../GUIStateMachine/GUIStateMachine.h"
 #include "../ReminderManager/ReminderManager.h"
 #include "Board/Board.h"
@@ -144,7 +144,7 @@ int main()
 
     GUIStateMachine guiStateMachine;
 
-    TaskCreationScreen taskCreationScreen(taskManager, windowPromptManager);
+    TaskConfigScreen taskCreationScreen(taskManager, windowPromptManager);
     OutsideBoardThing outsideBoardThing(reminderManager, guiStateMachine, windowPromptManager);
     Board board(window, taskManager, windowResizeHandler, windowPromptManager);
 

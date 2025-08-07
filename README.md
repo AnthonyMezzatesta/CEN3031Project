@@ -1,3 +1,7 @@
+# Project Description
+
+The CyclePlanner is a C++ program designed to help users manage tasks efficiently, featuring a robust task management system with user authentication and account management. The solution utilizes a Kanban board graphical interface, enabling users to create, update and organize tasks visually and interactively.
+
 # Installation Instructions
 
 - Requirements: Git, CMake, SQLite3
@@ -21,7 +25,7 @@ cd build/bin/
 ```
 
 
-# CyclePlanner Controls and Navigation
+# Controls and Navigation
 
 ### Kanban Board
 - Adding a Column
